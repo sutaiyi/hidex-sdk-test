@@ -1,14 +1,7 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CoreService = void 0;
-class CoreService {
-    constructor() {
-        // 实例变量
-        this.status = 'stopped';
-        this.config = {};
-        this.eventListeners = new Map();
-    }
-    // 公共方法
+export class CoreService {
+    status = 'stopped';
+    config = {};
+    eventListeners = new Map();
     async start(config) {
         if (this.status !== 'stopped') {
             throw new Error('Service is already running');
@@ -28,7 +21,7 @@ class CoreService {
     }
     async stop() {
         if (this.status !== 'running') {
-            throw new Error('Service is not running');
+            throw new Error('Service is not running2');
         }
         this.status = 'stopping';
         try {
@@ -50,14 +43,11 @@ class CoreService {
         listeners.push(callback);
         this.eventListeners.set(event, listeners);
     }
-    // 内部方法
     async initialize() {
-        // 初始化逻辑
         await this.validateConfig();
         await this.connectToDependencies();
     }
     async cleanup() {
-        // 清理逻辑
         await this.closeConnections();
     }
     emit(event, data) {
@@ -66,15 +56,10 @@ class CoreService {
             listeners.forEach(callback => callback(data));
         }
     }
-    // 私有辅助方法
     async validateConfig() {
-        // 配置验证逻辑
     }
     async connectToDependencies() {
-        // 连接外部依赖
     }
     async closeConnections() {
-        // 关闭连接
     }
 }
-exports.CoreService = CoreService;

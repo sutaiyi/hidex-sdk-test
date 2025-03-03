@@ -15,6 +15,7 @@ function App() {
       <div className='flex'>
         <div
           className="link-action"
+          style={{ marginBottom: '80px' }}
           onClick={() => {
             navigate('/test')
           }}

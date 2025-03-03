@@ -1,0 +1,1 @@
+{"version":3,"file":"lockTimer.d.ts","sourceRoot":"","sources":["../../../src/wallet/keysing/lockTimer.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,MAAM,wBAAwB,CAAC;AAGlD,cAAM,mBAAmB;IACxB,OAAO,CAAC,eAAe,CAAS;;IAK1B,aAAa,CAAC,QAAQ,EAAE,MAAM,EAAE,OAAO,EAAE,QAAQ;CAWvD;AAED,eAAO,MAAM,cAAc,qBAA4B,CAAC"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"ossStore.d.ts","sourceRoot":"","sources":["../../src/common/ossStore.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,SAAS,EAAE,MAAM,IAAI,CAAA;AAC9B,OAAO,EAAE,iBAAiB,EAAE,MAAM,sBAAsB,CAAA;AAsDxD,eAAO,MAAM,QAAQ;4BAxCgB,MAAM,SAAS,MAAM,aAAa,SAAS,QAAQ,MAAM,KAAG,QAAQ,iBAAiB,CAAC;4BAYtF,MAAM,SAAS,MAAM,aAAa,SAAS,OAAO,MAAM,SAAS,iBAAiB,KAAG,QAAQ,OAAO,CAAC;;CAgCzI,CAAA"}

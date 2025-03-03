@@ -10,9 +10,9 @@ function Test() {
     
   }, []);
   const btns:any = {
-    ...network,
-    ...account,
-    ...trade
+    network,
+    account,
+    trade
   }
 
   return (
@@ -24,7 +24,14 @@ function Test() {
         <div style={{flex: '1 1 100%', width: '100%', textAlign: 'center'}}>Hidex SDK 调试</div>
         {
           Object.keys(btns).map((item:any, key: number) =>
-            <button key={key} className='btn' onClick={async () => btns[item]()}>{item}</button>
+          <div style={{flex: '1 1 100%', width: '100%', textAlign: 'left'}}>
+            <h3 style={{'textTransform': 'capitalize'}}>{item}</h3>
+            {
+              Object.keys(btns[item]).map((item:any, key: number) =>
+                <button key={key} className='btn' onClick={async () => btns[item]()}>{item}</button>
+              )
+            }
+          </div>
           )
         }
       </div>

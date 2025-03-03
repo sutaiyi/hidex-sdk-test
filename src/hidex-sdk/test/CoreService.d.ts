@@ -14,3 +14,4 @@ export declare class CoreService implements ICoreService {
     private connectToDependencies;
     private closeConnections;
 }
+//# sourceMappingURL=CoreService.d.ts.map

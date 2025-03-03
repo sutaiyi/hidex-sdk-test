@@ -6,3 +6,4 @@ export interface ICoreService {
 }
 export type ServiceStatus = 'stopped' | 'starting' | 'running' | 'stopping' | 'error';
 export type EventCallback = (data?: unknown) => void;
+//# sourceMappingURL=interfaces.d.ts.map
