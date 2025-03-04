@@ -1,5 +1,5 @@
 const trade: any = {
-  获取交易对: async () => {
+  获获取交易路径: async () => {
     console.log(1)
   }
 }

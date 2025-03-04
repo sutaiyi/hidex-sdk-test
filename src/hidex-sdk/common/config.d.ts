@@ -1,3 +1,4 @@
+import { WalletCache } from "../wallet/interfaces";
 import { SwapItem } from "./interfaces";
 export declare const dexWalletFee = 0.01;
 export declare const mTokenAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
@@ -62,4 +63,5 @@ export declare const ENCRYPTION_NAME: {
     0: string;
     1: string;
 };
+export declare const defalutWalletStore: WalletCache;
 //# sourceMappingURL=config.d.ts.map

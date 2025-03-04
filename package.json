@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "start": "react-scripts start --silent",
-    "serve": "react-scripts start --silent",
-    "dev": "react-scripts start --silent",
+    "serve": "vite",
+    "dev": "vite",
     "build:prod": "vite build --mode production",
     "vite": "vite",
     "build": "react-scripts build --silent",
@@ -26,6 +26,7 @@
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.2.0",
     "react-scripts": "5.0.1",
+    "stream-browserify": "^3.0.0",
     "typescript": "^4.4.2",
     "vite": "^6.2.0",
     "web-vitals": "^2.1.0"

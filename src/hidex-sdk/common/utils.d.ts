@@ -6,7 +6,7 @@ export declare function sha256(message: string): Promise<string>;
 export declare function isValidSHA256(hash: string): boolean;
 export declare function fillZeroNumber(index: number): string;
 export declare function numberToCharCode(num: number): string;
-export declare function deepCopy(obj: bigint | null | any): any;
+export declare function deepCopy(obj: any): any;
 export declare function copyJson<T>(obj: T): T;
 export declare function isValidEthPrivateKey(key: string): boolean;
 export declare function isValidSolanaPrivateKey(key: string): boolean;

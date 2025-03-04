@@ -3,7 +3,7 @@ declare class webCatcher implements ICatcher {
     constructor();
     setItem(key: string, value: any): Promise<boolean>;
     getItem(key: string): Promise<any>;
+    removeItem(key: string): Promise<boolean>;
 }
-declare const _default: webCatcher;
-export default _default;
+export default webCatcher;
 //# sourceMappingURL=index.d.ts.map

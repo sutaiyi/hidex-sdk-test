@@ -20,5 +20,15 @@ class webCatcher {
             return null;
         }
     }
+    async removeItem(key) {
+        try {
+            await global.localStorage.removeItem(key);
+            return true;
+        }
+        catch (error) {
+            console.error('web/h5 catch removeItem error', error);
+            return false;
+        }
+    }
 }
-export default new webCatcher();
+export default webCatcher;

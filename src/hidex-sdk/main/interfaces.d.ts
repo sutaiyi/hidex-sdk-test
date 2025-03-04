@@ -3,6 +3,7 @@ import { ChainItem } from "../network/interfaces";
 export { ChainItem, INetworkService } from '../network/interfaces';
 export { WalletCache, WalletAccount, WalletList, WalletCacheResult, IWalletService } from '../wallet/interfaces';
 type HidexService = {
+    init(): Promise<void>;
     environmental(production: any, uat: any, development: any): any;
     chains(chain?: number | string): ChainItem | ChainItem[];
 };
@@ -21,7 +22,6 @@ export type Options = {
     env: Env;
     apparatus: Apparatus;
     token: string;
-    apiUrl: string;
 };
 export type OptionsCommon = Options & HidexService & {
     catcher: ICatcher;

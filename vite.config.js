@@ -19,6 +19,10 @@ export default defineConfig({
 	server: {
 		historyApiFallback: true,
 		proxy: {
+			'/api': {
+				target: 'https://hidex.open.name',
+				changeOrigin: true,
+			},
 			'/solana_new': {
 				target: 'https://hidex.open.name',
 				changeOrigin: true,

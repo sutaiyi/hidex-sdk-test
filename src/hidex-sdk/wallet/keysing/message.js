@@ -5,13 +5,12 @@ class KeyRuntimeController {
         this.dataStorage = {};
     }
     async initKeyRuntime(catcher) {
-        this.dataStorage = await catcher.getItem('dataStorage');
+        this.dataStorage = (await catcher.getItem('dataStorage')) || {};
     }
     async sendMessage(message, sendResponse, catcher) {
-        this.dataStorage = await catcher.getItem('dataStorage');
         if (keysing.messageConfirm(message.type)) {
             keysing.messageProcess(message, async (key, value) => {
-                if (key === 'SET') {
+                if (key === 'SET' && typeof value === 'object') {
                     Object.assign(this.dataStorage, value);
                     await catcher.setItem('dataStorage', this.dataStorage);
                     sendResponse({ status: 'success' });

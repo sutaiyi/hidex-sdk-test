@@ -1,9 +1,10 @@
-type Listener<T extends any[] = any[]> = (...args: T) => void;
-declare class EventEmitter {
-    private listeners;
-    on<T extends any[]>(event: string, callback: Listener<T>): void;
-    emit<T extends any[]>(event: string, ...args: T): void;
-    off<T extends any[]>(event: string, callback: Listener<T>): void;
+type EventMap = Record<string | symbol, any[]>;
+export default class EventEmitter<TEventMap extends EventMap = EventMap> {
+    private _events;
+    on<K extends keyof TEventMap>(event: K, listener: (...args: TEventMap[K]) => void): () => void;
+    off<K extends keyof TEventMap>(event: K, listener: (...args: TEventMap[K]) => void): void;
+    emit<K extends keyof TEventMap>(event: K, ...args: TEventMap[K]): void;
+    once<K extends keyof TEventMap>(event: K, listener: (...args: TEventMap[K]) => void): () => void;
 }
-export default EventEmitter;
+export {};
 //# sourceMappingURL=eventEmitter.d.ts.map

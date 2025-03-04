@@ -5,11 +5,12 @@ declare class WalletService implements IWalletService {
     private atpkeys;
     private ADDRESS_PATH_TYPE;
     private HS;
+    private setWalletTimer;
     private mapWalletCache;
     constructor(options: OptionsCommon);
     cloudWalletStore(): {
-        getWalletItem: (key?: string) => Promise<WalletCacheResult>;
-        setWalletItem: (key: string, value: WalletCacheResult) => Promise<boolean>;
+        getWalletItem: (HS: OptionsCommon, key?: string) => Promise<WalletCacheResult>;
+        setWalletItem: (HS: OptionsCommon, key: string, value: WalletCacheResult) => Promise<boolean>;
     };
     createPassword(password: string, oldPassword?: string): Promise<boolean>;
     resetPassword(oldPassword: string, password: string): Promise<boolean>;
@@ -20,10 +21,10 @@ declare class WalletService implements IWalletService {
     setLocked(): Promise<void>;
     hasWalletVault(): Promise<boolean>;
     private ownerKey;
-    private getMaxPathIndex;
+    generateMnemonic(): string;
     private getChainsPath;
-    createWallet(mnemonic: string, pathIndex?: number, id?: number): Promise<WalletList>;
-    createPrivateWallet(privateKey: string, accountName?: string): Promise<WalletList>;
+    createWallet(mnemonic: string, pathIndex?: number): Promise<WalletList>;
+    createPrivateWallet(privateKey: string): Promise<WalletList>;
     private setWalletList;
     getWalletByAddress(address: string): Promise<{
         has: boolean;
@@ -46,13 +47,15 @@ declare class WalletService implements IWalletService {
         accountItem: WalletAccount;
     }>;
     deleteWallet(password: string, walletId: number): Promise<boolean>;
+    clearWallet(password: string): Promise<boolean>;
+    clearWalletAccount(): Promise<boolean>;
     deleteWalletAccount(password: string, walletId: number, accountId: number): Promise<boolean>;
     eventSecretCode(): void;
     exportMnemonics(password: string, walletId: number): Promise<string>;
-    exportPrivateKey(password: string, walletId: number, accountId: number, chain: string): Promise<string>;
+    exportPrivateKey(password: string, walletId: number, accountId: number, chainName: string): Promise<string>;
     private getEncryptionWallet;
     private setEncryptionWallet;
-    private createByMnemonic;
+    private getPathByChain;
     private createByMnemonicAndSave;
     private createByMnemonicFun;
     private createByMnemonicFunBySol;
@@ -60,6 +63,9 @@ declare class WalletService implements IWalletService {
     private createEthSeriesPrivateKey;
     private generatePrivateKeyByChain;
     private getPublicKey;
+    isUnlocked(): boolean;
+    isSetPassword(): boolean;
+    hasWallet(): boolean;
 }
 export default WalletService;
 //# sourceMappingURL=WalletService.d.ts.map

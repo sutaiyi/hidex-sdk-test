@@ -15,19 +15,16 @@ export class HidexService {
         const serveCommon = this.processOptions(options);
         this.network = new NetworkService(serveCommon);
         this.wallet = new WalletService(serveCommon);
-        (async () => {
-            await keysing.keysingInitialized(this.catcher);
-            this.wallet.cloudWalletStore().getWalletItem();
-            this.wallet.eventSecretCode();
-        });
+        this.wallet.cloudWalletStore().getWalletItem(serveCommon);
+    }
+    async init() {
+        await keysing.keysingInitialized(this.catcher);
+        this.wallet.eventSecretCode();
     }
     processOptions(options) {
-        const rpcList = options.rpcList;
-        const env = options.env || 'production';
-        const apparatus = options.apparatus;
-        const serveApi = this.environmental('', '', '');
         return {
-            rpcList, serveApi, env, apparatus, options,
+            ...options,
+            options,
             catcher: this.catcher,
             environmental: this.environmental,
             chains: this.chains

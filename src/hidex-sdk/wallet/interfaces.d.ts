@@ -1,7 +1,8 @@
+import { OptionsCommon } from "../main/interfaces";
 export interface IWalletService {
     cloudWalletStore(): {
-        getWalletItem: (key?: string) => Promise<WalletCacheResult>;
-        setWalletItem: (key: string, value: WalletCacheResult) => Promise<boolean>;
+        getWalletItem: (HS: OptionsCommon, key?: string) => Promise<WalletCacheResult>;
+        setWalletItem: (HS: OptionsCommon, key: string, value: WalletCacheResult) => Promise<boolean>;
     };
     createPassword(password: string, oldPassword?: string): Promise<boolean>;
     resetPassword(oldPassword: string, password: string): Promise<boolean>;
@@ -9,8 +10,9 @@ export interface IWalletService {
     unlock(password: string): Promise<void>;
     setLocked(): Promise<void>;
     hasWalletVault(): Promise<boolean>;
+    generateMnemonic(): string;
     createWallet(mnemonic: string, pathIndex?: number): Promise<WalletList>;
-    createPrivateWallet(privateKey: string, accountName?: string): Promise<WalletList>;
+    createPrivateWallet(privateKey: string): Promise<WalletList>;
     getWalletByAddress(address: string): Promise<{
         has: boolean;
         walletId?: number;
@@ -30,9 +32,14 @@ export interface IWalletService {
         accountItem: WalletAccount;
     }>;
     deleteWallet(password: string, walletId: number): Promise<boolean>;
+    deleteWalletAccount(password: string, walletId: number, accountId: number): Promise<boolean>;
+    clearWallet(password: string): Promise<boolean>;
     eventSecretCode(): void;
     exportMnemonics(password: string, walletId: number): Promise<string>;
-    exportPrivateKey(password: string, walletId: number, accountId: number, chain: string): Promise<string>;
+    exportPrivateKey(password: string, walletId: number, accountId: number, chainName: string): Promise<string>;
+    isUnlocked(): boolean;
+    isSetPassword(): boolean;
+    hasWallet(): boolean;
 }
 export type WalletCache = {
     createTime: number;
@@ -57,7 +64,6 @@ export type WalletAccount = {
     BSC?: AccountItem;
     ETH?: AccountItem;
     SOLANA?: AccountItem;
-    accountName?: string;
     whoChain?: string;
     privateKey?: string;
     id?: number;

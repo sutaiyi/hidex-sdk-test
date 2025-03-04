@@ -1,18 +1,18 @@
 import React, { useEffect } from 'react';
 import logo from '../../assets/logo.svg';
 import './Test.css';
-import trade from './trade'
-import network from './network';
-import account from './account';
+import tradeTest from './trade'
+import networkTest from './network';
+import walletTest from './wallet';
 
 function Test() {
   useEffect(() => {
     
   }, []);
   const btns:any = {
-    network,
-    account,
-    trade
+    networkTest,
+    walletTest,
+    tradeTest
   }
 
   return (
@@ -23,12 +23,12 @@ function Test() {
       <div className='btn-content'>
         <div style={{flex: '1 1 100%', width: '100%', textAlign: 'center'}}>Hidex SDK 调试</div>
         {
-          Object.keys(btns).map((item:any, key: number) =>
-          <div style={{flex: '1 1 100%', width: '100%', textAlign: 'left'}}>
-            <h3 style={{'textTransform': 'capitalize'}}>{item}</h3>
+          Object.keys(btns).map((value: any, key: number) =>
+          <div style={{flex: '1 1 100%', width: '100%', textAlign: 'left'}} key={key}>
+            <h3 style={{'textTransform': 'capitalize'}}>{value}</h3>
             {
-              Object.keys(btns[item]).map((item:any, key: number) =>
-                <button key={key} className='btn' onClick={async () => btns[item]()}>{item}</button>
+              Object.keys(btns[value]).map((item: any, key: number) =>
+                <button key={key} className='btn' onClick={async () => btns[value][item]()}>{item}</button>
               )
             }
           </div>

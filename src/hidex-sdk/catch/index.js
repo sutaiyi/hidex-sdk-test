@@ -4,23 +4,28 @@ class CatcherService {
     catch;
     constructor(apparatus) {
         if (apparatus === 'web') {
-            this.catch = webCatcher;
+            this.catch = new webCatcher();
+            return;
         }
         else if (apparatus === 'app') {
-            this.catch = appCatcher;
+            this.catch = new appCatcher();
+            return;
         }
         throw new Error('Catch constructor error');
     }
     async setItem(key, value) {
         return await this.catch.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
     }
+    async removeItem(key) {
+        return await this.catch.removeItem(key);
+    }
     async getItem(key) {
         try {
             const value = await this.catch.getItem(key);
-            if (!value && value !== 'undefined' && value !== 'null') {
+            if (value && value !== 'undefined' && value !== 'null') {
                 return JSON.parse(value);
             }
-            throw new Error(`Invalid value: ${value}`);
+            return undefined;
         }
         catch (error) {
             console.error(error);

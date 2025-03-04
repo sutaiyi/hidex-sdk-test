@@ -209,3 +209,4 @@ export const ENCRYPTION_NAME = {
     0: 'ADDRESS_',
     1: 'MNEMONIC_HASH_',
 };
+export const defalutWalletStore = { createTime: 0, pathIndex: 0, hasWallet: false, walletBooted: {}, walletList: [], booted: '', isUnlocked: false, isBooted: false, currentWalletId: 0, currentAccountId: 0, currentWallet: '', upgrade: false };

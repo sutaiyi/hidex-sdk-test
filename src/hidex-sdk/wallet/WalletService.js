@@ -1,7 +1,7 @@
 import keysing from './keysing';
 import { isValidSHA256, sha256 } from '../common/utils';
 import { deepCopy, findAndIncrementMax, isValidEthPrivateKey, isValidSolanaPrivateKey, whosePrivater } from '../common/utils';
-import { ENCRYPTION_NAME, ETH_SERIES, NAMES } from '../common/config';
+import { defalutWalletStore, ENCRYPTION_NAME, ETH_SERIES, NAMES } from '../common/config';
 import { ossStore } from '../common/ossStore';
 import passworder from '../common/browser/passworder';
 import { ethers } from 'ethers';
@@ -14,26 +14,27 @@ class WalletService {
     atpkeys;
     ADDRESS_PATH_TYPE;
     HS;
+    setWalletTimer;
     mapWalletCache = new Map();
     constructor(options) {
+        this.setWalletTimer = null;
         this.password = '';
         this.atpkeys = [];
-        this.ADDRESS_PATH_TYPE = this.getChainsPath();
         this.HS = options;
+        this.ADDRESS_PATH_TYPE = this.getChainsPath();
         this.mapWalletCache = ossStore.getWalletCacheMap();
     }
     cloudWalletStore() {
-        const apiUrl = this.HS.apiUrl;
-        const token = this.HS.token;
-        const apparatus = this.HS.apparatus;
         return {
-            getWalletItem: async (key) => {
-                const res = await ossStore.getWalletItem(apiUrl, token, apparatus, key);
+            getWalletItem: async (HS, key) => {
+                const { token, apparatus } = HS;
+                const res = await ossStore.getWalletItem(token, apparatus, key);
                 this.mapWalletCache = ossStore.getWalletCacheMap();
                 return res;
             },
-            setWalletItem: async (key, value) => {
-                const res = await ossStore.setWalletItem(apiUrl, token, apparatus, key, value);
+            setWalletItem: async (HS, key, value) => {
+                const { token, apparatus } = HS;
+                const res = await ossStore.setWalletItem(token, apparatus, key, value);
                 this.mapWalletCache = ossStore.getWalletCacheMap();
                 return res;
             },
@@ -50,8 +51,6 @@ class WalletService {
         }
         this.password = await sha256(password);
         const booted = await passworder.encrypt(this.password, 'true');
-        await this.setWalletStore({ ...walletStore, booted });
-        keysing.booted(this.password, this.HS.catcher);
         let updataWalletBootedResult = null;
         if (oldPassword) {
             updataWalletBootedResult = await this.updateWalletBooted(oldPassword, walletStore);
@@ -60,6 +59,7 @@ class WalletService {
         if (updataWalletBootedResult) {
             update.walletBooted = updataWalletBootedResult;
         }
+        await keysing.booted(this.password, this.HS.catcher);
         await this.setWalletStore(update);
         return true;
     }
@@ -93,7 +93,6 @@ class WalletService {
             shaPassword = await sha256(password);
         }
         const encryptedBooted = await this.getWalletStore().booted;
-        console.log('encryptedBooted====>', encryptedBooted, shaPassword);
         if (!encryptedBooted) {
             throw new Error(JSON.stringify({ code: 10001, message: 'Cannot find password set' }));
         }
@@ -114,24 +113,21 @@ class WalletService {
         await this.setWalletStore({ ...this.getWalletStore(), isUnlocked: false });
     }
     async hasWalletVault() {
-        const hasWallet = !!(this.getWalletList() && this.getWalletList().length > 0);
-        await this.setWalletStore({ ...this.getWalletStore(), hasWallet });
-        return hasWallet;
+        return this.getWalletStore().walletList && this.getWalletStore().walletList.length > 0;
     }
     async ownerKey(address) {
         const key = await this.getEncryptionWallet(this.password, 0, address);
         return key;
     }
-    getMaxPathIndex(num) {
-        const pathIndex = localStorage.getItem('pathIndex') || 0;
-        if (num > Number(pathIndex)) {
-            localStorage.setItem('pathIndex', num.toString());
-            return num;
+    generateMnemonic() {
+        const result = ethers.Wallet.createRandom();
+        if (result === null || result.mnemonic === null) {
+            return '';
         }
-        return Number(pathIndex);
+        const mnemonic = result.mnemonic.phrase;
+        return mnemonic;
     }
     getChainsPath(whoChain = '') {
-        console.log('whoChain--->', whoChain);
         const apt = {};
         this.HS.chains().map((v) => {
             if (whoChain === 'SOLANA' && v.chain === 'SOLANA') {
@@ -146,66 +142,52 @@ class WalletService {
         });
         return apt;
     }
-    async createWallet(mnemonic, pathIndex = 0, id) {
-        console.time('createWallet_time');
+    async createWallet(mnemonic, pathIndex = 0) {
         const account = {};
-        this.getMaxPathIndex(pathIndex);
         if (isValidSHA256(mnemonic)) {
-            console.time('isValidSHA256Mnemonic_time');
             mnemonic = await this.getEncryptionWallet(this.password, 1, mnemonic);
-            console.timeEnd('isValidSHA256Mnemonic_time');
         }
-        console.time('FOR_ADDRESS_PATH_TYPE_time');
         const currArr = [];
-        for (const index in Object.keys(this.ADDRESS_PATH_TYPE)) {
-            const key = Object.keys(this.ADDRESS_PATH_TYPE)[index];
-            const createFu = await this.createByMnemonic(mnemonic, key, pathIndex);
+        for (const key of Object.keys(this.ADDRESS_PATH_TYPE)) {
+            const getPath = await this.getPathByChain(key, pathIndex);
             if (key.toUpperCase() === 'SOLANA' || key.toUpperCase() === 'ETH') {
-                currArr.push(this.createByMnemonicAndSave(key, createFu.mnemonic, createFu.path, createFu.pathIndex, key));
+                currArr.push(this.createByMnemonicAndSave(key, mnemonic, getPath.path, pathIndex, key));
             }
         }
-        console.time('createFu_time');
-        const itmes = await Promise.all(currArr);
-        console.timeEnd('createFu_time');
-        for (const index in Object.keys(this.ADDRESS_PATH_TYPE)) {
-            const key = Object.keys(this.ADDRESS_PATH_TYPE)[index];
-            console.log('setEncryptionWallet', key);
+        const items = await Promise.all(currArr);
+        for (const key of Object.keys(this.ADDRESS_PATH_TYPE)) {
             let item = {};
             if (key === 'SOLANA') {
-                item = itmes.find((v) => v.chain?.toLowerCase() === 'solana');
+                item = items.find((v) => v.chain.toUpperCase() === 'SOLANA');
             }
             else {
-                const itemob = itmes.find((v) => v.chain?.toLowerCase() === 'eth');
-                if (itemob) {
-                    item = deepCopy(itemob);
+                const itemEth = items.find((v) => v.chain.toUpperCase() === 'ETH');
+                if (itemEth) {
+                    item = deepCopy(itemEth);
                     item.chain = key;
                 }
             }
             account[key] = item;
+            const jsonItem = JSON.parse(JSON.stringify(item));
             if (key.toUpperCase() === 'SOLANA' || key.toUpperCase() === 'ETH') {
-                this.atpkeys.push(this.setEncryptionWallet(this.password, 0, item.address, item.privateKey));
+                this.atpkeys.push(this.setEncryptionWallet(this.password, 0, jsonItem.address, jsonItem.privateKey));
             }
             if (account[key] && account[key].privateKey) {
                 delete account[key].privateKey;
             }
         }
-        console.log('setEncryptionWallet', account);
-        console.timeEnd('FOR_ADDRESS_PATH_TYPE_time');
-        account.accountName = `${NAMES['accountName']}${pathIndex + 1}`;
+        const mha = await sha256(mnemonic);
+        this.atpkeys.push(this.setEncryptionWallet(this.password, 1, mha, mnemonic));
         account.id = pathIndex;
-        console.log('pathIndex', pathIndex);
         const walletList = {
-            mnemonic: await sha256(mnemonic),
+            mnemonic: mha,
             usePrivateKey: false,
             accountList: [account],
-            id: id || 0,
-            isBackup: false,
+            id: 0,
         };
-        this.setEncryptionWallet(this.password, 1, walletList.mnemonic, mnemonic);
-        console.timeEnd('createWallet_time');
-        return this.setWalletList(walletList);
+        return this.setWalletList(walletList, pathIndex);
     }
-    async createPrivateWallet(privateKey, accountName) {
+    async createPrivateWallet(privateKey) {
         const account = {};
         if (!isValidEthPrivateKey(privateKey) && !isValidSolanaPrivateKey(privateKey)) {
             throw new Error(JSON.stringify({ code: 10002, message: 'Invalid private key' }));
@@ -223,7 +205,6 @@ class WalletService {
             delete account[key].privateKey;
         }
         account.id = 0;
-        account.accountName = accountName || undefined;
         account.key = str;
         account.whoChain = whoChain;
         const walletList = {
@@ -231,12 +212,10 @@ class WalletService {
             usePrivateKey: true,
             accountList: [account],
             id: 0,
-            isBackup: true,
         };
         return await this.setWalletList(walletList);
     }
-    async setWalletList(walletList) {
-        console.time('setWalletList_time');
+    async setWalletList(walletList, mnemonicPathIndex = 0) {
         const pow = this.getWalletList() || [];
         const powList = deepCopy(pow);
         let backWallet = walletList;
@@ -266,7 +245,6 @@ class WalletService {
                     if (walletHas.has && walletHas.walletId !== undefined && walletHas.accountId !== undefined) {
                         const currentWallet = await this.getWalletAndAccount(walletHas.walletId, walletHas.accountId);
                         currentWallet.isRepeat = true;
-                        await this.setCurrentWallet(walletHas.walletId, walletHas.accountId);
                         return currentWallet;
                     }
                     walletList.accountList[0].id = findAndIncrementMax(powItem.accountList.map((v) => v.id));
@@ -292,9 +270,10 @@ class WalletService {
                 powList.push(walletList);
             }
         }
-        this.hasWalletVault();
-        await this.setWalletStore({ ...this.getWalletStore(), walletList: powList });
-        console.timeEnd('setWalletList_time');
+        await Promise.all(this.atpkeys);
+        console.log('powList', powList);
+        await this.setWalletStore({ ...this.getWalletStore(), walletList: powList, hasWallet: !!powList.length, pathIndex: mnemonicPathIndex });
+        this.atpkeys = [];
         return backWallet;
     }
     async getWalletByAddress(address) {
@@ -319,15 +298,20 @@ class WalletService {
         return walletStore.walletList || [];
     }
     getWalletStore() {
-        const walletStore = this.mapWalletCache.get('walletDataByMap') || {};
+        const walletStore = this.mapWalletCache.get('walletDataByMap') || { walletList: [] };
         return walletStore;
     }
     async setWalletStore(walletStore) {
+        global.clearTimeout(this.setWalletTimer);
         this.mapWalletCache.set('walletDataByMap', walletStore);
-        this.cloudWalletStore().setWalletItem('all', walletStore);
+        this.setWalletTimer = global.setTimeout(() => {
+            this.cloudWalletStore().setWalletItem(this.HS, 'all', walletStore);
+        }, 500);
     }
     async getCurrentWallet() {
-        const { currentWalletId, currentAccountId } = this.getWalletStore();
+        const wst = this.getWalletStore();
+        const currentWalletId = wst.currentWalletId || 0;
+        const currentAccountId = wst.currentAccountId || 0;
         const walletItem = await this.getWalletById(currentWalletId);
         let accountItem = walletItem.accountList.find((v) => v.id === currentAccountId);
         if (!accountItem) {
@@ -406,6 +390,16 @@ class WalletService {
             throw new Error(error.message);
         }
     }
+    async clearWallet(password) {
+        await this.verifyPassword(password);
+        await this.setWalletStore(defalutWalletStore);
+        await this.HS.catcher.removeItem('dataStorage');
+        return true;
+    }
+    async clearWalletAccount() {
+        await this.setWalletStore;
+        return true;
+    }
     async deleteWalletAccount(password, walletId, accountId) {
         try {
             await this.verifyPassword(password);
@@ -433,13 +427,11 @@ class WalletService {
     }
     eventSecretCode() {
         keysing.on('EventSecretCode', (value) => {
-            console.log('eventSecretCode=====>', value);
             this.password = value;
             if (!value) {
                 this.setLocked();
             }
         });
-        keysing.getSecretCode(this.HS.catcher);
     }
     async exportMnemonics(password, walletId) {
         await this.verifyPassword(password);
@@ -449,13 +441,13 @@ class WalletService {
         }
         throw new Error('mnemonic not found');
     }
-    async exportPrivateKey(password, walletId, accountId, chain) {
+    async exportPrivateKey(password, walletId, accountId, chainName) {
         try {
             await this.verifyPassword(password);
             const walletItem = await this.getWalletById(walletId);
             const accountItem = walletItem.accountList.find((v) => v.id === accountId);
             if (accountItem) {
-                const key = await this.ownerKey(accountItem[chain].address);
+                const key = await this.ownerKey(accountItem[chainName].address);
                 if (key) {
                     return key;
                 }
@@ -485,7 +477,6 @@ class WalletService {
             const name = ENCRYPTION_NAME;
             const booted = await passworder.encrypt(password, value);
             walletBooted[`${name[way]}${key.toLowerCase()}`] = booted;
-            this.setWalletStore({ ...walletStore, walletBooted });
             return walletBooted;
         }
         catch (error) {
@@ -493,38 +484,13 @@ class WalletService {
             return {};
         }
     }
-    async createByMnemonic(mnemonic, chainName, pathIndex = 0) {
+    async getPathByChain(chainName, pathIndex = 0) {
         let path = this.ADDRESS_PATH_TYPE[chainName];
         if (pathIndex) {
             path = path.replace(/\/0$/, `/${pathIndex}`);
         }
         return {
             path,
-            pathIndex,
-            mnemonic,
-            ETH: async (mnemonic, path, pathIndex, chainName) => {
-                return await this.createByMnemonicFun(mnemonic, path, pathIndex, chainName);
-            },
-            BASE: async (mnemonic, path, pathIndex, chainName) => {
-                if (chainName)
-                    return await this.createByMnemonicFun(mnemonic, path, pathIndex, 'BASE');
-            },
-            ARBITRUM: async (mnemonic, path, pathIndex, chainName) => {
-                if (chainName)
-                    return await this.createByMnemonicFun(mnemonic, path, pathIndex, 'ARBITRUM');
-            },
-            BSC: async (mnemonic, path, pathIndex, chainName) => {
-                if (chainName)
-                    return await this.createByMnemonicFun(mnemonic, path, pathIndex, 'BSC');
-            },
-            SEPOLIA: async (mnemonic, path, pathIndex, chainName) => {
-                if (chainName)
-                    return await this.createByMnemonicFun(mnemonic, path, pathIndex, 'SEPOLIA');
-            },
-            SOLANA: async (mnemonic, path, pathIndex) => {
-                if (path)
-                    return await this.createByMnemonicFunBySol(mnemonic, pathIndex, 'SOLANA');
-            },
         };
     }
     async createByMnemonicAndSave(chain, mnemonic, path, pathIndex, chainName) {
@@ -692,6 +658,15 @@ class WalletService {
     getPublicKey(privateKey) {
         const walletPrivate = new ethers.Wallet(privateKey);
         return walletPrivate.publicKey;
+    }
+    isUnlocked() {
+        return this.getWalletStore().isUnlocked;
+    }
+    isSetPassword() {
+        return !!this.getWalletStore().booted;
+    }
+    hasWallet() {
+        return this.getWalletStore().walletList?.length > 0;
     }
 }
 export default WalletService;

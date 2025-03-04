@@ -7,6 +7,7 @@ export declare class HidexService implements IHidexService {
     wallet: IWalletService;
     catcher: ICatcher;
     constructor(options: Options);
+    init(): Promise<void>;
     private processOptions;
     environmental(production: any, uat: any, development: any): any;
     chains(chain?: string | number): ChainItem | ChainItem[];
