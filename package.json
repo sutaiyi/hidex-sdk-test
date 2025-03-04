@@ -3,11 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "react-scripts start --silent",
     "serve": "vite",
-    "dev": "vite",
     "build:prod": "vite build --mode production",
-    "vite": "vite",
     "build": "react-scripts build --silent",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -22,6 +19,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "core-service-ts": "^1.0.0",
+    "hidex-sdk": "^1.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.2.0",
