@@ -10,9 +10,9 @@ function Test() {
     
   }, []);
   const btns:any = {
-    networkTest,
-    walletTest,
-    tradeTest
+    network: networkTest,
+    wallet: walletTest,
+    trade: tradeTest
   }
 
   return (
@@ -21,7 +21,9 @@ function Test() {
         <div className='logo-box'><img src={logo} className="logo-img" alt="logo" /></div>
       </div>
       <div className='btn-content'>
-        <div style={{flex: '1 1 100%', width: '100%', textAlign: 'center'}}>Hidex SDK 调试</div>
+        <div style={{flex: '1 1 100%', width: '100%', textAlign: 'center'}}>Hidex SDK 调试
+          <span className='tip'>请打开控制台查看调试信息</span>
+        </div>
         {
           Object.keys(btns).map((value: any, key: number) =>
           <div style={{flex: '1 1 100%', width: '100%', textAlign: 'left'}} key={key}>

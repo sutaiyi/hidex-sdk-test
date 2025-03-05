@@ -2,9 +2,9 @@ import HidexSDk from '../../hidexService'
 const { wallet } = HidexSDk;
 
 const walletTest: any = {
-  创建密码111111: async () => {
+  创建密码123123: async () => {
     try {
-      const password = '111111';
+      const password = '123123';
       await wallet.createPassword(password)
       console.log('密码创建成功', password)
     } catch (error) {
@@ -15,7 +15,7 @@ const walletTest: any = {
   修改密码123123: async () => {
     try {
       console.log('验证密码...')
-      const oldPassword = '111111';
+      const oldPassword = '123123';
       const newPassword = '123123';
       await wallet.verifyPassword(oldPassword);
       // 验证无误后修改密码

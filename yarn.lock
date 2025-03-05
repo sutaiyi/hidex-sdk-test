@@ -6653,10 +6653,10 @@ he@^1.2.0:
   resolved "https://registry.npmmirror.com/he/-/he-1.2.0.tgz#84ae65fa7eafb165fddb61566ae14baf05664f0f"
   integrity sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==
 
-hidex-sdk@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.npmjs.org/hidex-sdk/-/hidex-sdk-1.0.0.tgz#45abd7afd4225b51116f25bdab23251d7d3a5868"
-  integrity sha512-xkENrYeam/9btaeCcaCc4hrlOxw67eVSzdRN5vKxkaP3bPgK+6xDHqKii5aiGYL/gY1Zx3BmbHHb05a7nwBiSw==
+hidex-sdk@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.npmjs.org/hidex-sdk/-/hidex-sdk-1.0.2.tgz#6724047f8637334c7e647eaf1027407275e5f8d4"
+  integrity sha512-55kmRZJaCeOYw1BjP6P2v8/Gh1EPAX07roSKkT/8e30ICVO9y2eNX2R3TBjJ8AGHRP4a/0LngJ9q43sTeR3gTg==
   dependencies:
     "@codex-data/sdk" "^1.0.3"
     "@react-native-async-storage/async-storage" "^2.1.2"

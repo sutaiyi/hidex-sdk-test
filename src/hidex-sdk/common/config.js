@@ -10,6 +10,7 @@ export const ethSeries = [1, 8453, 11155111, 56];
 export const SORT_SERIES = ['ETH', 'BASE', 'SOL', 'SOLANA', 'BSC'];
 export const ETH_SERIES = ['ETH', 'BASE', 'BSC'];
 export const priorityFeeOnChain = 0.0015;
+export const HIDEXKEYWORD = 'HIDEXSAFETY';
 export const NOAPPROVE_CHAINID = [102];
 export function swaps(swapName) {
     const swapList = [

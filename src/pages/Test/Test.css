@@ -9,6 +9,25 @@
   font-size: calc(10px + 2vmin);
   color: white;
 }
+.tip {
+  font-size: 14px;
+  color: #ccc;
+  margin: 0 0 15px;
+  display: block;
+}
+
+.logo-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+  overflow: hidden;
+}
 
 .logo-content {
   position: absolute;

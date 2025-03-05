@@ -271,7 +271,6 @@ class WalletService {
             }
         }
         await Promise.all(this.atpkeys);
-        console.log('powList', powList);
         await this.setWalletStore({ ...this.getWalletStore(), walletList: powList, hasWallet: !!powList.length, pathIndex: mnemonicPathIndex });
         this.atpkeys = [];
         return backWallet;
@@ -294,7 +293,7 @@ class WalletService {
         return { has: false };
     }
     getWalletList() {
-        const walletStore = this.mapWalletCache.get('walletDataByMap') || {};
+        const walletStore = this.getWalletStore() || {};
         return walletStore.walletList || [];
     }
     getWalletStore() {

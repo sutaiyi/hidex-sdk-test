@@ -12,6 +12,7 @@ export declare const ethSeries: number[];
 export declare const SORT_SERIES: string[];
 export declare const ETH_SERIES: string[];
 export declare const priorityFeeOnChain = 0.0015;
+export declare const HIDEXKEYWORD: string;
 export declare const NOAPPROVE_CHAINID: number[];
 export declare function swaps(swapName?: string): SwapItem | SwapItem[];
 export declare const CurrentInTokenDefalut = 0;
