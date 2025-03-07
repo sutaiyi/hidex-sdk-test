@@ -1130,6 +1130,26 @@
     tsx "^4.19.1"
     typescript "^5.2.2"
 
+"@codex-data/sdk@^1.0.5":
+  version "1.0.5"
+  resolved "https://registry.npmjs.org/@codex-data/sdk/-/sdk-1.0.5.tgz#0d9b22bfc09410518f1487db6bf480e73a47569c"
+  integrity sha512-6z8DAsamuEO60Et+Kdmz19Ug1/F/cHdtjGQ/i5+99xGRQL8m6WR4nwhFqFnfgi7SGTrEaKxciySXwl60Do97Yw==
+  dependencies:
+    "@graphql-tools/wrap" "^10.0.5"
+    "@types/jest" "^29.5.4"
+    "@types/lodash" "^4.17.7"
+    "@types/node" "^20.5.7"
+    gql-query-builder "^3.8.0"
+    graphql "^16.9.0"
+    graphql-ast-types "^1.0.2"
+    graphql-request "^6.1.0"
+    graphql-ws "^5.14.0"
+    isomorphic-ws "^5.0.0"
+    lodash "^4.17.21"
+    mkdirp "^3.0.1"
+    tsx "^4.19.1"
+    typescript "^5.2.2"
+
 "@csstools/normalize.css@*":
   version "12.1.1"
   resolved "https://registry.npmmirror.com/@csstools/normalize.css/-/normalize.css-12.1.1.tgz#f0ad221b7280f3fc814689786fd9ee092776ef8f"

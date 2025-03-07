@@ -8,6 +8,9 @@ export interface INetworkService {
     getFastestProviderByChain(chain: string | number, commitment?: string): Promise<Provider | null>;
     getChainNameByChainId(chainId: number): string;
     getChainIdByChainName(chainName: string): number;
+    getCodexChainIdByChainName(chainName: string): number;
+    getChainIds(): Array<number>;
+    getCodexChainIds(): Array<number>;
     getFastestRpc(chain: string | number): Promise<string>;
     get sysProviderRpcs(): SysProviderRpcsFace;
     set sysProviderRpcs(value: SysProviderRpcsFace);
@@ -23,6 +26,7 @@ export type ChainItem = {
     aveChain: string;
     gmgnChain: string;
     chainID: number;
+    codexChainId: number;
     token: string;
     tokens: TokenInfo[];
     aliasChain: string[];

@@ -11,6 +11,7 @@ declare class NetworkController implements INetworkService {
     constructor(options: OptionsCommon);
     getChainNameByChainId(chainId: number): string;
     getChainIdByChainName(chainName: string): number;
+    getCodexChainIdByChainName(chainName: string): number;
     get sysProviderRpcs(): SysProviderRpcsFace;
     set sysProviderRpcs(value: SysProviderRpcsFace);
     choose(chain: string | number): Promise<ChainItem>;
@@ -23,6 +24,8 @@ declare class NetworkController implements INetworkService {
     rpcProviderInit(): Promise<SysProviderRpcsFace>;
     getChainProviderFromRpcs(chain: string): Provider[];
     private solanaConnect;
+    getChainIds: () => Array<number>;
+    getCodexChainIds: () => Array<number>;
 }
 export default NetworkController;
 //# sourceMappingURL=NetworkService.d.ts.map

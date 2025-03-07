@@ -25,10 +25,27 @@ class NetworkController {
         this.HS = options;
     }
     getChainNameByChainId(chainId) {
-        return this.HS.chains(chainId)?.chain || defaultChain;
+        let name = this.HS.chains(chainId)?.chain;
+        if (!name) {
+            const item = this.HS.chains().find((v) => v.codexChainId === chainId);
+            if (item) {
+                name = item.chain;
+            }
+        }
+        return name || defaultChain;
     }
     getChainIdByChainName(chainName) {
         return this.HS.chains(chainName)?.chainID || defaultChainID;
+    }
+    getCodexChainIdByChainName(chainName) {
+        let name = this.HS.chains(chainName)?.chainID;
+        if (!name) {
+            const item = this.HS.chains().find((v) => v.chain === chainName);
+            if (item) {
+                name = item.codexChainId;
+            }
+        }
+        return name || defaultChainID;
     }
     get sysProviderRpcs() {
         if (this._sysProviderRpcs['ETH'] === undefined || this._sysProviderRpcs['ETH'].length === 0) {
@@ -224,5 +241,11 @@ class NetworkController {
         });
         return currentProvider;
     }
+    getChainIds = () => {
+        return this.HS.chains().map((item) => item.chainID);
+    };
+    getCodexChainIds = () => {
+        return this.HS.chains().map((item) => item.codexChainId);
+    };
 }
 export default NetworkController;

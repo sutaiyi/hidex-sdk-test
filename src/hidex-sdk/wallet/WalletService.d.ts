@@ -20,7 +20,7 @@ declare class WalletService implements IWalletService {
     private setUnlocked;
     setLocked(): Promise<void>;
     hasWalletVault(): Promise<boolean>;
-    private ownerKey;
+    ownerKey(address: string): Promise<string>;
     generateMnemonic(): string;
     private getChainsPath;
     createWallet(mnemonic: string, pathIndex?: number): Promise<WalletList>;

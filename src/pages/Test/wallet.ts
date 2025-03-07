@@ -68,6 +68,16 @@ const walletTest: any = {
       alert(error);
     }
   },
+  查看当前选中的钱包: async () => {
+    try {
+      const chainName = 'SOLANA'
+      const { walletItem, accountItem } = await wallet.getCurrentWallet();
+      console.log('当前选中的钱包对象: ', walletItem, accountItem, accountItem[chainName]);
+    } catch (error) {
+      console.error(error);
+      alert(error);
+    }
+  },
   助记词创建钱包: async () => {
     try {
       const mnemonic = await wallet.generateMnemonic();

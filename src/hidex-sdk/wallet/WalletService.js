@@ -143,6 +143,7 @@ class WalletService {
         return apt;
     }
     async createWallet(mnemonic, pathIndex = 0) {
+        await this.verifyPassword(this.password);
         const account = {};
         if (isValidSHA256(mnemonic)) {
             mnemonic = await this.getEncryptionWallet(this.password, 1, mnemonic);
@@ -188,6 +189,7 @@ class WalletService {
         return this.setWalletList(walletList, pathIndex);
     }
     async createPrivateWallet(privateKey) {
+        await this.verifyPassword(this.password);
         const account = {};
         if (!isValidEthPrivateKey(privateKey) && !isValidSolanaPrivateKey(privateKey)) {
             throw new Error(JSON.stringify({ code: 10002, message: 'Invalid private key' }));

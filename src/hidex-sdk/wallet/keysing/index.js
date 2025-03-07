@@ -8,6 +8,7 @@ class KeysingController extends EventEmitter {
     }
     async keysingInitialized(catcher) {
         await keyRuntime.initKeyRuntime(catcher);
+        this.getSecretCode(catcher);
     }
     messageConfirm(message) {
         return message === keysingMessage['get'] || message === keysingMessage['set'];

@@ -3,11 +3,13 @@ import NetworkService from '../network/NetworkService';
 import CatcherService from '../catch';
 import WalletService from '../wallet/WalletService';
 import keysing from '../wallet/keysing';
+import TradeService from '../trade/TradeService';
 export class HidexService {
     options;
     network;
     wallet;
     catcher;
+    trade;
     constructor(options) {
         console.log('HidexService constructor called and options are: ', options);
         this.options = options;
@@ -16,10 +18,13 @@ export class HidexService {
         this.network = new NetworkService(serveCommon);
         this.wallet = new WalletService(serveCommon);
         this.wallet.cloudWalletStore().getWalletItem(serveCommon);
+        serveCommon.network = this.network;
+        serveCommon.wallet = this.wallet;
+        this.trade = new TradeService(serveCommon);
     }
     async init() {
-        await keysing.keysingInitialized(this.catcher);
         this.wallet.eventSecretCode();
+        await keysing.keysingInitialized(this.catcher);
     }
     processOptions(options) {
         return {
@@ -60,6 +65,7 @@ export class HidexService {
                 gmgnChain: 'sol',
                 aliasChain: ['SOL', 'SOLANA'],
                 chainID: 102,
+                codexChainId: 1399811149,
                 token: 'SOL',
                 tokens: solTokens,
                 rpc: ['https://swr.xnftdata.com/rpc-proxy', ...(findRpcItem(102, rpcList).rpc.split(','))],
@@ -79,6 +85,7 @@ export class HidexService {
                 gmgnChain: 'eth',
                 aliasChain: ['ETH', 'ETHEREUM', 'ETHER'],
                 chainID: 1,
+                codexChainId: 1,
                 token: 'ETH',
                 tokens: ethTokens,
                 rpc: [
@@ -101,6 +108,7 @@ export class HidexService {
                 gmgnChain: 'base',
                 aliasChain: ['BASE'],
                 chainID: 8453,
+                codexChainId: 8453,
                 token: 'ETH',
                 tokens: baseTokens,
                 rpc: [
@@ -123,6 +131,7 @@ export class HidexService {
                 gmgnChain: 'bsc',
                 aliasChain: ['BSC', 'BNB'],
                 chainID: 56,
+                codexChainId: 56,
                 token: 'BNB',
                 tokens: bnbTokens,
                 rpc: [

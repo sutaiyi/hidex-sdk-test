@@ -35,6 +35,7 @@ export interface IWalletService {
     deleteWalletAccount(password: string, walletId: number, accountId: number): Promise<boolean>;
     clearWallet(password: string): Promise<boolean>;
     eventSecretCode(): void;
+    ownerKey(accountAddress: string): Promise<string>;
     exportMnemonics(password: string, walletId: number): Promise<string>;
     exportPrivateKey(password: string, walletId: number, accountId: number, chainName: string): Promise<string>;
     isUnlocked(): boolean;

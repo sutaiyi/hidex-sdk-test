@@ -1,11 +1,13 @@
 import { IHidexService, Options, INetworkService, ChainItem } from './interfaces';
 import { ICatcher } from '../catch/interfaces';
 import { IWalletService } from '../wallet/interfaces';
+import { ITradeService } from '../trade/interfaces';
 export declare class HidexService implements IHidexService {
     options: Options;
     network: INetworkService;
     wallet: IWalletService;
     catcher: ICatcher;
+    trade: ITradeService;
     constructor(options: Options);
     init(): Promise<void>;
     private processOptions;

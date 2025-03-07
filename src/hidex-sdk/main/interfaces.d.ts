@@ -1,7 +1,9 @@
 import { ICatcher } from "../catch/interfaces";
-import { ChainItem } from "../network/interfaces";
+import { ChainItem, INetworkService } from "../network/interfaces";
+import { IWalletService } from "../wallet/interfaces";
 export { ChainItem, INetworkService } from '../network/interfaces';
 export { WalletCache, WalletAccount, WalletList, WalletCacheResult, IWalletService } from '../wallet/interfaces';
+export { ITradeService, CurrentSymbol, TokenInfo, NetWorkFee } from '../trade/interfaces';
 type HidexService = {
     init(): Promise<void>;
     environmental(production: any, uat: any, development: any): any;
@@ -25,5 +27,7 @@ export type Options = {
 };
 export type OptionsCommon = Options & HidexService & {
     catcher: ICatcher;
+    network: INetworkService;
+    wallet: IWalletService;
 };
 //# sourceMappingURL=interfaces.d.ts.map
