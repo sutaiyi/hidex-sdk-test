@@ -3,7 +3,8 @@ import { defaultChain, defaultChainID } from "../common/config";
 import { getSolanaRpcHeard, getSolRpcOrigin } from "./utils";
 import LoggingProvider from "./provider";
 import axios from "axios";
-class NetworkController {
+import EventEmitter from "../common/eventEmitter";
+class NetworkController extends EventEmitter {
     network;
     provider;
     _sysProviderRpcs;
@@ -11,6 +12,7 @@ class NetworkController {
     rpcs;
     HS;
     constructor(options) {
+        super();
         this.network = options.chains(defaultChainID);
         this.provider = this.getProvider();
         this._sysProviderRpcs = {};
@@ -64,6 +66,7 @@ class NetworkController {
     async choose(chain) {
         try {
             this.network = this.HS.chains(chain);
+            this.HS.networkChange(this.network);
             this.provider = this.getProvider(true);
             return this.network;
         }

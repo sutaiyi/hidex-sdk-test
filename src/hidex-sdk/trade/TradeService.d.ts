@@ -1,13 +1,16 @@
-import { CurrentSymbol, ITradeService, NetWorkFee, SendTransactionParams } from './interfaces';
-import { OptionsCommon } from '../main/interfaces';
-declare class TradeService implements ITradeService {
-    app: ITradeService | null;
+import { CurrentSymbol, ITradeService, NetWorkFee, ITradeFunctions, SendTransactionParams } from './interfaces';
+import { ChainItem, OptionsCommon } from '../main/interfaces';
+import { instructionReset, instructionsCheck } from './sol/utils';
+import EventEmitter from '../common/eventEmitter';
+declare class TradeService extends EventEmitter implements ITradeService {
+    app: ITradeFunctions | null;
     chainId: number;
     errorCode: number;
     private HS;
-    fun: any;
     constructor(options: OptionsCommon);
-    networkChange: (chainID: number) => void;
+    instructionReset: typeof instructionReset;
+    instructionsCheck: typeof instructionsCheck;
+    changeTradeService: (currentNetwork: ChainItem) => void;
     getBalance: (accountAddress: string, tokenAddress?: string) => Promise<string>;
     getBalanceMultiple: (chain: string, accountAddress: string, tokens: Array<string>) => Promise<Array<string>>;
     getNetWorkFees: (gasLimit?: number) => Promise<NetWorkFee[]>;

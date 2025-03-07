@@ -1,7 +1,7 @@
 import keysing from './keysing';
 import { isValidSHA256, sha256 } from '../common/utils';
 import { deepCopy, findAndIncrementMax, isValidEthPrivateKey, isValidSolanaPrivateKey, whosePrivater } from '../common/utils';
-import { defalutWalletStore, ENCRYPTION_NAME, ETH_SERIES, NAMES } from '../common/config';
+import { defalutWalletStore, ENCRYPTION_NAME, ETH_SERIES } from '../common/config';
 import { ossStore } from '../common/ossStore';
 import passworder from '../common/browser/passworder';
 import { ethers } from 'ethers';
@@ -221,6 +221,7 @@ class WalletService {
         const pow = this.getWalletList() || [];
         const powList = deepCopy(pow);
         let backWallet = walletList;
+        backWallet.isRepeat = false;
         if (walletList.mnemonic) {
             const powItem = powList.find((v) => v.mnemonic === walletList.mnemonic);
             if (powItem) {
@@ -245,35 +246,33 @@ class WalletService {
                 const hasAccount = powItem.accountList.find((v) => v.key === currentAddAccountItem.key);
                 if (!hasAccount) {
                     if (walletHas.has && walletHas.walletId !== undefined && walletHas.accountId !== undefined) {
-                        const currentWallet = await this.getWalletAndAccount(walletHas.walletId, walletHas.accountId);
-                        currentWallet.isRepeat = true;
-                        return currentWallet;
+                        backWallet.isRepeat = true;
                     }
-                    walletList.accountList[0].id = findAndIncrementMax(powItem.accountList.map((v) => v.id));
-                    backWallet = walletList;
-                    backWallet.id = powItem.id;
-                    powItem.accountList.push(...walletList.accountList);
+                    else {
+                        walletList.accountList[0].id = findAndIncrementMax(powItem.accountList.map((v) => v.id));
+                        backWallet.id = powItem.id;
+                        powItem.accountList.push(...walletList.accountList);
+                    }
                 }
                 else {
-                    const currentWallet = await this.getWalletAndAccount(powItem.id, hasAccount.id);
-                    currentWallet.isRepeat = true;
-                    return currentWallet;
+                    backWallet.isRepeat = true;
                 }
             }
             else {
                 if (walletHas.has && walletHas.walletId !== undefined && walletHas.accountId !== undefined) {
-                    const currentWallet = await this.getWalletAndAccount(walletHas.walletId, walletHas.accountId);
-                    currentWallet.isRepeat = true;
-                    return currentWallet;
+                    backWallet.isRepeat = true;
                 }
-                walletList.walletName = NAMES['usePrividerName'];
-                walletList.id = findAndIncrementMax(powList.map((v) => v.id));
-                backWallet = walletList;
-                powList.push(walletList);
+                else {
+                    walletList.id = findAndIncrementMax(powList.map((v) => v.id));
+                    powList.push(walletList);
+                    backWallet = walletList;
+                }
             }
         }
-        await Promise.all(this.atpkeys);
-        await this.setWalletStore({ ...this.getWalletStore(), walletList: powList, hasWallet: !!powList.length, pathIndex: mnemonicPathIndex });
+        if (!backWallet.isRepeat) {
+            await Promise.all(this.atpkeys);
+            await this.setWalletStore({ ...this.getWalletStore(), walletList: powList, hasWallet: !!powList.length, pathIndex: mnemonicPathIndex });
+        }
         this.atpkeys = [];
         return backWallet;
     }

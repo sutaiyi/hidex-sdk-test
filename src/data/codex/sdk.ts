@@ -1,6 +1,6 @@
 import { Codex } from "@codex-data/sdk";
 import { sdkResponse } from "./config";
-import { EventsQueryInput, EventType, HoldersInputSort, QuoteToken } from "@codex-data/sdk/dist/resources/graphql";
+import { EventType, HoldersInputSort, QuoteToken, RankingDirection, TokenRankingAttribute, TokenPairStatisticsType } from "@codex-data/sdk/dist/resources/graphql";
 
 export interface TokenEventsOptions { limit: number, eventType: string, maker: string, quoteToken: QuoteToken }
 
@@ -118,8 +118,13 @@ class CodexSdk {
         filters: {
           network: networks,
         },
-        limit: 1,
+        limit: networks.length + 1,
         phrase: tokenAddress,
+        rankings: [{
+          attribute: TokenRankingAttribute.Volume24,
+          direction: RankingDirection.Desc,
+        }],
+        statsType: TokenPairStatisticsType.Filtered
       })
       return sdkResponse(res)
     } catch (error) {

@@ -19,6 +19,24 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
   const [isLoading, setIsLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
+  const [defalutAddresses, setDefalutAddresses] = useState<Array<{chainName: string, address: string}>>([
+    {
+      chainName: 'SOLANA',
+      address: '6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN',
+    },
+    {
+      chainName: 'BSC',
+      address: '0x19c018e13cff682e729cc7b5fb68c8a641bf98a4',
+    },
+    {
+      chainName: 'BASE',
+      address: '0x1c4cca7c5db003824208adda61bd749e55f463a3',
+    },
+    {
+      chainName: 'ETH',
+      address: '0x1121acc14c63f3c872bfca497d10926a6098aac5',
+    }
+  ]);
 
   const handleSearch = async (query: string) => {
     if (!query) {
@@ -29,7 +47,6 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
     const onSearch = async (query: string) => {
       const networks = network.getCodexChainIds();
       const results = await codex.filterTokens(query, networks);
-      console.log(results, '----');
       return results.map((v: any, index: number) => {
         return {
           id: index + 1,
@@ -43,7 +60,6 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
     try {
       const searchResults = await onSearch(query);
       setResults(searchResults);
-      
     } catch (error) {
       console.error('Search failed:', error);
       setResults([]);
@@ -77,17 +93,13 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
     setSelected(result);
     setInputValue('');
     setShowDropdown(false);
-    
     if (result && result?.token) {
       try {
         const chainName = network.getChainNameByChainId(result?.token?.networkId)
         const currentNetwork = await network.choose(chainName)
         const { accountItem }: {accountItem: any} = await wallet.getCurrentWallet()
         const account = accountItem[chainName]
-        console.log(account)
-
-        const balance = await trade.getBalance(account.address);
-        const tokenBalance = await trade.getBalance(account.address, result?.token.address);
+        const [balance, tokenBalance] = await Promise.all([trade.getBalance(account.address), trade.getBalance(account.address, result?.token.address)])
         const tradeInfo = {
           ...result, 
           account: account,
@@ -177,8 +189,26 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
       )}
     </div>
     {
+      defalutAddresses && defalutAddresses.length > 0 && (
+        <div style={{display: 'flex', marginTop: '10px', justifyContent: 'left', gap: '20px' , alignItems: 'center'}}>
+          {
+            defalutAddresses.map((item: any) => {
+              return <div key={item.address} style={{cursor: 'pointer', color: '#666', fontSize: '14px'}} onClick={() => {
+                setInputValue(item.address)
+              }}><span style={{color: '#999'}}>{item.chainName}</span>：{simpleAddress(item.address, 2)}</div>
+            })
+          }
+        </div>
+      )
+    }
+    {
       selected && <div>
-        <div style={{fontSize: '16px', marginTop: '10px', marginBottom: '5px', color: '#999'}}>当前交易信息：</div>
+        <div style={{fontSize: '16px', marginTop: '10px', marginBottom: '5px', color: '#999'}}>当前交易信息：
+          <span style={{cursor: 'pointer', color: '#1890ff', marginLeft: '10px'}} onClick={async ()=> {
+            await handleResultClick(selected);
+            console.log('刷新完成!')
+          }}>刷新</span>
+        </div>
         <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '14px', margin: '0 0 10px 0'}}>
           代币名称：{selected?.token?.symbol} <br/>
           代币地址：{selected?.token?.address} <br/>

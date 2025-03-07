@@ -2,27 +2,25 @@ import { ethService } from './eth/index';
 import { solService } from './sol/index';
 import { defaultChainID } from '../common/config';
 import { instructionReset, instructionsCheck } from './sol/utils';
-class TradeService {
+import EventEmitter from '../common/eventEmitter';
+class TradeService extends EventEmitter {
     app;
     chainId;
     errorCode = 9800;
     HS;
-    fun;
     constructor(options) {
+        super();
         this.chainId = defaultChainID;
         this.app = defaultChainID === 102 ? solService(options) : ethService(options);
         this.HS = options;
-        this.fun = {
-            instructionReset,
-            instructionsCheck
-        };
     }
-    networkChange = (chainID) => {
-        this.chainId = chainID;
-        switch (chainID) {
+    instructionReset = instructionReset;
+    instructionsCheck = instructionsCheck;
+    changeTradeService = (currentNetwork) => {
+        this.chainId = currentNetwork.chainID;
+        switch (this.chainId) {
             case 1:
             case 56:
-            case 11155111:
             case 8453:
                 this.app = ethService(this.HS);
                 break;
@@ -30,7 +28,7 @@ class TradeService {
                 this.app = solService(this.HS);
                 break;
             default:
-                this.app = ethService(this.HS);
+                this.app = solService(this.HS);
         }
     };
     getBalance = async (accountAddress, tokenAddress) => {

@@ -13,5 +13,6 @@ export declare class HidexService implements IHidexService {
     private processOptions;
     environmental(production: any, uat: any, development: any): any;
     chains(chain?: string | number): ChainItem | ChainItem[];
+    networkChange: (currentNetwork: ChainItem) => void;
 }
 //# sourceMappingURL=HidexService.d.ts.map

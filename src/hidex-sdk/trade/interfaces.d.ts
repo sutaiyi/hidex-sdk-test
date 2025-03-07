@@ -1,5 +1,12 @@
-import { Provider } from '../network/interfaces';
-export interface ITradeService {
+import { ChainItem, Provider } from '../network/interfaces';
+export interface ITradeOthersFunction {
+    changeTradeService(currentNetwork: ChainItem): void;
+    instructionReset(order: any): Promise<any>;
+    instructionsCheck(order: any): Promise<any>;
+}
+export interface ITradeService extends ITradeFunctions, ITradeOthersFunction {
+}
+export interface ITradeFunctions {
     getBalance(accountAddress: string, tokenAddress?: string, provider?: Provider): Promise<string>;
     getBalanceMultiple(chain: string, accountAddress: string, tokens: Array<string>): Promise<Array<string>>;
     getNetWorkFees(gasLimit: number): Promise<NetWorkFee[]>;

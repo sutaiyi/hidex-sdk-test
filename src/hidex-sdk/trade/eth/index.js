@@ -8,9 +8,10 @@ import { abiInFun, actionNameAndValue } from "./abiFun";
 export const ethService = (HS) => {
     const { network, wallet } = HS;
     return {
-        getBalance: async (accountAddress, tokenAddress) => {
+        getBalance: async (accountAddress, tokenAddress = '') => {
             const currentNetwork = network.get();
-            if ((tokenAddress && tokenAddress.toLowerCase() === mTokenAddress.toLowerCase()) || tokenAddress === '') {
+            console.log('currentNetwork', tokenAddress);
+            if (!tokenAddress || tokenAddress.toLowerCase() === mTokenAddress.toLowerCase()) {
                 const balanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
                     return v.getBalance(accountAddress)
                         .then((res) => {
@@ -18,13 +19,9 @@ export const ethService = (HS) => {
                     })
                         .catch((err) => {
                         Promise.reject(err);
-                        return { error: String(err) };
                     });
                 });
                 const balance = await Promise.any(balanceProm);
-                if (!balance.error) {
-                    await balance.wait();
-                }
                 return balance.toString();
             }
             if (tokenAddress) {
@@ -37,14 +34,9 @@ export const ethService = (HS) => {
                     })
                         .catch((err) => {
                         Promise.reject(err);
-                        return { error: String(err) };
                     });
                 });
                 const balance = await Promise.any(balanceProm);
-                if (balance.error) {
-                    await balance.await();
-                    throw new Error(balance.error);
-                }
                 return balance;
             }
             return '0';
@@ -71,19 +63,13 @@ export const ethService = (HS) => {
                             }
                             else {
                                 Promise.reject([]);
-                                return { error: String('') };
                             }
                         })
                             .catch((err) => {
                             Promise.reject(err);
-                            return { error: String(err) };
                         });
                     });
                     const balanceAll = await Promise.any(profun);
-                    if (balanceAll.error) {
-                        await balanceAll.await();
-                        throw new Error(balanceAll.error);
-                    }
                     return balanceAll.map((bl) => bl.toString());
                 }
             }
@@ -175,13 +161,9 @@ export const ethService = (HS) => {
                 })
                     .catch((err) => {
                     Promise.reject(err);
-                    return { error: String(err) };
                 });
             });
             const allowance = await Promise.any(profun);
-            if (!allowance.error) {
-                await allowance.wait();
-            }
             return allowance;
         },
         toApprove: async (tokenAddress, accountAddress, authorizedAddress, amountToApprove) => {
@@ -200,14 +182,9 @@ export const ethService = (HS) => {
                     })
                         .catch((err) => {
                         Promise.reject(err);
-                        return { error: String(err) };
                     });
                 });
                 const tx = await Promise.any(profun);
-                if (!tx.error) {
-                    await tx.wait();
-                    return true;
-                }
                 throw new Error(tx.error);
             }
             catch (error) {
@@ -234,14 +211,9 @@ export const ethService = (HS) => {
                         return res;
                     }).catch((err) => {
                         Promise.reject(err);
-                        return { error: String(err) };
                     });
                 });
                 const gasEstimate = await Promise.any(profun);
-                if (gasEstimate.error) {
-                    await gasEstimate.await();
-                    throw new Error(gasEstimate.error);
-                }
                 return {
                     gasLimit: Math.floor(gasEstimate.toNumber() * 1.01),
                 };
@@ -374,14 +346,9 @@ export const ethService = (HS) => {
                 })
                     .catch((err) => {
                     Promise.reject(err);
-                    return { error: String(err) };
                 });
             });
             const getLimit = await Promise.any(profunGetLimit);
-            if (getLimit.error) {
-                await getLimit.await();
-                throw new Error(getLimit.error);
-            }
             if (getLimit) {
                 const result = {
                     data,

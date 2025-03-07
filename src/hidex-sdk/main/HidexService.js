@@ -32,7 +32,11 @@ export class HidexService {
             options,
             catcher: this.catcher,
             environmental: this.environmental,
-            chains: this.chains
+            chains: this.chains,
+            networkChange: this.networkChange,
+            init: this.init,
+            network: this.network,
+            wallet: this.wallet,
         };
     }
     environmental(production, uat, development) {
@@ -49,12 +53,15 @@ export class HidexService {
     }
     chains(chain) {
         const rpcList = this.options.rpcList;
-        const findRpcItem = (chainID, rpcList) => {
+        const restRpcItem = (chainID, rpcList, defaultRpc) => {
             const item = rpcList.find(r => r.chainId === chainID);
             if (!item) {
                 throw new Error(`Chain with ID ${chainID} not found`);
             }
-            return item;
+            if (!item.rpc) {
+                return defaultRpc;
+            }
+            return Array.from(new Set([...(item.rpc.split(',')), ...defaultRpc]));
         };
         const chainsList = [
             {
@@ -68,7 +75,7 @@ export class HidexService {
                 codexChainId: 1399811149,
                 token: 'SOL',
                 tokens: solTokens,
-                rpc: ['https://swr.xnftdata.com/rpc-proxy', ...(findRpcItem(102, rpcList).rpc.split(','))],
+                rpc: restRpcItem(102, rpcList, ['https://swr.xnftdata.com/rpc-proxy']),
                 blockExplorerUrls: ['https://solscan.io'],
                 blockExplorerName: 'Solscan',
                 defaultPath: `m/44'/501'/0'/0`,
@@ -88,10 +95,7 @@ export class HidexService {
                 codexChainId: 1,
                 token: 'ETH',
                 tokens: ethTokens,
-                rpc: [
-                    'https://rpc.ankr.com/eth',
-                    ...(findRpcItem(1, rpcList).rpc.split(','))
-                ],
+                rpc: restRpcItem(1, rpcList, ['https://rpc.ankr.com/eth']),
                 blockExplorerUrls: ['https://etherscan.io'],
                 blockExplorerName: 'Etherscan',
                 defaultPath: `m/44'/60'/0'/0/0`,
@@ -111,10 +115,7 @@ export class HidexService {
                 codexChainId: 8453,
                 token: 'ETH',
                 tokens: baseTokens,
-                rpc: [
-                    'https://1rpc.io/base',
-                    ...(findRpcItem(8453, rpcList).rpc.split(','))
-                ],
+                rpc: restRpcItem(8453, rpcList, ['https://1rpc.io/base']),
                 blockExplorerUrls: ['https://basescan.org'],
                 blockExplorerName: 'Basescan',
                 defaultPath: `m/44'/60'/0'/0/0`,
@@ -134,10 +135,7 @@ export class HidexService {
                 codexChainId: 56,
                 token: 'BNB',
                 tokens: bnbTokens,
-                rpc: [
-                    'https://bsc-dataseed.bnbchain.org',
-                    ...(findRpcItem(8453, rpcList).rpc.split(','))
-                ],
+                rpc: restRpcItem(56, rpcList, ['https://bsc-dataseed.bnbchain.org']),
                 blockExplorerUrls: ['https://bscscan.com'],
                 blockExplorerName: 'Bscscan',
                 defaultPath: `m/44'/60'/0'/0/0`,
@@ -162,4 +160,7 @@ export class HidexService {
         }
         return chainsList;
     }
+    networkChange = (currentNetwork) => {
+        this.trade.changeTradeService(currentNetwork);
+    };
 }

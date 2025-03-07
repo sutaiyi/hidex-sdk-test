@@ -12,17 +12,17 @@ const serviceInit = () => {
       {
         chainId: 1,
         chainName: 'ETH',
-        rpc: 'string',
+        rpc: 'https://eth.llamarpc.com,https://eth.meowrpc.com,https://eth-pokt.nodies.app',
       },
       {
-        chainId: 86,
+        chainId: 56,
         chainName: 'BSC',
-        rpc: 'string',
+        rpc: 'https://bsc-dataseed.bnbchain.org,https://bsc-dataseed1.defibit.io,https://bsc-dataseed1.ninicoin.io,https://bsc-rpc.publicnode.com',
       },
       {
         chainId: 8453,
         chainName: 'BASE',
-        rpc: 'string',
+        rpc: '/api/llamarpc,/api/meowrpc,/api/offical,/api/devaccess',
       }],
       env: 'development', // development、uat、production
       apparatus: 'web',

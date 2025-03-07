@@ -1,7 +1,8 @@
 import { Commitment } from "@solana/web3.js";
 import { OptionsCommon } from "../main/interfaces";
 import { ChainItem, Provider, INetworkService, SysProviderRpcsFace } from "./interfaces";
-declare class NetworkController implements INetworkService {
+import EventEmitter from "../common/eventEmitter";
+declare class NetworkController extends EventEmitter implements INetworkService {
     private network;
     private provider;
     private _sysProviderRpcs;

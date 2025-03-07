@@ -3,11 +3,11 @@ import HidexSDK from "@/hidexService"
 const { trade, network, wallet } = HidexSDK;
 const tradeFun: any = {
   检测指令: async () => {
-    const result = await trade.fun.instructionsCheck()
+    const result = await trade.instructionsCheck('test')
     console.log(result)
   },
   重置指令: async () => {
-    const result = await trade.fun.instructionReset()
+    const result = await trade.instructionReset('test')
     console.log(result)
   },
   'BNB买入0.0001': async (info: any) => {

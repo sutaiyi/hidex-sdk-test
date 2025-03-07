@@ -8,6 +8,7 @@ type HidexService = {
     init(): Promise<void>;
     environmental(production: any, uat: any, development: any): any;
     chains(chain?: number | string): ChainItem | ChainItem[];
+    networkChange(currentNetWork: ChainItem): void;
 };
 export type IHidexService = HidexService;
 export type RpcItem = {
@@ -25,7 +26,10 @@ export type Options = {
     apparatus: Apparatus;
     token: string;
 };
-export type OptionsCommon = Options & HidexService & {
+export type OptionsItem = {
+    options: Options;
+};
+export type OptionsCommon = Options & OptionsItem & HidexService & {
     catcher: ICatcher;
     network: INetworkService;
     wallet: IWalletService;
