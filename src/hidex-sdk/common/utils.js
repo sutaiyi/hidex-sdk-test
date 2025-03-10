@@ -174,3 +174,18 @@ export function toLzString(input) {
 export function lzStringTo(input) {
     return decodeURIComponent(escape(atob(input)));
 }
+export function environmental(production, uat, development) {
+    if (global.window?.HidexConfig?.env === 'production') {
+        return production;
+    }
+    else if (global.window?.HidexConfig?.env === 'development') {
+        return development;
+    }
+    else if (global.window?.HidexConfig?.env === 'uat') {
+        return uat;
+    }
+    return production;
+}
+export function globalSet(key, value) {
+    global.window[key] = value;
+}

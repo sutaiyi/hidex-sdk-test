@@ -4,12 +4,15 @@ import CatcherService from '../catch';
 import WalletService from '../wallet/WalletService';
 import keysing from '../wallet/keysing';
 import TradeService from '../trade/TradeService';
+import DexFeeService from '../trade/utils/dexfee';
+import { globalSet } from '../common/utils';
 export class HidexService {
     options;
     network;
     wallet;
     catcher;
     trade;
+    dexFee;
     constructor(options) {
         console.log('HidexService constructor called and options are: ', options);
         this.options = options;
@@ -20,7 +23,9 @@ export class HidexService {
         this.wallet.cloudWalletStore().getWalletItem(serveCommon);
         serveCommon.network = this.network;
         serveCommon.wallet = this.wallet;
+        this.dexFee = new DexFeeService(serveCommon);
         this.trade = new TradeService(serveCommon);
+        globalSet('HidexConfig', options);
     }
     async init() {
         this.wallet.eventSecretCode();
@@ -37,6 +42,7 @@ export class HidexService {
             init: this.init,
             network: this.network,
             wallet: this.wallet,
+            dexFee: this.dexFee,
         };
     }
     environmental(production, uat, development) {

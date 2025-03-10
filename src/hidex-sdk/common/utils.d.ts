@@ -29,4 +29,6 @@ export declare function mergeAndDeduplicateObjects(arr1: Array<any>, arr2: Array
 export declare function mergedRepeat(arr1: Array<any>, arr2: Array<any>, id: string): Array<any>;
 export declare function toLzString(input: string): string;
 export declare function lzStringTo(input: string): string;
+export declare function environmental(production: any, uat: any, development: any): any;
+export declare function globalSet(key: string, value: any): void;
 //# sourceMappingURL=utils.d.ts.map

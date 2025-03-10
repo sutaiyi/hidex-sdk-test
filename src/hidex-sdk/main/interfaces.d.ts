@@ -1,5 +1,6 @@
 import { ICatcher } from "../catch/interfaces";
 import { ChainItem, INetworkService } from "../network/interfaces";
+import { IDexFeeService } from "../trade/interfaces";
 import { IWalletService } from "../wallet/interfaces";
 export { ChainItem, INetworkService } from '../network/interfaces';
 export { WalletCache, WalletAccount, WalletList, WalletCacheResult, IWalletService } from '../wallet/interfaces';
@@ -33,5 +34,6 @@ export type OptionsCommon = Options & OptionsItem & HidexService & {
     catcher: ICatcher;
     network: INetworkService;
     wallet: IWalletService;
+    dexFee: IDexFeeService;
 };
 //# sourceMappingURL=interfaces.d.ts.map

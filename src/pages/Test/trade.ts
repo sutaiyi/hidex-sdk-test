@@ -1,6 +1,6 @@
 import HidexSDK from "@/hidexService"
 
-const { trade, network, wallet } = HidexSDK;
+const { trade, network, wallet, dexFee } = HidexSDK;
 const tradeFun: any = {
   检测指令: async () => {
     const result = await trade.instructionsCheck('test')
@@ -10,15 +10,12 @@ const tradeFun: any = {
     const result = await trade.instructionReset('test')
     console.log(result)
   },
-  'BNB买入0.0001': async (info: any) => {
+  '买入0.0001': async (info: any) => {
     try {
       if (!info) {
         alert('请选择BNB网络的代币');
       }
       const { chainName, account, token, balance } = info;
-      if (chainName !== 'BSC') {
-        alert('请选择BNB网络的代币');
-      }
       const currentChain = await network.choose(chainName);
       const { address } = account
       const isBuy = true; // 买入
@@ -58,10 +55,9 @@ const tradeFun: any = {
       };
       const swapPath = await trade.getSwapPath(currentSymbol);
       console.log('交易路径===>', swapPath);
-      // currentSymbol.amountOut = getAmountOut(currentSymbol, swapPath[1]);
-      // currentSymbol.amountOutMin = getAmountOutMin(currentSymbol, swapPath[1]);
-      // currentSymbol.dexFeeAmount = await getDexFeeAmount(currentSymbol, swapPath[1]);
-      // console.log('交易数据==>', currentSymbol);
+      currentSymbol.amountOutMin = await dexFee.getAmountOutMin(currentSymbol, swapPath.minOutAmount.toString());
+      currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount(currentSymbol, swapPath.minOutAmount.toString());
+      console.log('交易数据==>', currentSymbol);
       // await approve.execute(currentSymbol.in.address, address, currentChain.deTrade);
       // console.log('Swapping Approved');
       // const transaction = await trade.getTradeEstimateGas(currentSymbol, swapPath[0], address);

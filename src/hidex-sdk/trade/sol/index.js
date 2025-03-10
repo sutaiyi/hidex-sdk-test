@@ -3,7 +3,7 @@ import { mTokenAddress } from "../../common/config";
 import abis from "../../common/abis";
 import { getBaseFeePerGas, getUseGasPrice } from "../eth/utils";
 import { NETWORK_FEE_RATES, networkWeight } from "../eth/config";
-import { isMotherTrad, motherCurrencyTrade } from "../eth/nativeTokenTrade";
+import { isMotherTrad, motherCurrencyTrade } from "../utils/nativeTokenTrade";
 import { abiInFun, actionNameAndValue } from "../eth/abiFun";
 export const solService = (HS) => {
     const { network, wallet } = HS;
@@ -312,7 +312,6 @@ export const solService = (HS) => {
                 throw new Error('amountIn must be greater than 0');
             }
             const motherTrade = isMotherTrad(currentSymbol, network);
-            console.log('motherTrade==>', motherTrade);
             if (motherTrade) {
                 return {
                     minOutAmount: currentSymbol.amountIn,

@@ -106,7 +106,8 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           chainName,
           chainId: network.getChainIdByChainName(chainName),
           balance: strToNumberByDecimals(balance, currentNetwork.tokens[0].decimals), 
-          tokenBalance: strToNumberByDecimals(tokenBalance, result?.token.decimals)
+          tokenBalance: strToNumberByDecimals(tokenBalance, result?.token.decimals),
+          symbol: network.get().tokens[0].symbol
         }
         setSelected(tradeInfo)
         onResultSelect(tradeInfo);
@@ -216,7 +217,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           所属链：{network.getChainNameByChainId(selected?.token?.networkId)} <br/>
           当前钱包地址：{selected?.account?.address}
           <br/>
-          钱包余额：{selected?.balance} {network.get().tokens[0].symbol}<br/>
+          钱包余额：{selected?.balance} {selected.symbol}<br/>
           代币余额：{selected?.tokenBalance} {selected?.token?.symbol}
         </pre>
       </div>

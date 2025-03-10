@@ -36,6 +36,8 @@ export interface ITradeFunctions {
         result: any;
     }>;
 }
+export interface IDexFeeService {
+}
 export type SendTransactionParams = {
     from: string;
     to: string;

@@ -35,7 +35,7 @@ function Test() {
             {value === 'wallet' && <WalletFrom onResultSelect={ ()=> {}}></WalletFrom>}
             {
               Object.keys(btns[value]).map((item: any, key: number) =>
-                <button key={key} className='btn' onClick={async () => btns[value][item](tradeInfo)}>{item}</button>
+                <button key={key} className='btn' onClick={async () => btns[value][item](tradeInfo)}>{['买入','卖出'].some(keyword => item.includes(keyword)) ? `${item}${tradeInfo?.symbol || ''}的${tradeInfo?.token.symbol|| ""}` : item}</button>
               )
             }
           </div>

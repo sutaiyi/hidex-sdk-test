@@ -3,7 +3,7 @@ import { mTokenAddress } from "../../common/config";
 import abis from "../../common/abis";
 import { getBaseFeePerGas, getUseGasPrice } from "./utils";
 import { NETWORK_FEE_RATES, networkWeight } from "./config";
-import { isMotherTrad, motherCurrencyTrade } from "./nativeTokenTrade";
+import { isMotherTrad, motherCurrencyTrade } from "../utils/nativeTokenTrade";
 import { abiInFun, actionNameAndValue } from "./abiFun";
 export const ethService = (HS) => {
     const { network, wallet } = HS;
@@ -319,7 +319,10 @@ export const ethService = (HS) => {
                     });
                 });
                 const path = await Promise.any(profun);
-                return path;
+                return {
+                    minOutAmount: path[1],
+                    data: path[0],
+                };
             }
         },
         getTradeEstimateGas: async (currentSymbol, path, accountAddress) => {

@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { wethAbi } from './abiFun';
+import { wethAbi } from '../eth/abiFun';
 import { mTokenAddress } from '../../common/config';
 export const isMotherTrad = (currentSymbol, network) => {
     const currentNetWork = network.get();
