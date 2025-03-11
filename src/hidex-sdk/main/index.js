@@ -1,1 +1,0 @@
-export { HidexService } from './HidexService';

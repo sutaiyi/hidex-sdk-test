@@ -178,7 +178,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
                     【{network.getChainNameByChainId(result.token.networkId)}】{result.token.symbol}
                   </span>
                   <span>
-                    {result.priceUSD}
+                    价格：${result.priceUSD}
                   </span>
                 </div>
               </div>
@@ -214,6 +214,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           代币名称：{selected?.token?.symbol} <br/>
           代币地址：{selected?.token?.address} <br/>
           代币精度：{selected?.token?.decimals} <br/>
+          代币价格：${selected?.priceUSD} <br/>
           所属链：{network.getChainNameByChainId(selected?.token?.networkId)} <br/>
           当前钱包地址：{selected?.account?.address}
           <br/>

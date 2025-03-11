@@ -1,4 +1,5 @@
 import HidexSDK from "@/hidexService"
+import { swapSign } from "./utils";
 
 const { trade, network, wallet, dexFee, utils } = HidexSDK;
 const tradeFun: any = {
@@ -98,6 +99,7 @@ const tradeFun: any = {
       if (!info) {
         alert('请选择代币');
       }
+      console.time('tradeTimer');
       const { chainName, account, token, balance } = info;
       const currentChain = await network.choose(chainName);
       const { address } = account
@@ -110,8 +112,6 @@ const tradeFun: any = {
         return;
       }
       const amountIn = '100000000000000'; // 买入 0.0001 BNB
-      const feeArray = await trade.getNetWorkFees(currentChain.defaultLimit as number);
-      console.log(`网络费用===>`, feeArray);
 
       const inToken = currentChain?.tokens[0];
       const currentSymbol = {
@@ -129,31 +129,69 @@ const tradeFun: any = {
         priorityFee: (0.003 * Math.pow(10, 18)).toString(), // 优先费
         inviter: '', // 邀请地址
         isBuy,
-        networkFee: feeArray[0],
+        networkFee: {
+          value: 0, unit: '', gasPrice: '', gasLimit: 0
+        },
         poolAddress: '',  // 池子地址
         bribeFee: '',  // 贿赂费给平台比如（jito...）
         tradeType: 0,
         isPump: false,
         TOKEN_2022: false,
       };
-      const swapPath = await trade.getSwapPath(currentSymbol);
-      console.log('交易路径===>', swapPath);
+      console.time('swapPath&swapSignTimer');
+      const [swapPath, signRes] = await Promise.all([
+        trade.getSwapPath(currentSymbol),
+        swapSign(currentChain.chainID, account.address),
+      ]);
+      console.timeEnd('swapPath&swapSignTimer');
+
+      console.time('dexFeeTimer')
       currentSymbol.amountOutMin = await dexFee.getAmountOutMin(currentSymbol, swapPath.minOutAmount.toString());
       currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount(currentSymbol, swapPath.minOutAmount.toString());
-      console.log('交易数据==>', currentSymbol);
-      await trade.approve.execute(currentSymbol.in.address, address, currentChain.deTrade);
-      // console.log('Swapping Approved');
-      // const transaction = await trade.getTradeEstimateGas(currentSymbol, swapPath[0], address);
-      // console.log(transaction);
+      console.timeEnd('dexFeeTimer')
 
-      // const minBalance = await swap.minTransactionBalance(currentSymbol);
-      // console.log('最少得有多少余额==>', minBalance);
 
-      // // 买入按钮执行
-      // const { error, result } = await swap.trade(currentSymbol, transaction, address);
-      // console.log('交易结果==>', error, result);
+      console.time('approveTimer')
+      // 交易授权
+      if (!currentSymbol.isBuy) {
+        await trade.approve.execute(currentSymbol.in.address, address, currentChain.deTrade);
+        console.log('Swapp Approved');
+      }
+      console.timeEnd('approveTimer')
+
+
+      // ETH系需要获取交易签名
+      Object.assign(currentSymbol, {
+        inviter: signRes.inviterAddress,
+        feeRate: signRes.feeRate,
+        commissionRate: signRes.commissionRate,
+        contents: signRes.contents,
+        signature: signRes.signature
+      });
+
+
+      console.time('getSwapEstimateGasTimer');
+      const estimateResult = await trade.getSwapEstimateGas(currentSymbol, swapPath, address);
+      console.timeEnd('getSwapEstimateGasTimer');
+
+
+      console.time('getNetWorkFeesTimer');
+      const networkFeeArr = await trade.getNetWorkFees(estimateResult.gasLimit)
+      currentSymbol.networkFee = networkFeeArr[1];
+      const minBalance = await trade.getSwapFees(currentSymbol);
+      console.log('最少得有多少余额==>', minBalance);
+      console.timeEnd('getNetWorkFeesTimer');
+
+      console.time('tradeswapTimer');
+      const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
+      console.timeEnd('tradeswapTimer');
+      if (!error) {
+        alert('交易成功' + result.hash)
+      }
+      console.log('交易结果==>', error, result);
     } catch (error) {
-      console.log('error==>', error);
+      console.log(utils.getErrorMessage(error).message)
+      alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
     }
   },
 
