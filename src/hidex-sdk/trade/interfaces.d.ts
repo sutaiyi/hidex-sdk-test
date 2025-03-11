@@ -5,6 +5,7 @@ export interface ITradeOthersFunction {
     instructionsCheck(order: any): Promise<any>;
 }
 export interface ITradeService extends ITradeFunctions, ITradeOthersFunction {
+    approve: IApproveService;
 }
 export interface ITradeFunctions {
     getBalance(accountAddress: string, tokenAddress?: string, provider?: Provider): Promise<string>;
@@ -15,7 +16,7 @@ export interface ITradeFunctions {
     getSendEstimateGas(sendParams: SendTransactionParams): Promise<{
         gasLimit: number;
     }>;
-    getSendFees(networkFee: NetWorkFee, gasLimit: number): Promise<string>;
+    getSendFees(networkFee: NetWorkFee): Promise<number>;
     sendTransaction(sendParams: SendTransactionParams & {
         currentNetWorkFee: NetWorkFee;
     }): Promise<{
@@ -26,23 +27,26 @@ export interface ITradeFunctions {
         minOutAmount: string;
         data: any;
     }>;
-    getTradeEstimateGas(currentSymbol: CurrentSymbol, path: string, accountAddress: string): Promise<{
+    getSwapEstimateGas(currentSymbol: CurrentSymbol, path: string, accountAddress: string): Promise<{
         gasLimit: number;
         data?: any;
     }>;
-    getTradeFees(networkFee: NetWorkFee, gasLimit: number): Promise<string>;
-    trade(currentSymbol: CurrentSymbol, transaction: any, accountAddress: string): Promise<{
+    getSwapFees(networkFee: NetWorkFee, gasLimit: number): Promise<string>;
+    swap(currentSymbol: CurrentSymbol, transaction: any, accountAddress: string): Promise<{
         error: boolean | string | null;
         result: any;
     }>;
 }
 export interface IDexFeeService {
 }
+export interface IApproveService {
+    execute(tokenAddress: string, accountAddress: string, authorizedAddress: string): Promise<boolean>;
+}
 export type SendTransactionParams = {
     from: string;
     to: string;
     amount: string;
-    tokenAddress: string;
+    tokenAddress?: string;
 };
 export type CurrentSymbol = {
     in: TokenInfo;

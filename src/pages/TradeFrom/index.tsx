@@ -126,7 +126,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
 
   return (
     <div style={{marginBottom: '10px'}}>
-      <div style={{fontSize: '16px', marginTop: '10px', marginBottom: '5px', color: '#999'}}>搜索并选择代币</div>
+      <div style={{fontSize: '16px', marginTop: '10px', marginBottom: '5px', color: '#999'}}>搜索/选择代币</div>
       <div style={{ position: 'relative', width: '360px' }}>
       <input
         type="text"

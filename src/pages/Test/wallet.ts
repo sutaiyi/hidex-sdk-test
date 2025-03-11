@@ -82,22 +82,26 @@ const walletTest: any = {
     try {
       const mnemonic = await wallet.generateMnemonic();
       console.log('助记词： ', mnemonic);
-      const walletAccount = await wallet.createWallet(mnemonic, 0);
+      const walletAccount = await wallet.createWallet(mnemonic, 0, '发财钱包');
       console.log('助记词钱包创建成功（返回当前创建的钱包对象）: ', walletAccount);
+
+      // 选中该钱包(根据具体业务而定)
+      await wallet.setCurrentWallet(walletAccount.id, 0);
+
     } catch (error) {
       console.error(error);
       alert(error);
     }
   },
-  同个助记词下创建多个钱包: async (mnemonic: string = 'hip language bulb glow worry gaze forum viable strong manual fame scorpion', pathIndex: number = 0) => {
+  同个助记词下创建多个钱包: async (tradeInfo: null, mnemonic: string = 'hip language bulb glow worry gaze forum viable strong manual fame scorpion', pathIndex: number = 0) => {
     try {
-      console.log('下标：', pathIndex);
+      console.log('下标：', pathIndex, mnemonic);
       const walletAccount = await wallet.createWallet(mnemonic, pathIndex);
       console.log('创建成功（返回当前创建的钱包对象）: ', walletAccount);
       if (pathIndex >= 2) {
         return;
       }
-      setTimeout(await walletTest.同个助记词下创建多个钱包(mnemonic, pathIndex + 1), 2500);
+      setTimeout(await walletTest.同个助记词下创建多个钱包(tradeInfo, mnemonic, pathIndex + 1), 2500);
     } catch (error) {
       console.error(error);
       alert(error);
@@ -120,9 +124,36 @@ const walletTest: any = {
       alert(error);
     }
   },
+  修改钱包名称: async () => {
+    try {
+      await wallet.setWalletName(0, '修改后的钱包名称（发财啊）')
+      alert('修改成功')
+    } catch (error) {
+      console.error(error);
+      alert(error);
+    }
+  },
+  'SOL/ETH钱包签名': async () => {
+    try {
+      // 获取当前的钱包
+      const { accountItem } = await wallet.getCurrentWallet();
+      const chainName = 'SOLANA';
+      if (accountItem[chainName] && accountItem[chainName].address) {
+        const { address } = accountItem[chainName];
+        const message = '这是一个签名消息';
+        const signature = await wallet.signMessage(message, address);
+        console.log('签名结果: ', signature);
+        return signature;
+      }
+      alert('未找到钱包账号账号')
+    } catch (error) {
+      console.error(error);
+      alert(error);
+    }
+  },
   导出私钥: async () => {
     try {
-      const privateKey = await wallet.exportPrivateKey('123123', 0, 0, 'SOLANA')
+      const privateKey = await wallet.exportPrivateKey('123123', 0, 0, 'BSC')
       console.log('私钥为: ', privateKey);
     } catch (error) {
       console.error(error);

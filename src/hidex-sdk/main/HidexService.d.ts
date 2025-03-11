@@ -10,6 +10,7 @@ export declare class HidexService implements IHidexService {
     catcher: ICatcher;
     trade: ITradeService;
     dexFee: DexFeeService;
+    utils: any;
     constructor(options: Options);
     init(): Promise<void>;
     private processOptions;

@@ -23,9 +23,11 @@ declare class WalletService implements IWalletService {
     ownerKey(address: string): Promise<string>;
     generateMnemonic(): string;
     private getChainsPath;
-    createWallet(mnemonic: string, pathIndex?: number): Promise<WalletList>;
+    createWallet(mnemonic: string, pathIndex?: number, walletName?: string, id?: number): Promise<WalletList>;
     createPrivateWallet(privateKey: string): Promise<WalletList>;
     private setWalletList;
+    setWalletName(walletId: number, name: string): Promise<boolean>;
+    updatedWallet(wallet: WalletList): Promise<WalletList>;
     getWalletByAddress(address: string): Promise<{
         has: boolean;
         walletId?: number;
@@ -66,6 +68,7 @@ declare class WalletService implements IWalletService {
     isUnlocked(): boolean;
     isSetPassword(): boolean;
     hasWallet(): boolean;
+    signMessage(message: string, address: string): Promise<string>;
 }
 export default WalletService;
 //# sourceMappingURL=WalletService.d.ts.map

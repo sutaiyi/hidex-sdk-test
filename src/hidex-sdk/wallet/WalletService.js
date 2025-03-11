@@ -1,7 +1,7 @@
 import keysing from './keysing';
-import { isValidSHA256, sha256 } from '../common/utils';
+import { checkAddressChain, isValidSHA256, numberToCharCode, sha256 } from '../common/utils';
 import { deepCopy, findAndIncrementMax, isValidEthPrivateKey, isValidSolanaPrivateKey, whosePrivater } from '../common/utils';
-import { defalutWalletStore, ENCRYPTION_NAME, ETH_SERIES } from '../common/config';
+import { defalutWalletStore, ENCRYPTION_NAME, ETH_SERIES, NAMES } from '../common/config';
 import { ossStore } from '../common/ossStore';
 import passworder from '../common/browser/passworder';
 import { ethers } from 'ethers';
@@ -9,6 +9,8 @@ import { Keypair } from '@solana/web3.js';
 import * as bip39 from 'bip39';
 import bs58 from 'bs58';
 import { derivePath } from 'ed25519-hd-key';
+import { ownerKeypair } from '../trade/sol/config';
+import nacl from 'tweetnacl';
 class WalletService {
     password;
     atpkeys;
@@ -27,10 +29,15 @@ class WalletService {
     cloudWalletStore() {
         return {
             getWalletItem: async (HS, key) => {
-                const { token, apparatus } = HS;
-                const res = await ossStore.getWalletItem(token, apparatus, key);
-                this.mapWalletCache = ossStore.getWalletCacheMap();
-                return res;
+                try {
+                    const { token, apparatus } = HS;
+                    const res = await ossStore.getWalletItem(token, apparatus, key);
+                    this.mapWalletCache = ossStore.getWalletCacheMap();
+                    return res;
+                }
+                catch (error) {
+                    throw new Error(error);
+                }
             },
             setWalletItem: async (HS, key, value) => {
                 const { token, apparatus } = HS;
@@ -116,6 +123,7 @@ class WalletService {
         return this.getWalletStore().walletList && this.getWalletStore().walletList.length > 0;
     }
     async ownerKey(address) {
+        await this.verifyPassword(this.password);
         const key = await this.getEncryptionWallet(this.password, 0, address);
         return key;
     }
@@ -142,7 +150,7 @@ class WalletService {
         });
         return apt;
     }
-    async createWallet(mnemonic, pathIndex = 0) {
+    async createWallet(mnemonic, pathIndex = 0, walletName = '', id = 0) {
         await this.verifyPassword(this.password);
         const account = {};
         if (isValidSHA256(mnemonic)) {
@@ -184,9 +192,9 @@ class WalletService {
             mnemonic: mha,
             usePrivateKey: false,
             accountList: [account],
-            id: 0,
+            id,
         };
-        return this.setWalletList(walletList, pathIndex);
+        return this.setWalletList(walletList, pathIndex, walletName);
     }
     async createPrivateWallet(privateKey) {
         await this.verifyPassword(this.password);
@@ -217,7 +225,7 @@ class WalletService {
         };
         return await this.setWalletList(walletList);
     }
-    async setWalletList(walletList, mnemonicPathIndex = 0) {
+    async setWalletList(walletList, mnemonicPathIndex = 0, walletName = '') {
         const pow = this.getWalletList() || [];
         const powList = deepCopy(pow);
         let backWallet = walletList;
@@ -234,6 +242,8 @@ class WalletService {
                 }
             }
             else {
+                const numIndex = powList.find((v) => v.usePrivateKey) ? powList.length : powList.length + 1;
+                walletList.walletName = walletName || `${NAMES['walletName']}${numberToCharCode(numIndex)}`;
                 walletList.id = findAndIncrementMax(powList.map((v) => v.id));
                 powList.push(walletList);
             }
@@ -259,6 +269,7 @@ class WalletService {
                 }
             }
             else {
+                walletList.walletName = NAMES['usePrividerName'];
                 if (walletHas.has && walletHas.walletId !== undefined && walletHas.accountId !== undefined) {
                     backWallet.isRepeat = true;
                 }
@@ -275,6 +286,24 @@ class WalletService {
         }
         this.atpkeys = [];
         return backWallet;
+    }
+    async setWalletName(walletId, name) {
+        const walletItem = await this.getWalletById(walletId);
+        const item = deepCopy(walletItem);
+        item.walletName = name;
+        this.updatedWallet(item);
+        return true;
+    }
+    async updatedWallet(wallet) {
+        const pow = this.getWalletList() || [];
+        const walletList = deepCopy(pow);
+        const walletItem = walletList.find((v) => v.id === wallet.id);
+        if (walletItem) {
+            Object.assign(walletItem, wallet);
+            await this.setWalletStore({ ...this.getWalletStore(), walletList: walletList });
+            return wallet;
+        }
+        throw new Error('wallet not found');
     }
     async getWalletByAddress(address) {
         const pow = this.getWalletList() || [];
@@ -667,6 +696,17 @@ class WalletService {
     }
     hasWallet() {
         return this.getWalletStore().walletList?.length > 0;
+    }
+    async signMessage(message, address) {
+        const privateKey = await this.ownerKey(address);
+        if (checkAddressChain(address) === 'ETH') {
+            const wallet = new ethers.Wallet(privateKey);
+            const signature = await wallet.signMessage(message);
+            return signature;
+        }
+        const messageUint8 = new TextEncoder().encode(message);
+        const signature = nacl.sign.detached(messageUint8, ownerKeypair(privateKey).secretKey);
+        return bs58.encode(signature);
     }
 }
 export default WalletService;

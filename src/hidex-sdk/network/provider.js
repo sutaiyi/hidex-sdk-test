@@ -14,7 +14,7 @@ export default class LoggingProvider extends providers.JsonRpcProvider {
             return response;
         }
         catch (error) {
-            console.error(`Error in request: ${method}`, error);
+            console.error(`Error in request: ${method}`);
             throw error;
         }
     }

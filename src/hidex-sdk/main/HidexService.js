@@ -6,6 +6,7 @@ import keysing from '../wallet/keysing';
 import TradeService from '../trade/TradeService';
 import DexFeeService from '../trade/utils/dexfee';
 import { globalSet } from '../common/utils';
+import UtilsService from '../utils/UtilsService';
 export class HidexService {
     options;
     network;
@@ -13,9 +14,11 @@ export class HidexService {
     catcher;
     trade;
     dexFee;
+    utils;
     constructor(options) {
         console.log('HidexService constructor called and options are: ', options);
         this.options = options;
+        this.utils = new UtilsService();
         this.catcher = new CatcherService(options.apparatus);
         const serveCommon = this.processOptions(options);
         this.network = new NetworkService(serveCommon);
@@ -43,6 +46,7 @@ export class HidexService {
             network: this.network,
             wallet: this.wallet,
             dexFee: this.dexFee,
+            utils: this.utils,
         };
     }
     environmental(production, uat, development) {

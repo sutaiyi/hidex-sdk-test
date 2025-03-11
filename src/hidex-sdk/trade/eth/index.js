@@ -17,11 +17,14 @@ export const ethService = (HS) => {
                         .then((res) => {
                         return res;
                     })
-                        .catch((err) => {
-                        Promise.reject(err);
+                        .catch((error) => {
+                        return Promise.reject(error);
                     });
                 });
                 const balance = await Promise.any(balanceProm);
+                if (balance.error) {
+                    throw new Error(balance.error);
+                }
                 return balance.toString();
             }
             if (tokenAddress) {
@@ -32,11 +35,14 @@ export const ethService = (HS) => {
                         .then((res) => {
                         return res;
                     })
-                        .catch((err) => {
-                        Promise.reject(err);
+                        .catch((error) => {
+                        return Promise.reject(error);
                     });
                 });
                 const balance = await Promise.any(balanceProm);
+                if (balance.error) {
+                    throw new Error(balance.error);
+                }
                 return balance;
             }
             return '0';
@@ -62,14 +68,17 @@ export const ethService = (HS) => {
                                 return res;
                             }
                             else {
-                                Promise.reject([]);
+                                return Promise.reject([]);
                             }
                         })
-                            .catch((err) => {
-                            Promise.reject(err);
+                            .catch((error) => {
+                            return Promise.reject(error);
                         });
                     });
                     const balanceAll = await Promise.any(profun);
+                    if (balanceAll.error) {
+                        throw new Error(balanceAll.error);
+                    }
                     return balanceAll.map((bl) => bl.toString());
                 }
             }
@@ -82,27 +91,24 @@ export const ethService = (HS) => {
             const currentNetwork = network.get();
             const unit = currentNetwork.tokens[0].symbol;
             const baseFee = await getBaseFeePerGas(network);
+            console.log('baseFee----', baseFee);
             let gasFeeETH = '';
-            let gasPriceWei = 0;
-            if (baseFee.toString() === '0') {
+            let gasPriceWei = '0';
+            if (baseFee === '0') {
                 const gasresult = await getUseGasPrice(network, gasLimit);
                 gasFeeETH = gasresult.gasFeeETH;
                 gasPriceWei = gasresult.gasPriceWei;
             }
-            console.log('baseFee===>', baseFee);
             const getTotalGasFee = (baseFee, rate) => {
-                if (baseFee.toString() === '0') {
+                if (baseFee === '0') {
                     return { value: parseFloat(gasFeeETH) * rate, maxFeePerGas: BigNumber.from(0), maxPriorityFeePerGas: BigNumber.from(0) };
                 }
-                const maxPriorityFeePerGas = ethers.utils.parseUnits(((Number(baseFee.toString()) / 10 ** 9) * rate).toFixed(4), 'gwei');
-                console.log('maxPriorityFeePerGas===>', maxPriorityFeePerGas.toString());
-                const maxFeePerGas = baseFee
+                const maxPriorityFeePerGas = ethers.utils.parseUnits(((Number(baseFee) / 10 ** 9) * rate).toFixed(4), 'gwei');
+                const maxFeePerGas = BigNumber.from(baseFee)
                     .add(maxPriorityFeePerGas)
                     .mul(BigNumber.from(Math.floor(networkWeight * 100).toString()))
                     .div('100');
-                console.log('maxFeePerGas===>', maxFeePerGas.toString());
                 const totalGasFee = currentNetwork.chain === 'ETH' ? maxFeePerGas.mul(gasLimit) : maxFeePerGas.mul(gasLimit).mul(BigNumber.from((150).toString())).div('100');
-                console.log('totalGasFee===>', totalGasFee);
                 return {
                     value: Number(ethers.utils.formatEther(totalGasFee)),
                     maxFeePerGas: maxFeePerGas.toString(),
@@ -160,10 +166,13 @@ export const ethService = (HS) => {
                     return res;
                 })
                     .catch((err) => {
-                    Promise.reject(err);
+                    return Promise.reject(err);
                 });
             });
             const allowance = await Promise.any(profun);
+            if (allowance.error) {
+                throw new Error(allowance.error);
+            }
             return allowance;
         },
         toApprove: async (tokenAddress, accountAddress, authorizedAddress, amountToApprove) => {
@@ -180,12 +189,15 @@ export const ethService = (HS) => {
                         .then((res) => {
                         return res;
                     })
-                        .catch((err) => {
-                        Promise.reject(err);
+                        .catch((error) => {
+                        return Promise.reject(error);
                     });
                 });
                 const tx = await Promise.any(profun);
-                throw new Error(tx.error);
+                if (tx.error) {
+                    throw new Error(tx.error);
+                }
+                return true;
             }
             catch (error) {
                 console.error('Approval failed:', error);
@@ -198,7 +210,7 @@ export const ethService = (HS) => {
                 gasLimit: 21000,
             };
             const currentNetWork = network.get();
-            if (tokenAddress && tokenAddress !== currentNetWork.tokens[0].address) {
+            if ((tokenAddress && tokenAddress !== currentNetWork.tokens[0].address)) {
                 const profun = network.sysProviderRpcs[currentNetWork.chain].map((v) => {
                     const tokenContract = new ethers.Contract(tokenAddress, abis.tokenABI, v);
                     const txData = tokenContract.interface.encodeFunctionData('transfer', [to, amount]);
@@ -209,11 +221,14 @@ export const ethService = (HS) => {
                     };
                     return v.estimateGas(transaction).then((res) => {
                         return res;
-                    }).catch((err) => {
-                        Promise.reject(err);
+                    }).catch((error) => {
+                        return Promise.reject(error);
                     });
                 });
                 const gasEstimate = await Promise.any(profun);
+                if (gasEstimate.error) {
+                    throw new Error(gasEstimate.error);
+                }
                 return {
                     gasLimit: Math.floor(gasEstimate.toNumber() * 1.01),
                 };
@@ -222,9 +237,9 @@ export const ethService = (HS) => {
                 return defaultLimit;
             }
         },
-        getSendFees: async (networkFee, gasLimit) => {
-            const { gasPrice } = networkFee;
-            return (Number(gasPrice) * gasLimit).toString();
+        getSendFees: async (networkFee) => {
+            const { value } = networkFee;
+            return value;
         },
         sendTransaction: async (sendParams) => {
             const { from, to, amount, tokenAddress, currentNetWorkFee } = sendParams;
@@ -314,18 +329,21 @@ export const ethService = (HS) => {
                         .then((res) => {
                         return res;
                     })
-                        .catch((err) => {
-                        throw new Error(err);
+                        .catch((error) => {
+                        return Promise.reject(error);
                     });
                 });
                 const path = await Promise.any(profun);
+                if (path.error) {
+                    throw new Error(path.error);
+                }
                 return {
                     minOutAmount: path[1],
                     data: path[0],
                 };
             }
         },
-        getTradeEstimateGas: async (currentSymbol, path, accountAddress) => {
+        getSwapEstimateGas: async (currentSymbol, path, accountAddress) => {
             const ownerKey = await wallet.ownerKey(accountAddress);
             const currentNetWork = network.get();
             const { amountIn, amountOutMin } = currentSymbol;
@@ -347,11 +365,14 @@ export const ethService = (HS) => {
                     .then((res) => {
                     return res;
                 })
-                    .catch((err) => {
-                    Promise.reject(err);
+                    .catch((error) => {
+                    return Promise.reject(error);
                 });
             });
             const getLimit = await Promise.any(profunGetLimit);
+            if (getLimit.error) {
+                throw new Error(getLimit.error);
+            }
             if (getLimit) {
                 const result = {
                     data,
@@ -363,11 +384,11 @@ export const ethService = (HS) => {
             }
             throw new Error('GetLimit Error');
         },
-        getTradeFees: async (networkFee, gasLimit) => {
+        getSwapFees: async (networkFee, gasLimit) => {
             const { gasPrice } = networkFee;
             return (Number(gasPrice) * gasLimit).toString();
         },
-        trade: async (currentSymbol, transaction, accountAddress) => {
+        swap: async (currentSymbol, transaction, accountAddress) => {
             const currentNetWork = network.get();
             const provider = await network.getFastestProviderByChain(currentNetWork.chain);
             const { gasLimit, data } = transaction;

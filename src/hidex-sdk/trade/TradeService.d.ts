@@ -1,15 +1,17 @@
-import { CurrentSymbol, ITradeService, NetWorkFee, ITradeFunctions, SendTransactionParams } from './interfaces';
+import { CurrentSymbol, ITradeService, NetWorkFee, ITradeFunctions, SendTransactionParams, IApproveService } from './interfaces';
 import { ChainItem, OptionsCommon } from '../main/interfaces';
-import { instructionReset, instructionsCheck } from './sol/utils';
+import { instructionReset, instructionsCheck, instructionsEdit } from './sol/utils';
 import EventEmitter from '../common/eventEmitter';
 declare class TradeService extends EventEmitter implements ITradeService {
     app: ITradeFunctions | null;
     chainId: number;
     errorCode: number;
     private HS;
+    approve: IApproveService;
     constructor(options: OptionsCommon);
     instructionReset: typeof instructionReset;
     instructionsCheck: typeof instructionsCheck;
+    instructionsEdit: typeof instructionsEdit;
     changeTradeService: (currentNetwork: ChainItem) => void;
     getBalance: (accountAddress: string, tokenAddress?: string) => Promise<string>;
     getBalanceMultiple: (chain: string, accountAddress: string, tokens: Array<string>) => Promise<Array<string>>;
@@ -17,7 +19,7 @@ declare class TradeService extends EventEmitter implements ITradeService {
     getSendEstimateGas: (sendParams: SendTransactionParams) => Promise<{
         gasLimit: number;
     }>;
-    getSendFees: (networkFee: NetWorkFee, gasLimit: number) => Promise<string>;
+    getSendFees: (networkFee: NetWorkFee) => Promise<number>;
     sendTransaction: (sendParams: SendTransactionParams & {
         currentNetWorkFee: NetWorkFee;
     }) => Promise<{
@@ -30,12 +32,12 @@ declare class TradeService extends EventEmitter implements ITradeService {
         minOutAmount: string;
         data: any;
     }>;
-    getTradeEstimateGas: (currentSymbol: CurrentSymbol, path: string, accountAddress: string) => Promise<{
+    getSwapEstimateGas: (currentSymbol: CurrentSymbol, path: string, accountAddress: string) => Promise<{
         gasLimit: number;
         data?: any;
     }>;
-    getTradeFees: (networkFee: NetWorkFee, gasLimit: number) => Promise<string>;
-    trade: (currentSymbol: CurrentSymbol, transaction: any, accountAddress: string) => Promise<{
+    getSwapFees: (networkFee: NetWorkFee, gasLimit: number) => Promise<string>;
+    swap: (currentSymbol: CurrentSymbol, transaction: any, accountAddress: string) => Promise<{
         error: boolean | string | null;
         result: any;
     }>;

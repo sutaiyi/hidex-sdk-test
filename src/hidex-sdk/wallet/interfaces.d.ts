@@ -11,7 +11,7 @@ export interface IWalletService {
     setLocked(): Promise<void>;
     hasWalletVault(): Promise<boolean>;
     generateMnemonic(): string;
-    createWallet(mnemonic: string, pathIndex?: number): Promise<WalletList>;
+    createWallet(mnemonic: string, pathIndex: number, walletName?: string, id?: number): Promise<WalletList>;
     createPrivateWallet(privateKey: string): Promise<WalletList>;
     getWalletByAddress(address: string): Promise<{
         has: boolean;
@@ -24,6 +24,7 @@ export interface IWalletService {
         accountItem: WalletAccount;
     }>;
     getWalletById(id: number): Promise<WalletList>;
+    updatedWallet(wallet: WalletList): Promise<WalletList>;
     getDefaultWallet(): Promise<WalletList>;
     getWalletAndAccount(walletId: number, accountId: number): Promise<WalletList>;
     getAccountById(walletId: number, accountId: number): Promise<WalletAccount>;
@@ -31,6 +32,7 @@ export interface IWalletService {
         walletItem: WalletList;
         accountItem: WalletAccount;
     }>;
+    setWalletName(walletId: number, name: string): Promise<boolean>;
     deleteWallet(password: string, walletId: number): Promise<boolean>;
     deleteWalletAccount(password: string, walletId: number, accountId: number): Promise<boolean>;
     clearWallet(password: string): Promise<boolean>;
@@ -41,6 +43,7 @@ export interface IWalletService {
     isUnlocked(): boolean;
     isSetPassword(): boolean;
     hasWallet(): boolean;
+    signMessage(message: string, address: string): Promise<string>;
 }
 export type WalletCache = {
     createTime: number;
@@ -61,16 +64,16 @@ export type WalletCache = {
 export type WalletCacheResult = WalletCache | WalletCache[keyof WalletCache];
 export type WalletAccount = {
     ARBITRUM?: AccountItem;
-    BASE?: AccountItem;
-    BSC?: AccountItem;
-    ETH?: AccountItem;
-    SOLANA?: AccountItem;
+    BASE: AccountItem;
+    BSC: AccountItem;
+    ETH: AccountItem;
+    SOLANA: AccountItem;
     whoChain?: string;
     privateKey?: string;
     id?: number;
     key?: string;
     money?: number;
-};
+} & Record<string, any>;
 export type WalletList = {
     mnemonic?: string;
     usePrivateKey?: boolean;
@@ -80,11 +83,11 @@ export type WalletList = {
     isRepeat?: boolean;
 };
 export type AccountItem = {
-    path?: string;
-    address?: string;
-    pathIndex?: number;
-    publicKey?: string;
-    chain?: string;
+    path: string;
+    address: string;
+    pathIndex: number;
+    publicKey: string;
+    chain: string;
     value?: string;
     block?: number;
 };
