@@ -53,6 +53,7 @@ export default defineConfig({
 			process: 'process/browser',
 			buffer: 'buffer',
 			stream: 'stream-browserify',
+			'hidex-sdk': process.env.NODE_ENV === 'development' ? './hidex-sdk' : 'hidex-sdk',
 		},
 	},
 })

@@ -1,5 +1,4 @@
-// import { HidexService } from 'hidex-sdk';
-import { HidexService } from './hidex-sdk';
+import { HidexService } from 'hidex-sdk';
 
 const serviceInit = () => {
   try {
