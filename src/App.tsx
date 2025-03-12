@@ -5,10 +5,10 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from './pages/Home/Index';
 import Test from './pages/Test/Index';
 
-import './hidexService'
 
 
 function App() {
+
   return (
     <Router>
       <div>

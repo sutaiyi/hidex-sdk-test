@@ -1,16 +1,39 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './assets/index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import HidexSDK from './hidexService'
+
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
-root.render(
-  <React.StrictMode>
+
+const Rend = () => {
+  const { utils } = HidexSDK;
+	useEffect(() => {
+		const initLoading = async () => {
+			try {
+        await HidexSDK.init();
+      } catch (error) {
+        const {code, message} = utils.getErrorMessage(error)
+        if (code === 13001) {
+          alert(message)
+        }
+      }
+		};
+		initLoading();
+	}, []);
+	return (
+    <React.StrictMode>
     <App />
   </React.StrictMode>
+	);
+};
+
+root.render(
+  <Rend />
 );
 
 // If you want to start measuring performance in your app, pass a function
