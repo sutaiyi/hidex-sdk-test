@@ -1,0 +1,1 @@
+export { HidexService } from './HidexService';
