@@ -1,3 +1,4 @@
+import { Transaction } from '@solana/web3.js';
 import { ChainItem, Provider } from '../network/interfaces';
 export interface ITradeOthersFunction {
     changeTradeService(currentNetwork: ChainItem): void;
@@ -70,6 +71,7 @@ export type CurrentSymbol = {
     signature?: string;
     feeRate?: number;
     commissionRate?: number;
+    transactions?: Array<Transaction>;
 };
 export type TokenInfo = {
     symbol: string;

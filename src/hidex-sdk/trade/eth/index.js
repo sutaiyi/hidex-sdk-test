@@ -5,13 +5,11 @@ import { getBaseFeePerGas, getUseGasPrice } from "./utils";
 import { NETWORK_FEE_RATES, networkWeight } from "./config";
 import { isMotherTrad, motherCurrencyTrade } from "../utils/nativeTokenTrade";
 import { abiInFun, actionNameAndValue } from "./abiFun";
-import { PROGRAMID } from "../sol/config";
 export const ethService = (HS) => {
     const { network, wallet } = HS;
     return {
         getBalance: async (accountAddress, tokenAddress = '') => {
             const currentNetwork = network.get();
-            console.log('currentNetwork', tokenAddress);
             if (!tokenAddress || tokenAddress.toLowerCase() === mTokenAddress.toLowerCase()) {
                 const balanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
                     return v.getBalance(accountAddress)
@@ -24,7 +22,7 @@ export const ethService = (HS) => {
                 });
                 const balance = await Promise.any(balanceProm);
                 if (balance.error) {
-                    throw new Error(balance.error);
+                    return '0';
                 }
                 return balance.toString();
             }
@@ -42,7 +40,7 @@ export const ethService = (HS) => {
                 });
                 const balance = await Promise.any(balanceProm);
                 if (balance.error) {
-                    throw new Error(balance.error);
+                    return '0';
                 }
                 return balance;
             }
@@ -50,7 +48,7 @@ export const ethService = (HS) => {
         },
         getBalanceMultiple: async (chain, accountAddress, tokens) => {
             try {
-                const currentNetWork = HS.chains(chain);
+                const currentNetWork = await network.choose(chain);
                 if (Object.entries(network.sysProviderRpcs).length === 0 && !network.sysProviderRpcs[chain]) {
                     const provider = await network.getFastestProviderByChain(chain);
                     const chillSwapContract = new ethers.Contract(currentNetWork.deTrade, abis.chillSwapABI, provider);
@@ -206,7 +204,6 @@ export const ethService = (HS) => {
             }
         },
         getSendEstimateGas: async (sendParams) => {
-            console.log('getNetWorkFees env 调试', PROGRAMID);
             const { from, to, amount, tokenAddress } = sendParams;
             const defaultLimit = {
                 gasLimit: 21000,
@@ -387,9 +384,9 @@ export const ethService = (HS) => {
             throw new Error('GetLimit Error');
         },
         getSwapFees: async (currentSymbol) => {
-            const { networkFee } = currentSymbol;
+            const { networkFee, dexFeeAmount } = currentSymbol;
             if (networkFee) {
-                return networkFee.value;
+                return networkFee.value + (Number(dexFeeAmount) / Math.pow(10, currentSymbol.isBuy ? currentSymbol.in.decimals : currentSymbol.out.decimals));
             }
             return 0;
         },

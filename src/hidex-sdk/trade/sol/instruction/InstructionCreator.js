@@ -4,7 +4,7 @@ import { ComputeBudgetProgram, PublicKey, SystemProgram, TransactionMessage, Ver
 import abis from '../../../common/abis';
 import CustomWallet from '../../../wallet/custom';
 import { sTokenAddress, zero } from '../../../common/config';
-import { AssociateTokenProgram, SEED_DATA, SEED_SWAP, SEED_TRADE } from '../config';
+import { AssociateTokenProgram, PROGRAMID, SEED_DATA, SEED_SWAP, SEED_TRADE } from '../config';
 export const isBuy = (currentSymbol) => {
     return !!currentSymbol.isBuy;
 };
@@ -16,7 +16,7 @@ export function initAnchor(owner, network) {
 }
 export async function information(currentSymbol, owner, network) {
     initAnchor(owner, network);
-    const programId = new PublicKey("6cvxe8KqAss1pY2xgXuB7yAn2Rb8ETXSjdfCC4UYbZr1");
+    const programId = new PublicKey(PROGRAMID());
     const program = new anchor.Program(abis.solanaIDL, programId);
     const [data_pda] = await PublicKey.findProgramAddress([Buffer.from(SEED_DATA)], programId);
     const [swap_pda, bump2] = await PublicKey.findProgramAddress([Buffer.from(SEED_SWAP)], programId);
@@ -61,11 +61,14 @@ export async function information(currentSymbol, owner, network) {
     return info;
 }
 export async function priorityFeeInstruction(limit, fee) {
+    console.log("limit = " + limit);
+    console.log("fee = " + fee);
+    console.log("price = " + Math.floor(fee * Math.pow(10, 6) / limit));
     const addPriorityLimit = ComputeBudgetProgram.setComputeUnitLimit({
         units: limit,
     });
     const addPriorityFee = ComputeBudgetProgram.setComputeUnitPrice({
-        microLamports: Math.floor(fee * Math.pow(10, 15) / limit),
+        microLamports: Math.floor(fee * Math.pow(10, 6) / limit),
     });
     return [addPriorityLimit, addPriorityFee];
 }

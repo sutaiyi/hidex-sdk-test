@@ -175,7 +175,6 @@ export function lzStringTo(input) {
     return decodeURIComponent(escape(atob(input)));
 }
 export function environmental(production, uat, development) {
-    console.log(global.window?.HidexConfig);
     if (global.window?.HidexConfig?.env === 'production') {
         return production;
     }

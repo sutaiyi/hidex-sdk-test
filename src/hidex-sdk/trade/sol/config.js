@@ -33,6 +33,16 @@ export const SUPPORT_CHANGE_PROGRAM_IDS = [
     "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P",
     "Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB"
 ];
+export const JITO_FEE_ACCOUNT = [
+    "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe",
+    "DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh",
+    "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
+    "Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY",
+    "DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL",
+    "ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49",
+    "3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT",
+    "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt"
+];
 export const SUPPORT_CHANGE_INSTRUCTION_START_INDEXES = [
     2, 16, 16, 16, 16, 16, 16,
 ];
@@ -43,5 +53,9 @@ export const GMGN_PRIORITY_FEE_Collect_ID = new PublicKey("BB5dnY55FXS1e1NXqZDwC
 export const PUEM_INSTRUCTION_PREFIX = "66063d1201daebea";
 export const SOLANA_SYSTEM_PROGRAM_TRANSFER_ID = 0X02;
 export const SOLANA_CREATE_ACCOUNT_WITH_SEED_ID = 0X03;
-export const DEFAULT_SWAP_SOL_LAMPORTS = BigInt("100000");
+export const SOLANA_TX_SERIALIZE_SIGN = 900;
+export const DEFAULT_SWAP_SOL_LAMPORTS = BigInt("5000000000");
+export const DEFAULT_SWAP_PUMP_LAMPORTS = BigInt("500000000");
 export const BASE_ACCOUNT_INIT_FEE = BigInt("2039280");
+export const TIP_MINI_IN_PRIORITY = BigInt("2000000");
+export const DEFAULD_SOLANA_SWAP_LIMIT = Number("400000");

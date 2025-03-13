@@ -3,9 +3,9 @@ import { Keypair, PublicKey } from '@solana/web3.js';
 import abis from '../../common/abis';
 import { dexWalletFee, ETH_SERIES, zero } from '../../common/config';
 import { PROGRAMID, SEED_DATA } from '../sol/config';
-import { initAnchor } from '../sol/instruction';
 import { ethers } from 'ethers';
 import { isMotherTrad } from './nativeTokenTrade';
+import { initAnchor } from '../sol/instruction/InstructionCreator';
 class DexFeeService {
     store;
     defaultFeeInfo;

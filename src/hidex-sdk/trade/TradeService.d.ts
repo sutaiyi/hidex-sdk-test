@@ -10,7 +10,7 @@ declare class TradeService extends EventEmitter implements ITradeService {
     approve: IApproveService;
     constructor(options: OptionsCommon);
     resetInstructions: (transactionMessage: TransactionMessage, newInputAmount: bigint, newOutputAmount: bigint) => TransactionMessage;
-    getTransactionsSignature: (transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any) => Promise<string[] | null>;
+    getTransactionsSignature: (transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any) => Promise<import("@solana/web3.js").VersionedTransaction[] | null>;
     compileTransaction: (swapBase64Str: string) => Promise<{
         message: TransactionMessage;
         addressesLookup: AddressLookupTableAccount[];
