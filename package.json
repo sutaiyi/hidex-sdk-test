@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "serve": "vite",
-    "build:prod": "vite build --mode production",
-    "build": "react-scripts build --silent",
+    "build": "vite build --mode production",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

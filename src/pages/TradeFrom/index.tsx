@@ -1,5 +1,5 @@
 import { codex } from '@/data';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import hidexService from '@/hidexService';
 import { simpleAddress, strToNumberByDecimals } from '@/common/utils';
 
