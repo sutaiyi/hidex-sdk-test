@@ -179,7 +179,7 @@ const tradeFun: any = {
       const networkFeeArr = await trade.getNetWorkFees(estimateResult.gasLimit)
       currentSymbol.networkFee = networkFeeArr[1];
       const minBalance = await trade.getSwapFees(currentSymbol);
-      console.log('最少得有多少余额==>', minBalance);
+      console.log('最少得有多少母币余额（未加上用户支付的母币数量）==>', minBalance);
       console.timeEnd('getNetWorkFeesTimer');
 
       console.time('tradeswapTimer');
@@ -279,7 +279,7 @@ const tradeFun: any = {
       const networkFeeArr = await trade.getNetWorkFees(estimateResult.gasLimit)
       currentSymbol.networkFee = networkFeeArr[1];
       const minBalance = await trade.getSwapFees(currentSymbol);
-      console.log('最少得有多少余额==>', minBalance);
+      console.log('最少得有多少母币余额==>', minBalance);
       console.timeEnd('getNetWorkFeesTimer');
 
       console.time('tradeswapTimer');
