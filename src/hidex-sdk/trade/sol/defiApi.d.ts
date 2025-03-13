@@ -1,7 +1,7 @@
-import { CurrentSymbol } from '../interfaces';
+import { CurrentSymbol, IDefiApi } from '../interfaces';
 import { BlockhashWithExpiryBlockHeight, Transaction } from '@solana/web3.js';
 import { INetworkService } from '../../network/interfaces';
-declare class DefiApi {
+declare class DefiApi implements IDefiApi {
     constructor();
     getLatestBlockhash(network: INetworkService): Promise<BlockhashWithExpiryBlockHeight | undefined>;
     swapRoute(currentSymbol: CurrentSymbol, amountIn: bigint, fromAddress: string): Promise<any>;
@@ -17,6 +17,5 @@ declare class DefiApi {
     }>;
     getSwapStatus(hash: string): Promise<any>;
 }
-declare const _default: DefiApi;
-export default _default;
+export default DefiApi;
 //# sourceMappingURL=defiApi.d.ts.map

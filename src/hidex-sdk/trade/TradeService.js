@@ -3,18 +3,22 @@ import { defaultChainID } from '../common/config';
 import ApproveService from './utils/approve';
 import { compileTransaction, resetInstructions, getTransactionsSignature, isInstructionsSupportReset } from './sol/instruction/index';
 import EventEmitter from '../common/eventEmitter';
+import DefiApi from './sol/defiApi';
 class TradeService extends EventEmitter {
     app;
     chainId;
     errorCode = 9800;
     HS;
     approve;
+    defiApi;
     constructor(options) {
         super();
         this.chainId = defaultChainID;
         this.app = defaultChainID === 102 ? ethService(options) : ethService(options);
         this.HS = options;
         this.approve = new ApproveService({ ...options, trade: this });
+        this.defiApi = new DefiApi();
+        this.defiApi.getLatestBlockhash(this.HS.network);
     }
     resetInstructions = (transactionMessage, newInputAmount, newOutputAmount) => {
         return resetInstructions(transactionMessage, newInputAmount, newOutputAmount);

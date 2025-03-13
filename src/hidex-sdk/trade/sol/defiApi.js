@@ -123,4 +123,4 @@ class DefiApi {
         }
     }
 }
-export default new DefiApi();
+export default DefiApi;

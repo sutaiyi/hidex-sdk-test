@@ -1,9 +1,8 @@
 import HidexSDK from "@/hidexService"
 import { swapSign } from "./utils";
-
 const { trade, network, wallet, dexFee, utils } = HidexSDK;
 const tradeFun: any = {
-  检测指令: async () => {
+  指令调试: async () => {
     const swapBase64Str =
       "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAFCQtBD6bU58nclkm/Bmm9dztX13TEkZyT3kTshhJZtc+35+sRwZG+FAmslmG5GOEyM8kdtkieyaUMSBSjijCLEkJ5/f3z/y6DYV6qShd68DAYic45gTgcm5TTuPJ8CAeYLPyKVwr+r3J5up0tnL9GQ98lvzfM18cn9wmoO3wwLgL2AwZGb+UhFzL/7K26csOb57yM5bvF9xJrLEObOkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpBpuIV/6rgYT7aH9jRhjANdrEOdwa6ztVmKDwAAAAAAFL2UnENgLDPyB3kO0Wo1JMobmXXPEhoqkM/+x9+LaKzY8e7OFPxreMN7nBQV31k+Wl/uBPNohXir2HpdKMd0HQBwQACQMVFgUAAAAAAAQABQLgkwQABQIAAXwDAAAAC0EPptTnydyWSb8Gab13O1fXdMSRnJPeROyGElm1z7cgAAAAAAAAADZSc2Jjdmk0MWhnR21jTE5BVDJqREJDN01TaG5kcVlvkKQgAAAAAAClAAAAAAAAAAbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpBgQBBwAUAQEIEgYKFgsCDA0VDg8QERITFwEDABEJoIYBAAAAAAAIu4EAAAAAAAYDAQAAAQkFAgAJDAIAAADoAwAAAAAAAAJ4IuyAOJt4qzcglYTn50/yPCmhVsyTy5UUULyyMxWHGwEYAgULGzPgjqDRvs3YSwvQXTcmyUVHRlb0i/86R62WPdutZVkKKiwtLjAxMjM0NQIBNg==";
     const result = await trade.compileTransaction(swapBase64Str)
@@ -62,10 +61,6 @@ const tradeFun: any = {
     console.log(Buffer.from(txArray[2].serialize()).toString("base64"))
     console.log(Buffer.from(txArray[3].serialize()).toString("base64"))
 
-  },
-  重置指令: async () => {
-    const result = await trade.instructionReset('test')
-    console.log(result)
   },
   获取转账网络费用列表: async (info: any) => {
     try {
@@ -350,8 +345,14 @@ const tradeFun: any = {
       alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
     }
   },
+}
 
+
+const getTokenBeforeData = (info: any) => {
+  const { token } = info;
 
 }
+
+getTokenBeforeData({ token: { address: '6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN', decimals: 6 } });
 
 export default tradeFun

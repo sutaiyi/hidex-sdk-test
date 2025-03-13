@@ -4,10 +4,10 @@ import { getTokenOwner, sendSolanaTransaction } from "./utils";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createTransferInstruction, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { ownerKeypair, TOKEN_2022_OWNER } from "./config";
 import { priorityFeeInstruction } from "./instruction/InstructionCreator";
-import defiApi from "./defiApi";
+import DefiApi from "./defiApi";
 export const solService = (HS) => {
     const { network, wallet } = HS;
-    defiApi.getLatestBlockhash(network);
+    const defiApi = new DefiApi();
     return {
         getBalance: async (accountAddress, tokenAddress = '') => {
             const currentNetwork = network.get();

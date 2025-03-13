@@ -1,7 +1,14 @@
-import { Transaction } from '@solana/web3.js';
-import { ChainItem, Provider } from '../network/interfaces';
+import { AddressLookupTableAccount, BlockhashWithExpiryBlockHeight, Transaction, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
+import { ChainItem, INetworkService, Provider } from '../network/interfaces';
 export interface ITradeOthersFunction {
     changeTradeService(currentNetwork: ChainItem): void;
+    resetInstructions(transactionMessage: TransactionMessage, newInputAmount: bigint, newOutputAmount: bigint): TransactionMessage;
+    isInstructionsSupportReset(transactionMessage: TransactionMessage): boolean;
+    compileTransaction(swapBase64Str: string): Promise<{
+        message: TransactionMessage;
+        addressesLookup: AddressLookupTableAccount[];
+    }>;
+    getTransactionsSignature(transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any): Promise<Array<VersionedTransaction>>;
 }
 export interface ITradeService extends ITradeFunctions, ITradeOthersFunction {
     approve: IApproveService;
@@ -37,6 +44,21 @@ export interface ITradeFunctions {
     }>;
 }
 export interface IDexFeeService {
+}
+export interface IDefiApi {
+    getLatestBlockhash(network: INetworkService): Promise<BlockhashWithExpiryBlockHeight | undefined>;
+    swapRoute(currentSymbol: CurrentSymbol, amountIn: bigint, fromAddress: string): Promise<any>;
+    submitSwap(currentSymbol: CurrentSymbol, transaction: Transaction): Promise<{
+        success: boolean;
+        hash: string;
+        currentSymbol: CurrentSymbol;
+        transaction: Transaction;
+    }>;
+    submitSwapByJito(transactions: Array<Transaction>): Promise<{
+        success: boolean;
+        hash: string;
+    }>;
+    getSwapStatus(hash: string): Promise<any>;
 }
 export interface IApproveService {
     execute(tokenAddress: string, accountAddress: string, authorizedAddress: string): Promise<boolean>;

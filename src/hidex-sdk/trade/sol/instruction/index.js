@@ -155,6 +155,4 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
             swaCompletedTx
         ];
     }
-    return null;
-    ;
 }
