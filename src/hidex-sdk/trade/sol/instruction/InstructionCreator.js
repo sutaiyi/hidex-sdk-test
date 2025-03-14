@@ -32,10 +32,14 @@ export async function information(currentSymbol, owner, network) {
         inviterPublic = new PublicKey(currentSymbol.inviter);
     }
     const amount = new anchor.BN(currentSymbol.amountIn);
-    const swapAtaAccount = await getAssociatedTokenAddress(tokenOutMint, swap_pda, true);
-    let userAtaAccount = await getAssociatedTokenAddress(tokenOutMint, owner.publicKey, false);
+    let userAtaAccount;
     if (currentSymbol.TOKEN_2022) {
-        userAtaAccount = await getAssociatedTokenAddress(tokenOutMint, owner.publicKey, false, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+        userAtaAccount = await getAssociatedTokenAddress(currentSymbol.isBuy ? tokenOutMint : tokenInMint, owner.publicKey, false, TOKEN_2022_PROGRAM_ID);
+        console.log("userAtaAccount1 = " + userAtaAccount);
+    }
+    else {
+        userAtaAccount = await getAssociatedTokenAddress(currentSymbol.isBuy ? tokenOutMint : tokenInMint, owner.publicKey, false);
+        console.log("userAtaAccount2 = " + userAtaAccount);
     }
     const wSol = new PublicKey(sTokenAddress);
     const swapWsolPdaAta = await getAssociatedTokenAddress(wSol, swap_pda, true);
@@ -51,7 +55,6 @@ export async function information(currentSymbol, owner, network) {
         tokenOutMint,
         tokenInMint,
         amount,
-        swapAtaAccount,
         userAtaAccount,
         inviterPublic,
         wSol,
@@ -61,9 +64,6 @@ export async function information(currentSymbol, owner, network) {
     return info;
 }
 export async function priorityFeeInstruction(limit, fee) {
-    console.log("limit = " + limit);
-    console.log("fee = " + fee);
-    console.log("price = " + Math.floor(fee * Math.pow(10, 6) / limit));
     const addPriorityLimit = ComputeBudgetProgram.setComputeUnitLimit({
         units: limit,
     });
@@ -94,6 +94,22 @@ export function getTotalFee(currentSymbol) {
     }
     const total = BigInt(Math.floor(fee)) + BigInt(5000 * 4);
     return total.toString();
+}
+export async function createSwapPrepareInstruction(currentSymbol, owner, network) {
+    if (currentSymbol.isBuy) {
+        return createBuySwapPrepareInstruction(currentSymbol, owner, network);
+    }
+    else {
+        return createSaleSwapPrepareInstruction(currentSymbol, owner, network);
+    }
+}
+export async function createSwapCompleteInstruction(currentSymbol, owner, network) {
+    if (currentSymbol.isBuy) {
+        return createBuySwapCompletedInstruction(currentSymbol, owner, network);
+    }
+    else {
+        return createSaleSwapCompletedInstruction(currentSymbol, owner, network);
+    }
 }
 export async function createBuySwapPrepareInstruction(currentSymbol, owner, network) {
     const { program, tradePda, userAtaAccount } = await information(currentSymbol, owner, network);
@@ -133,10 +149,10 @@ export async function createSaleSwapPrepareInstruction(currentSymbol, owner, net
     return program.methods
         .saleSwapPrepare()
         .accounts({
-        tradePda,
-        userwSolAta,
+        tradeConfigPda: tradePda,
+        userWsolAtaAccount: userwSolAta,
         user: owner.publicKey,
-        userAtaAccount
+        userAtaAccount: userAtaAccount
     })
         .instruction();
 }

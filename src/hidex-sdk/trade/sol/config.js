@@ -1,6 +1,5 @@
 import { environmental } from '../../common/utils';
-import { Keypair, PublicKey } from '@solana/web3.js';
-import bs58 from 'bs58';
+import { PublicKey } from '@solana/web3.js';
 export const TOKEN_LIST_API_URL = 'https://token.jup.ag/all';
 export const SwapChillApi = () => environmental('https://app.hidex.pro/solApi', 'https://hidex.open.name/solApi', '/solApi');
 export const SwapJupiterApi = () => environmental('https://app.hidex.pro/solPub', 'https://hidex.open.name/solPub', '/solPub');
@@ -17,10 +16,6 @@ export const simulateConfig = {
     replaceRecentBlockhash: false,
     commitment: 'processed',
 };
-export const ownerKeypair = (key) => {
-    return Keypair.fromSecretKey(bs58.decode(key));
-};
-export const owner = ownerKeypair('KJWXrT2D971hYPydn8M9CV22Hdh7M8hVAHQP5buQZWZ6WRsqNh9GRLg8XecFW5fdCZLLFwT19DU9rkkSFLfAAYw');
 export const SEED_SWAP = 'chill_swap';
 export const SEED_DATA = 'chill_data';
 export const SEED_TRADE = "trade_config_data";
@@ -54,6 +49,7 @@ export const PUEM_INSTRUCTION_PREFIX = "66063d1201daebea";
 export const SOLANA_SYSTEM_PROGRAM_TRANSFER_ID = 0X02;
 export const SOLANA_CREATE_ACCOUNT_WITH_SEED_ID = 0X03;
 export const SOLANA_TX_SERIALIZE_SIGN = 900;
+export const SOLANA_MAX_TX_SERIALIZE_SIGN = 1232;
 export const DEFAULT_SWAP_SOL_LAMPORTS = BigInt("5000000000");
 export const DEFAULT_SWAP_PUMP_LAMPORTS = BigInt("500000000");
 export const BASE_ACCOUNT_INIT_FEE = BigInt("2039280");

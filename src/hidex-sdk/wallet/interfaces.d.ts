@@ -2,10 +2,7 @@ import { ICatcher } from "../catch/interfaces";
 import { OptionsCommon } from "../main/interfaces";
 export interface IWalletService {
     walletInit(): Promise<void>;
-    walletCatch(): {
-        getWalletItem: (catcher: ICatcher, key?: string) => Promise<WalletCacheResult>;
-        setWalletItem: (catcher: ICatcher, key: string, value: WalletCacheResult) => Promise<boolean>;
-    };
+    getWalletCatch(catcher: ICatcher, key?: string): Promise<WalletCacheResult>;
     cloudBootedOss(): {
         getBootedOssItem: (HS: OptionsCommon, key?: string) => Promise<BootedOssStore>;
         setBootedOssItem: (HS: OptionsCommon, key: string, value: BootedOssStore) => Promise<boolean>;

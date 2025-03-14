@@ -8,17 +8,14 @@ declare class WalletService implements IWalletService {
     private HS;
     private setWalletTimer;
     private setBootdOsssTimer;
-    private mapWalletCache;
     private mapBootedOss;
     constructor(options: OptionsCommon);
     cloudBootedOss(): {
         getBootedOssItem: (HS: OptionsCommon, key?: string) => Promise<BootedOssStore>;
         setBootedOssItem: (HS: OptionsCommon, key: string, value: BootedOssStore) => Promise<boolean>;
     };
-    walletCatch(): {
-        getWalletItem: (catcher: ICatcher, key?: string) => Promise<WalletCacheResult>;
-        setWalletItem: (catcher: ICatcher, key: string, value: WalletCacheResult) => Promise<boolean>;
-    };
+    getWalletCatch(catcher: ICatcher, key?: string): Promise<WalletCacheResult>;
+    private setWalletCatch;
     walletInit(): Promise<void>;
     createPassword(password: string, oldPassword?: string): Promise<boolean>;
     resetPassword(oldPassword: string, password: string): Promise<boolean>;

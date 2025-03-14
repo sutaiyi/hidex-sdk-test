@@ -40,7 +40,10 @@ const walletTest: any = {
     try {
       const password = '123123';
       await wallet.unlock(password);
+      // 检测并同步账号
+      await wallet.walletInit();
       console.log('钱包解锁成功');
+      alert('解锁成功')
     } catch (error) {
       console.error(error);
       alert(error);

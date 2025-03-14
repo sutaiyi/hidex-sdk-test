@@ -6,6 +6,7 @@ class KeyRuntimeController {
     }
     async initKeyRuntime(catcher) {
         this.dataStorage = (await catcher.getItem('dataStorage')) || {};
+        return { value: this.dataStorage['KEYSING_SECRETCODE'] };
     }
     async sendMessage(message, sendResponse, catcher) {
         if (keysing.messageConfirm(message.type)) {

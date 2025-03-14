@@ -1,4 +1,5 @@
 import { ethService } from './eth/index';
+import { solService } from './sol/index';
 import { defaultChainID } from '../common/config';
 import ApproveService from './utils/approve';
 import { compileTransaction, resetInstructions, getTransactionsSignature, isInstructionsSupportReset } from './sol/instruction/index';
@@ -14,10 +15,10 @@ class TradeService extends EventEmitter {
     constructor(options) {
         super();
         this.chainId = defaultChainID;
-        this.app = defaultChainID === 102 ? ethService(options) : ethService(options);
+        this.app = defaultChainID === 102 ? solService(options) : ethService(options);
         this.HS = options;
         this.approve = new ApproveService({ ...options, trade: this });
-        this.defiApi = new DefiApi();
+        this.defiApi = DefiApi;
         this.defiApi.getLatestBlockhash(this.HS.network);
     }
     resetInstructions = (transactionMessage, newInputAmount, newOutputAmount) => {
@@ -41,7 +42,7 @@ class TradeService extends EventEmitter {
                 this.app = ethService(this.HS);
                 break;
             default:
-                this.app = ethService(this.HS);
+                this.app = solService(this.HS);
         }
     };
     getBalance = async (accountAddress, tokenAddress) => {

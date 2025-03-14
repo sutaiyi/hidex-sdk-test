@@ -6,12 +6,21 @@ import networkTest from './network';
 import walletTest from './wallet';
 import TradeFrom from '../TradeFrom';
 import WalletFrom from '../WalletFrom';
+import { setBeforeTradeData } from './solTrade'
+import HidexSDK from '../../hidexService'
 
-function Test() {
+const Test = React.memo( () => {
+  const { network } = HidexSDK;
   const [tradeInfo, setTradeInfo] = useState<any>(null);
   useEffect(() => {
-    
-  }, []);
+    (async () => {
+      if (tradeInfo?.token?.address) {
+        const currentChain = await network.choose(tradeInfo.chainName)
+        setBeforeTradeData(tradeInfo, { isBuy: true, isPump: false, currentChain });
+      }
+    })()
+  }, [tradeInfo]);
+
   const btns:any = {
     network: networkTest,
     wallet: walletTest,
@@ -44,6 +53,6 @@ function Test() {
       </div>
     </div>
   );
-}
+})
 
 export default Test;

@@ -30,10 +30,10 @@ export class HidexService {
         globalSet('HidexConfig', options);
     }
     async init() {
-        await this.wallet.walletCatch().getWalletItem(this.catcher);
-        await this.wallet.cloudBootedOss().getBootedOssItem(this.processOptions(this.options));
-        this.wallet.eventSecretCode();
         await keysing.keysingInitialized(this.catcher);
+        this.wallet.eventSecretCode();
+        await this.wallet.getWalletCatch(this.catcher);
+        await this.wallet.cloudBootedOss().getBootedOssItem(this.processOptions(this.options));
         await this.wallet.walletInit();
     }
     processOptions(options) {

@@ -1,4 +1,4 @@
-import { Keypair, PublicKey, SimulateTransactionConfig } from '@solana/web3.js';
+import { PublicKey, SimulateTransactionConfig } from '@solana/web3.js';
 export declare const TOKEN_LIST_API_URL = "https://token.jup.ag/all";
 export declare const SwapChillApi: () => any;
 export declare const SwapJupiterApi: () => any;
@@ -11,8 +11,6 @@ export declare const AssociateTokenProgram = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25ef
 export declare const AddressTable = "5ZF8nmsRMPB24j5UDU7ztjvxVBJ7pprZJvzbujZ5nKpQ";
 export declare const TOKEN_2022_OWNER = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 export declare const simulateConfig: SimulateTransactionConfig;
-export declare const ownerKeypair: (key: string) => Keypair;
-export declare const owner: Keypair;
 export declare const SEED_SWAP = "chill_swap";
 export declare const SEED_DATA = "chill_data";
 export declare const SEED_TRADE = "trade_config_data";
@@ -27,6 +25,7 @@ export declare const PUEM_INSTRUCTION_PREFIX = "66063d1201daebea";
 export declare const SOLANA_SYSTEM_PROGRAM_TRANSFER_ID = 2;
 export declare const SOLANA_CREATE_ACCOUNT_WITH_SEED_ID = 3;
 export declare const SOLANA_TX_SERIALIZE_SIGN = 900;
+export declare const SOLANA_MAX_TX_SERIALIZE_SIGN = 1232;
 export declare const DEFAULT_SWAP_SOL_LAMPORTS: bigint;
 export declare const DEFAULT_SWAP_PUMP_LAMPORTS: bigint;
 export declare const BASE_ACCOUNT_INIT_FEE: bigint;

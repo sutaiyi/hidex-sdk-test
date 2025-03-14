@@ -1,6 +1,7 @@
 import { AddressLookupTableAccount, BlockhashWithExpiryBlockHeight, Transaction, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
 import { ChainItem, INetworkService, Provider } from '../network/interfaces';
 export interface ITradeOthersFunction {
+    defiApi: IDefiApi;
     changeTradeService(currentNetwork: ChainItem): void;
     resetInstructions(transactionMessage: TransactionMessage, newInputAmount: bigint, newOutputAmount: bigint): TransactionMessage;
     isInstructionsSupportReset(transactionMessage: TransactionMessage): boolean;
@@ -46,8 +47,13 @@ export interface ITradeFunctions {
 export interface IDexFeeService {
 }
 export interface IDefiApi {
-    getLatestBlockhash(network: INetworkService): Promise<BlockhashWithExpiryBlockHeight | undefined>;
-    swapRoute(currentSymbol: CurrentSymbol, amountIn: bigint, fromAddress: string): Promise<any>;
+    lastBlockHash: BlockhashWithExpiryBlockHeight;
+    getLatestBlockhash(network: INetworkService): Promise<void>;
+    swapRoute(currentSymbol: CurrentSymbol, fromAddress: string): Promise<{
+        success: boolean;
+        swapTransaction: string;
+        outAmount: string;
+    }>;
     submitSwap(currentSymbol: CurrentSymbol, transaction: Transaction): Promise<{
         success: boolean;
         hash: string;
@@ -93,7 +99,8 @@ export type CurrentSymbol = {
     signature?: string;
     feeRate?: number;
     commissionRate?: number;
-    transactions?: Array<Transaction>;
+    compile?: any;
+    currentPrice?: string;
 };
 export type TokenInfo = {
     symbol: string;

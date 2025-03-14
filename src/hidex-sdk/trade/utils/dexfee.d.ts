@@ -18,7 +18,11 @@ declare class DexFeeService {
     getAmountOut(bigOut: string): string;
     getSlipAmountOut(currentSymbol: CurrentSymbol, amountOut: number): number;
     getDexFeeAmountOut(amountOut: number): number;
-    getDexFeeAmount(currentSymbol: CurrentSymbol, bigOut: string): Promise<string>;
+    getDexFeeAmount({ isBuy, buyAmount, inviter }: {
+        isBuy: boolean;
+        buyAmount: string;
+        inviter: string | undefined;
+    }): Promise<string>;
     getAmountOutMin(currentSymbol: CurrentSymbol, minOutAmount: string): Promise<string>;
 }
 export default DexFeeService;

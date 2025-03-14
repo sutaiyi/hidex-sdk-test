@@ -2,12 +2,14 @@ import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { smTokenAddress, sTokenAddress } from "../../common/config";
 import { getTokenOwner, sendSolanaTransaction } from "./utils";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createTransferInstruction, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { ownerKeypair, TOKEN_2022_OWNER } from "./config";
+import { simulateConfig, TOKEN_2022_OWNER } from "./config";
 import { priorityFeeInstruction } from "./instruction/InstructionCreator";
-import DefiApi from "./defiApi";
+import defiApi from "./defiApi";
+import UtilsService from "../../utils/UtilsService";
+import { compileTransaction, getTransactionsSignature, isInstructionsSupportReset, resetInstructions } from "./instruction";
+const utils = new UtilsService();
 export const solService = (HS) => {
     const { network, wallet } = HS;
-    const defiApi = new DefiApi();
     return {
         getBalance: async (accountAddress, tokenAddress = '') => {
             const currentNetwork = network.get();
@@ -116,7 +118,7 @@ export const solService = (HS) => {
             const { from, to, amount, tokenAddress } = sendParams;
             try {
                 const ownerKey = await wallet.ownerKey(from);
-                const senderKeypair = ownerKeypair(ownerKey);
+                const senderKeypair = utils.ownerKeypair(ownerKey);
                 const senderPublicKey = senderKeypair.publicKey;
                 const receiverPublicKey = new PublicKey(to);
                 const instructions = [];
@@ -158,20 +160,60 @@ export const solService = (HS) => {
             }
         },
         getSwapPath: async (currentSymbol) => {
-            if (currentSymbol.transactions?.length === 1) {
+            let minOutAmount = '0';
+            const slipPersent = currentSymbol.isPump ? 1 : currentSymbol.slipPersent;
+            if (currentSymbol.isBuy && currentSymbol.currentPrice) {
+                minOutAmount = (Math.floor(Number(currentSymbol.amountIn) / Number(currentSymbol.currentPrice) * slipPersent)).toString();
             }
-            if (currentSymbol.transactions?.length === 2) {
-            }
-            if (currentSymbol.transactions?.length === 4) {
+            if (!currentSymbol.isBuy && currentSymbol.currentPrice) {
+                minOutAmount = (Math.floor(Number(currentSymbol.amountIn) * Number(currentSymbol.currentPrice) * slipPersent)).toString();
             }
             return {
-                minOutAmount: '0',
+                minOutAmount,
                 data: null
             };
         },
-        getSwapEstimateGas: async () => {
+        getSwapEstimateGas: async (currentSymbol, path, accountAddress) => {
+            const { compile, amountOutMin, amountIn } = currentSymbol;
+            let compileUse = compile;
+            let resetResult = null;
+            let txArray = [];
+            const owner = HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress));
+            console.log('compileUse', compileUse);
+            if (compileUse) {
+                const isSupport = isInstructionsSupportReset(compile['message']);
+                if (isSupport) {
+                    resetResult = resetInstructions(compile['message'], BigInt(amountIn), BigInt(amountOutMin));
+                    txArray = await getTransactionsSignature(resetResult, compileUse['addressesLookup'], defiApi.lastBlockHash.blockhash, currentSymbol, owner, HS);
+                }
+                console.log('isSupport', isSupport);
+            }
+            if (txArray.length === 0) {
+                const { success, swapTransaction } = await defiApi.swapRoute(currentSymbol, accountAddress);
+                if (!success) {
+                    throw new Error('Failed to swap' + path);
+                }
+                compileUse = await compileTransaction(swapTransaction, HS);
+                resetResult = compileUse['message'];
+                console.log('defiApi.lastBlockHash.blockhash', defiApi.lastBlockHash);
+                txArray = await getTransactionsSignature(resetResult, compileUse['addressesLookup'], defiApi.lastBlockHash.blockhash, currentSymbol, owner, HS);
+            }
+            console.time('timer simulateTransaction');
+            const vertransaction = txArray.length === 5 ? txArray[4] : txArray[0];
+            if (vertransaction) {
+                const connection = await network.getProviderByChain(102);
+                const simulateResponse = await connection.simulateTransaction(vertransaction, simulateConfig);
+                console.log('交易 - 预估', simulateResponse);
+                if (simulateResponse && simulateResponse?.value?.err) {
+                    throw new Error(JSON.stringify(simulateResponse.value.logs));
+                }
+            }
+            console.timeEnd('timer simulateTransaction');
             return {
                 gasLimit: 0,
+                data: {
+                    vertransactions: txArray,
+                }
             };
         },
         getSwapFees: async (currentSymbol) => {
@@ -183,19 +225,16 @@ export const solService = (HS) => {
             const priorityFee = Number(currentSymbol.priorityFee) / Math.pow(10, 9);
             return netFee + dexFee + mitToken + accountSave + priorityFee;
         },
-        swap: async (currentSymbol) => {
-            if (currentSymbol.transactions?.length === 1) {
-                const result = await defiApi.submitSwap(currentSymbol, currentSymbol.transactions[0]);
-                if (result.success) {
-                    return { error: null, result: { hash: result.hash, message: 'SUCCESS' } };
-                }
-                return { error: true, result };
+        swap: async (currentSymbol, transaction) => {
+            const { vertransactions } = transaction?.data;
+            let result = { success: false, hash: '' };
+            if (vertransactions?.length >= 4) {
+                result = await defiApi.submitSwapByJito(vertransactions.splice(0, 4));
             }
-            if (currentSymbol.transactions?.length === 2) {
+            else {
+                result = await defiApi.submitSwap(currentSymbol, vertransactions[0]);
             }
-            if (currentSymbol.transactions?.length === 4) {
-            }
-            return { error: true, result: null };
+            return { error: !result.success, result: { hash: result.hash, vertransactions } };
         }
     };
 };

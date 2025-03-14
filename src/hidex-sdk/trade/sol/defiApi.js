@@ -1,46 +1,44 @@
 import axios from 'axios';
 import bs58 from 'bs58';
-const LastBlockHashMap = new Map();
 class DefiApi {
+    clearTimer;
+    lastBlockHash;
     constructor() {
+        this.clearTimer = null;
+        this.lastBlockHash = {
+            blockhash: '',
+            lastValidBlockHeight: 0
+        };
     }
     async getLatestBlockhash(network) {
         const connection = await network.getProviderByChain(102);
         if (connection) {
             const blockhash = await connection.getLatestBlockhash();
-            LastBlockHashMap.set('lastBlockHash', blockhash);
-            return blockhash;
+            this.lastBlockHash = blockhash;
         }
-        setInterval(() => this.getLatestBlockhash, 30000);
+        this.clearTimer && global.clearInterval(this.clearTimer);
+        this.clearTimer = global.setInterval(() => { this.getLatestBlockhash(network); }, 25000);
     }
-    async swapRoute(currentSymbol, amountIn, fromAddress) {
-        try {
-            const inputToken = currentSymbol.in.address;
-            const outputToken = currentSymbol.out.address;
-            let slippage = currentSymbol.slipPersent * 100;
-            const fee = 0.0001;
-            const url = `/gmgn/defi/router/v1/sol/tx/get_swap_route?token_in_address=${inputToken}&token_out_address=${outputToken}&in_amount=${amountIn}&from_address=${fromAddress}&slippage=${slippage}&fee=${fee}`;
-            const response = await axios.get(url);
-            if (response.status === 200 && response.data?.code === 0) {
-                const { quote, raw_tx } = response.data.data;
-                return {
-                    success: true,
-                    swapTransaction: raw_tx.swapTransaction,
-                    outAmount: quote.outAmount,
-                    lastValidBlockHeight: raw_tx.lastValidBlockHeight
-                };
-            }
-            if (response.status === 200 && response.data?.code !== 0) {
-                throw new Error(response.data.msg);
-            }
-            throw new Error('Error API get_swap_route');
-        }
-        catch (error) {
+    async swapRoute(currentSymbol, fromAddress) {
+        const amountIn = BigInt(currentSymbol.amountIn) - BigInt(currentSymbol.dexFeeAmount);
+        const inputToken = currentSymbol.in.address;
+        const outputToken = currentSymbol.out.address;
+        let slippage = currentSymbol.slipPersent * 100;
+        const fee = 0.0001;
+        const url = `/gmgn/defi/router/v1/sol/tx/get_swap_route?token_in_address=${inputToken}&token_out_address=${outputToken}&in_amount=${amountIn}&from_address=${fromAddress}&slippage=${slippage}&fee=${fee}`;
+        const response = await axios.get(url);
+        if (response.status === 200 && response.data?.code === 0) {
+            const { quote, raw_tx } = response.data.data;
             return {
-                success: false,
-                error
+                success: true,
+                swapTransaction: raw_tx.swapTransaction,
+                outAmount: quote.outAmount,
             };
         }
+        if (response.status === 200 && response.data?.code !== 0) {
+            throw new Error(response.data.msg);
+        }
+        throw new Error('Error API get_swap_route');
     }
     async submitSwap(currentSymbol, transaction) {
         try {
@@ -104,7 +102,7 @@ class DefiApi {
     }
     async getSwapStatus(hash) {
         try {
-            const latestBlockhash = LastBlockHashMap.get('lastBlockHash');
+            const latestBlockhash = this.lastBlockHash;
             const url = `/gmgn/defi/router/v1/sol/tx/get_transaction_status?hash=${hash}&last_valid_height=${latestBlockhash?.lastValidBlockHeight}`;
             const response = await axios.get(url);
             if (response.status === 200 && response.data?.code === 0) {
@@ -123,4 +121,4 @@ class DefiApi {
         }
     }
 }
-export default DefiApi;
+export default new DefiApi;

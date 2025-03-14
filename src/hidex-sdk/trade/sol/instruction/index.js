@@ -1,6 +1,6 @@
 import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount, PublicKey, } from "@solana/web3.js";
-import { SUPPORT_CHANGE_PROGRAM_IDS, HIDEX_ADDRESS_LOOK_UP, SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, DEFAULT_SWAP_SOL_LAMPORTS, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, BASE_ACCOUNT_INIT_FEE, SUPPORT_CHANGE_INSTRUCTION_START_INDEXES, PUEM_INSTRUCTION_PREFIX, PUMP_PROGRAM_ID, GMGN_PRIORITY_FEE_Collect_ID, SOLANA_TX_SERIALIZE_SIGN, JITO_FEE_ACCOUNT, DEFAULD_SOLANA_SWAP_LIMIT, TIP_MINI_IN_PRIORITY, DEFAULT_SWAP_PUMP_LAMPORTS } from '../config';
-import { createBuySwapCompletedInstruction, createBuySwapPrepareInstruction, createTipTransferInstruction, priorityFeeInstruction, versionedTra } from "./InstructionCreator";
+import { SUPPORT_CHANGE_PROGRAM_IDS, HIDEX_ADDRESS_LOOK_UP, SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, DEFAULT_SWAP_SOL_LAMPORTS, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, BASE_ACCOUNT_INIT_FEE, SUPPORT_CHANGE_INSTRUCTION_START_INDEXES, PUEM_INSTRUCTION_PREFIX, PUMP_PROGRAM_ID, GMGN_PRIORITY_FEE_Collect_ID, SOLANA_TX_SERIALIZE_SIGN, JITO_FEE_ACCOUNT, DEFAULD_SOLANA_SWAP_LIMIT, TIP_MINI_IN_PRIORITY, DEFAULT_SWAP_PUMP_LAMPORTS, SOLANA_MAX_TX_SERIALIZE_SIGN } from '../config';
+import { createSwapCompleteInstruction, createSwapPrepareInstruction, createTipTransferInstruction, priorityFeeInstruction, versionedTra } from "./InstructionCreator";
 export function resetInstructions(transactionMessage, newInputAmount, newOutputAmount) {
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
         const tempInstruction = transactionMessage.instructions[i];
@@ -12,10 +12,8 @@ export function resetInstructions(transactionMessage, newInputAmount, newOutputA
             const instructionId = tempInstruction.data.readUInt32LE(0);
             if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
                 const readBigUInt64LE = tempInstruction.data.readBigUInt64LE(4);
-                console.log("转账数量 = " + readBigUInt64LE);
                 if (DEFAULT_SWAP_SOL_LAMPORTS == readBigUInt64LE || DEFAULT_SWAP_PUMP_LAMPORTS == readBigUInt64LE) {
                     const transferData = dataHex.slice(0, dataHex.length - 16) + newInputAmountHex;
-                    console.log("转账数量修改为 = " + transferData);
                     tempInstruction.data = Buffer.from(transferData, "hex");
                 }
             }
@@ -38,27 +36,23 @@ export function resetInstructions(transactionMessage, newInputAmount, newOutputA
             }
         }
         const dexProgramIndex = SUPPORT_CHANGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58());
-        console.log("程序地址 = " + tempInstruction.programId.toBase58());
         if (dexProgramIndex >= 0) {
-            console.log("swap指令 = " + dataHex);
-            console.log("dex程序地址 = " + tempInstruction.programId.toBase58());
             const beforeInput = dataHex.substring(SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex], SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16);
-            console.log("beforeInput = " + beforeInput);
             const beforeInputHex = beforeInput.match(/.{2}/g)?.reverse().join("") || "";
             const bigIntBeforeInput = BigInt("0x" + beforeInputHex);
             console.log("修改前输入的代币数量 = " + bigIntBeforeInput);
             const beforeOutput = dataHex.substring(SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16, SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16 * 2);
-            console.log("beforeOutput = " + beforeOutput);
             const beforeOutputHex = beforeOutput.match(/.{2}/g)?.reverse().join("") || "";
             const bigIntBeforeOutput = BigInt("0x" + beforeOutputHex);
             console.log("修改前输出的代币数量 = " + bigIntBeforeOutput);
             const swapInstructionBuffer = Buffer.alloc(8);
             swapInstructionBuffer.writeBigUInt64LE(newInputAmount);
             const newInputReverseHex = swapInstructionBuffer.toString("hex");
+            console.log("修改后输入的代币数量 = " + newInputAmount);
             swapInstructionBuffer.writeBigUInt64LE(newOutputAmount);
             const newOutputReverseHex = swapInstructionBuffer.toString("hex");
+            console.log("修改后输出的代币数量 = " + newOutputAmount);
             let replaceHex = newInputReverseHex.concat(newOutputReverseHex);
-            console.log("replaceHex = " + replaceHex);
             if (tempInstruction.programId.toBase58() ==
                 PUMP_PROGRAM_ID.toBase58() &&
                 dataHex.startsWith(PUEM_INSTRUCTION_PREFIX)) {
@@ -67,7 +61,6 @@ export function resetInstructions(transactionMessage, newInputAmount, newOutputA
             const finalData = dataHex.slice(0, SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex]) +
                 replaceHex +
                 dataHex.slice(SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16 * 2);
-            console.log("修改结束 = " + finalData);
             tempInstruction.data = Buffer.from(finalData, "hex");
         }
     }
@@ -112,11 +105,11 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
     const beforeTransaction = new VersionedTransaction(beforeMeessage);
     const serializedBeforeTransaction = beforeTransaction.serialize();
     const beforeTxSize = serializedBeforeTransaction.length;
-    const swapPrepareIx = await createBuySwapPrepareInstruction(currentSymbol, owner, HS.network);
-    const swapCompletedIx = await createBuySwapCompletedInstruction(currentSymbol, owner, HS.network);
+    const swapPrepareIx = await createSwapPrepareInstruction(currentSymbol, owner, HS.network);
+    const swapCompletedIx = await createSwapCompleteInstruction(currentSymbol, owner, HS.network);
     let priorityFee = Number(currentSymbol.priorityFee);
+    transactionMessage.instructions.splice(0, 2);
     if (currentSymbol.tradeType != 0) {
-        transactionMessage.instructions.splice(0, 2);
         transactionMessage.instructions.splice(0, 0, swapPrepareIx);
         transactionMessage.instructions.push(swapCompletedIx);
         if (priorityFee >= TIP_MINI_IN_PRIORITY) {
@@ -142,17 +135,25 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
         }
     }
     else {
+        const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(DEFAULD_SOLANA_SWAP_LIMIT, priorityFee);
+        transactionMessage.instructions.splice(0, 0, addPriorityLimitIx);
+        transactionMessage.instructions.splice(0, 0, addPriorityPriceIx);
         const swapPrepareTx = await versionedTra([swapPrepareIx], owner, recentBlockhash, addressLookupTableAccounts);
         const swapTx = await versionedTra(transactionMessage.instructions, owner, recentBlockhash, addressLookupTableAccounts);
         const swaCompletedTx = await versionedTra([swapCompletedIx], owner, recentBlockhash, addressLookupTableAccounts);
         const randomIndex = Math.floor(Math.random() * JITO_FEE_ACCOUNT.length);
         const tipIx = await createTipTransferInstruction(owner.publicKey, new PublicKey(JITO_FEE_ACCOUNT[randomIndex]), BigInt(priorityFee));
         const tipTx = await versionedTra([tipIx], owner, recentBlockhash, addressLookupTableAccounts);
-        return [
+        const simulateTx = await versionedTra([swapPrepareIx, ...transactionMessage.instructions, swapCompletedIx, tipIx], owner, recentBlockhash, addressLookupTableAccounts);
+        const txArray = [
             tipTx,
             swapPrepareTx,
             swapTx,
             swaCompletedTx
         ];
+        if (simulateTx.serialize().length < SOLANA_MAX_TX_SERIALIZE_SIGN) {
+            txArray.push(simulateTx);
+        }
+        return txArray;
     }
 }

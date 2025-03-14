@@ -1,6 +1,7 @@
 import axios from "axios";
 
 export const swapSign = async (chainId: number, walletAddress: string) => {
+  if (chainId === 102) return {}
   const url = `/api/frontend/public/swap/commission`;
   const response = await axios.post(
     url,

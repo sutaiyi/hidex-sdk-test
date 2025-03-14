@@ -93,19 +93,20 @@ class DexFeeService {
         const dexFeeAmount = Number(amountOut) * (1 - dexWalletFee);
         return Math.floor(dexFeeAmount);
     }
-    async getDexFeeAmount(currentSymbol, bigOut) {
+    async getDexFeeAmount({ isBuy, buyAmount, inviter }) {
         const { dexFee, inviterDiscount } = await this.getDexFee();
-        const useDexFee = currentSymbol.inviter && currentSymbol.inviter !== zero ? inviterDiscount : dexFee;
-        if (currentSymbol.isBuy) {
-            const dexFeeAmount = Math.floor(Number(currentSymbol.amountIn) * useDexFee);
+        const useDexFee = inviter && inviter !== zero ? inviterDiscount : dexFee;
+        if (isBuy) {
+            const dexFeeAmount = Math.floor(Number(buyAmount) * useDexFee);
             return dexFeeAmount.toString();
         }
-        const amountOut = bigOut.toString();
-        const dexFeeAmount = Math.floor(Number(amountOut) * useDexFee);
-        return dexFeeAmount.toString();
+        return '0';
     }
     async getAmountOutMin(currentSymbol, minOutAmount) {
         console.log("getAmountOutMin", currentSymbol, minOutAmount);
+        if (currentSymbol.compile) {
+            return minOutAmount;
+        }
         const amountOut = this.getAmountOut(minOutAmount);
         if (isMotherTrad(currentSymbol, this.network)) {
             return amountOut;

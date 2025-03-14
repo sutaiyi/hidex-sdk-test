@@ -4,6 +4,7 @@ import './assets/index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import HidexSDK from './hidexService'
+import Loading from './Loading';
 
 
 const root = ReactDOM.createRoot(
@@ -11,24 +12,25 @@ const root = ReactDOM.createRoot(
 );
 
 const Rend = () => {
+  const [loading, setLoading] = React.useState(true)
   const { utils } = HidexSDK;
 	useEffect(() => {
 		const initLoading = async () => {
 			try {
         await HidexSDK.init();
+        setLoading(false);
       } catch (error) {
         const {code, message} = utils.getErrorMessage(error)
         if (code === 13001) {
           alert(message)
         }
+        setLoading(false);
       }
 		};
 		initLoading();
 	}, []);
 	return (
-    <React.StrictMode>
-    <App />
-  </React.StrictMode>
+    loading ? <Loading/> : <App />
 	);
 };
 

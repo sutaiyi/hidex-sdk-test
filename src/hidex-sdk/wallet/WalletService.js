@@ -9,8 +9,8 @@ import { Keypair } from '@solana/web3.js';
 import * as bip39 from 'bip39';
 import bs58 from 'bs58';
 import { derivePath } from 'ed25519-hd-key';
-import { ownerKeypair } from '../trade/sol/config';
 import nacl from 'tweetnacl';
+let mapWalletCache = new Map();
 class WalletService {
     password;
     atpkeys;
@@ -18,7 +18,6 @@ class WalletService {
     HS;
     setWalletTimer;
     setBootdOsssTimer;
-    mapWalletCache = new Map();
     mapBootedOss = new Map();
     constructor(options) {
         this.setWalletTimer = null;
@@ -27,7 +26,6 @@ class WalletService {
         this.atpkeys = [];
         this.HS = options;
         this.ADDRESS_PATH_TYPE = this.getChainsPath();
-        this.mapWalletCache = ossStore.getWalletCacheMap();
     }
     cloudBootedOss() {
         return {
@@ -50,34 +48,30 @@ class WalletService {
             },
         };
     }
-    walletCatch() {
-        return {
-            getWalletItem: async (catcher, key) => {
-                try {
-                    const res = await ossStore.getWalletItem(catcher, key);
-                    this.mapWalletCache = await ossStore.getWalletCacheMap();
-                    return res;
-                }
-                catch (error) {
-                    throw new Error(error);
-                }
-            },
-            setWalletItem: async (catcher, key, value) => {
-                const res = await ossStore.setWalletItem(catcher, key, value);
-                this.mapWalletCache = ossStore.getWalletCacheMap();
-                return res;
-            },
-        };
+    async getWalletCatch(catcher, key) {
+        try {
+            const res = await ossStore.getWalletItem(catcher, key);
+            mapWalletCache = await ossStore.getWalletCacheMap();
+            return res;
+        }
+        catch (error) {
+            throw new Error(error);
+        }
+    }
+    async setWalletCatch(catcher, key, value) {
+        const res = await ossStore.setWalletItem(catcher, key, value);
+        mapWalletCache = ossStore.getWalletCacheMap();
+        return res;
     }
     async walletInit() {
         const walletStore = this.getWalletStore();
         const bootedOss = deepCopy(this.getBootedOss());
-        console.log('walletInit', walletStore, bootedOss);
+        console.log('walletInit', walletStore, bootedOss, walletStore.walletList);
         if (!walletStore.walletList?.length || walletStore.pathIndex !== bootedOss.pathIndex) {
             console.log('walletRest');
             const maxPathIndex = bootedOss.pathIndex;
             let id = 0;
-            console.log('bootedOss', bootedOss);
+            console.log('bootedOsssss', bootedOss);
             for (const key of Object.keys(bootedOss.walletBooted)) {
                 if (key.includes('MNEMONIC_HASH')) {
                     id++;
@@ -234,7 +228,7 @@ class WalletService {
             accountList: [account],
             id,
         };
-        return this.setWalletList(walletList, pathIndex, walletName);
+        return await this.setWalletList(walletList, pathIndex, walletName);
     }
     async createPrivateWallet(privateKey) {
         await this.verifyPassword(this.password);
@@ -368,14 +362,15 @@ class WalletService {
         return walletStore.walletList || [];
     }
     getWalletStore() {
-        const walletStore = this.mapWalletCache.get('walletDataByMap') || defalutWalletStore;
+        const walletStore = mapWalletCache.get('walletDataByMap');
+        console.log(deepCopy(walletStore), 'walletStore');
         return walletStore;
     }
     async setWalletStore(walletStore) {
-        this.mapWalletCache.set('walletDataByMap', walletStore);
+        mapWalletCache.set('walletDataByMap', walletStore);
         global.clearTimeout(this.setWalletTimer);
         this.setWalletTimer = global.setTimeout(() => {
-            this.walletCatch().setWalletItem(this.HS.catcher, 'all', walletStore);
+            this.setWalletCatch(this.HS.catcher, 'all', walletStore);
         }, 500);
     }
     getBootedOss() {
@@ -501,13 +496,14 @@ class WalletService {
         return true;
     }
     eventSecretCode() {
-        keysing.on('EventSecretCode', (value) => {
-            this.password = value;
-            this.setUnlocked();
-            if (!value) {
+        const secret = (code) => {
+            this.password = code ? code : keysing.get();
+            if (!this.password) {
                 this.setLocked();
             }
-        });
+        };
+        secret('');
+        keysing.on('EventSecretCode', secret);
     }
     async exportMnemonics(password, walletId) {
         await this.verifyPassword(password);
@@ -752,7 +748,7 @@ class WalletService {
             return signature;
         }
         const messageUint8 = new TextEncoder().encode(message);
-        const signature = nacl.sign.detached(messageUint8, ownerKeypair(privateKey).secretKey);
+        const signature = nacl.sign.detached(messageUint8, this.HS.utils.ownerKeypair(privateKey).secretKey);
         return bs58.encode(signature);
     }
 }

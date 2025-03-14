@@ -4,7 +4,9 @@ declare class KeyRuntimeController {
         [key: string]: string;
     };
     constructor();
-    initKeyRuntime(catcher: ICatcher): Promise<void>;
+    initKeyRuntime(catcher: ICatcher): Promise<{
+        value: string;
+    }>;
     sendMessage(message: any, sendResponse: any, catcher: ICatcher): Promise<void>;
 }
 declare const _default: KeyRuntimeController;

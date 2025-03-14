@@ -4,6 +4,7 @@ declare class KeysingController extends EventEmitter {
     secretCode: string | null;
     constructor();
     keysingInitialized(catcher: ICatcher): Promise<void>;
+    get(): string;
     messageConfirm(message: string): boolean;
     messageProcess(message: {
         type: string;

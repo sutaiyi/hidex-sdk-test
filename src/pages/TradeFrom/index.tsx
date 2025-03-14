@@ -107,6 +107,8 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           chainId: network.getChainIdByChainName(chainName),
           balance: strToNumberByDecimals(balance, currentNetwork.tokens[0].decimals), 
           tokenBalance: strToNumberByDecimals(tokenBalance, result?.token.decimals),
+          balanceStr: balance,
+          tokenBalanceStr: tokenBalance,
           symbol: network.get().tokens[0].symbol
         }
         setSelected(tradeInfo)
