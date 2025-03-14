@@ -102,6 +102,7 @@ class TradeService extends EventEmitter {
         throw new Error('app undefined');
     };
     getSwapPath = async (currentSymbol) => {
+        console.log('路由参数', currentSymbol);
         const result = await this.app?.getSwapPath(currentSymbol);
         if (result) {
             return result;
@@ -109,6 +110,7 @@ class TradeService extends EventEmitter {
         throw new Error('app undefined');
     };
     getSwapEstimateGas = async (currentSymbol, path, accountAddress) => {
+        console.log('预估参数', currentSymbol, path, accountAddress);
         const result = await this.app?.getSwapEstimateGas(currentSymbol, path, accountAddress);
         if (result) {
             return result;

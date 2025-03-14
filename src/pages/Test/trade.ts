@@ -158,20 +158,17 @@ const tradeFun: any = {
       const { address } = account
       const currentChain = await network.choose(chainName);
       const { currentSymbol } = await getCurrentSymbolTest(info, { isBuy, isPump: false, currentChain });
-
-
-      console.log('currentChain', currentChain);
       // 实际买入金额
       const buyAmount = (0.0001 * Math.pow(10, currentChain.tokens[1].decimals)).toString();
       currentSymbol.compile = getBeforeTradeData(isBuy, chainName, token.address)
-      // 交易费用
+      // 交易手续费用
       currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount({ isBuy, buyAmount, inviter: currentSymbol.inviter });
 
       // 实际购买金额
       currentSymbol.amountIn = (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
 
       // 当前时时价格
-      currentSymbol.currentPrice = (Math.floor(priceUSD * Math.pow(10, currentChain.tokens[1].decimals))).toString();
+      currentSymbol.currentPrice = priceUSD;
 
       console.time('swapPath&swapSignTimer');
       const [swapPath, signRes] = await Promise.all([
@@ -234,44 +231,23 @@ const tradeFun: any = {
         alert('请选择代币');
       }
       console.time('tradeTimer');
-      const { chainName, account, token, balanceToken } = info;
-      const currentChain = await network.choose(chainName);
-      const { address } = account
+      const { chainName, account, token, balance, priceUSD } = info;
       const isBuy = false; // 卖出
-      const tokenAddress = token.address;
-      const decimals = token.decimals;
-      console.log('卖出Token地址===>', tokenAddress);
-      if (balanceToken < 0.01) {
-        alert('余额不足');
-        return;
-      }
-      const amountIn = (0.01 * Math.pow(10, decimals)).toString(); // 卖出 0.01 Token
+      const { address } = account
+      const currentChain = await network.choose(chainName);
+      const { currentSymbol } = await getCurrentSymbolTest(info, { isBuy, isPump: false, currentChain });
+      // 实际卖出金额
+      const buyAmount = (0.001 * Math.pow(10, token.decimals)).toString();
+      currentSymbol.compile = getBeforeTradeData(isBuy, chainName, token.address)
+      // 交易手续费用
+      currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount({ isBuy, buyAmount, inviter: currentSymbol.inviter });
 
-      const inToken = currentChain?.tokens[0]; // 具体以页面显示的代币为主
-      const currentSymbol = {
-        in: inToken,
-        out: {
-          address: tokenAddress,
-          decimals,
-          name: '',
-          symbol: '',
-        },
-        amountIn, // 兑换数量
-        slipPersent: 0.05, // 滑点5%
-        amountOutMin: '', // 最少得到数量
-        dexFeeAmount: '', // 交易手续费
-        priorityFee: (0.003 * Math.pow(10, 18)).toString(), // 优先费
-        inviter: '', // 邀请地址
-        isBuy,
-        networkFee: {
-          value: 0, unit: '', gasPrice: '', gasLimit: 0
-        },
-        poolAddress: '',  // 池子地址
-        bribeFee: '',  // 贿赂费给平台比如（jito...）
-        tradeType: 0,
-        isPump: false,
-        TOKEN_2022: false,
-      };
+      // 实际卖出金额
+      currentSymbol.amountIn = (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
+
+      // 当前时时价格
+      currentSymbol.currentPrice = priceUSD
+
       console.time('swapPath&swapSignTimer');
       const [swapPath, signRes] = await Promise.all([
         trade.getSwapPath(currentSymbol),
@@ -280,13 +256,12 @@ const tradeFun: any = {
       console.timeEnd('swapPath&swapSignTimer');
 
       console.time('dexFeeTimer')
-      currentSymbol.amountOutMin = await dexFee.getAmountOutMin(currentSymbol, swapPath.minOutAmount.toString());
-      currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount(currentSymbol, swapPath.minOutAmount.toString());
+      currentSymbol.amountOutMin = await dexFee.getAmountOutMin(currentSymbol, swapPath.minOutAmount);
       console.timeEnd('dexFeeTimer')
 
 
       console.time('approveTimer')
-      // 交易授权
+      // ETH系交易授权
       if (!currentSymbol.isBuy) {
         await trade.approve.execute(currentSymbol.in.address, address, currentChain.deTrade);
         console.log('Swapp Approved');
@@ -296,11 +271,11 @@ const tradeFun: any = {
 
       // ETH系需要获取交易签名
       Object.assign(currentSymbol, {
-        inviter: signRes.inviterAddress,
-        feeRate: signRes.feeRate,
-        commissionRate: signRes.commissionRate,
-        contents: signRes.contents,
-        signature: signRes.signature
+        inviter: currentSymbol.inviter ? currentSymbol.inviter : signRes.inviterAddress || '',
+        feeRate: signRes.feeRate || 0,
+        commissionRate: signRes.commissionRate || 0,
+        contents: signRes.contents || '',
+        signature: signRes.signature || ''
       });
 
 
@@ -312,8 +287,8 @@ const tradeFun: any = {
       console.time('getNetWorkFeesTimer');
       const networkFeeArr = await trade.getNetWorkFees(estimateResult.gasLimit)
       currentSymbol.networkFee = networkFeeArr[1];
-      const minBalance = await trade.getSwapFees(currentSymbol);
-      console.log('最少得有多少母币余额==>', minBalance);
+      const needFee = await trade.getSwapFees(currentSymbol);
+      console.log('最少得有多少母币余额（未加上用户支付的母币数量）==>', needFee);
       console.timeEnd('getNetWorkFeesTimer');
 
       console.time('tradeswapTimer');

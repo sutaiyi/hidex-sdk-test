@@ -54,11 +54,10 @@ export interface IDefiApi {
         swapTransaction: string;
         outAmount: string;
     }>;
-    submitSwap(currentSymbol: CurrentSymbol, transaction: Transaction): Promise<{
+    submitSwap(currentSymbol: CurrentSymbol, transaction: VersionedTransaction): Promise<{
         success: boolean;
         hash: string;
         currentSymbol: CurrentSymbol;
-        transaction: Transaction;
     }>;
     submitSwapByJito(transactions: Array<Transaction>): Promise<{
         success: boolean;

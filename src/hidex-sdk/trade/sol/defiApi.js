@@ -52,7 +52,6 @@ class DefiApi {
                     success: true,
                     hash: signatureBase58[0],
                     currentSymbol,
-                    transaction
                 };
             }
             if (response.status === 200 && response.data?.code !== 0) {

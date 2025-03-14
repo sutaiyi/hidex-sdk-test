@@ -8,7 +8,7 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentChain }: 
   currentChain: ChainItem,
   address: string
 }> => {
-  const { token, account, balanceTokenStr, inviter } = info;
+  const { token, account, tokenBalanceStr, inviter } = info;
   const { address } = account;
   const tokenAddress = token.address;
   const decimals = token.decimals;
@@ -21,7 +21,7 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentChain }: 
   }
   const testNumber = isPump ? 0.5 : 5;
   const buyTestAmount = (testNumber * Math.pow(10, inToken.decimals)).toString();
-  const amountIn = isBuy ? buyTestAmount : balanceTokenStr;
+  const amountIn = isBuy ? buyTestAmount : tokenBalanceStr;
   const currentSymbol = {
     in: isBuy ? inToken : outToken,
     out: isBuy ? outToken : inToken,
@@ -29,7 +29,7 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentChain }: 
     slipPersent: 0.05, // 滑点5%
     amountOutMin: '0', // 最少得到数量
     dexFeeAmount: '0', // 交易手续费
-    priorityFee: (0.006 * Math.pow(10, 9)).toString(), // 优先费
+    priorityFee: (0.0002 * Math.pow(10, 9)).toString(), // 优先费
     inviter, // 邀请地址
     isBuy,
     networkFee: {
@@ -37,7 +37,7 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentChain }: 
     },
     poolAddress: '',  // 池子地址
     bribeFee: '',  // 贿赂费给平台比如（jito...）
-    tradeType: 0,
+    tradeType: 1,
     isPump,
     TOKEN_2022: false,
   };
@@ -50,13 +50,12 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentChain }: 
 const setBeforeTradeData = async (info: any, { isBuy, isPump, currentChain }: { isBuy: boolean, isPump: boolean, currentChain: ChainItem }) => {
   const { token } = info;
   const { currentSymbol, address } = await getCurrentSymbolTest(info, { isBuy, isPump, currentChain });
+  console.log(currentSymbol, address)
   const { success, swapTransaction } = await trade.defiApi.swapRoute(currentSymbol, address)
   if (!success) {
     return;
   }
   const compile = await trade.compileTransaction(swapTransaction)
-  console.log(compile)
-
   const mapItems = beforeTradeDataMap.get('compiles') || {};
   mapItems[`${isBuy}_${currentChain.chain}_${token.address}`] = compile
   beforeTradeDataMap.set('compiles', mapItems)
@@ -65,7 +64,6 @@ const setBeforeTradeData = async (info: any, { isBuy, isPump, currentChain }: { 
 
 const getBeforeTradeData = (isBuy: boolean, chainName: string, tokenAddress: string) => {
   const mapItems = beforeTradeDataMap.get('compiles')
-  console.log(mapItems, isBuy, chainName, tokenAddress)
   return mapItems[`${isBuy}_${chainName}_${tokenAddress}`];
 }
 

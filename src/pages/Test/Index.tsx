@@ -17,6 +17,7 @@ const Test = React.memo( () => {
       if (tradeInfo?.token?.address) {
         const currentChain = await network.choose(tradeInfo.chainName)
         setBeforeTradeData(tradeInfo, { isBuy: true, isPump: false, currentChain });
+        setBeforeTradeData(tradeInfo, { isBuy: false, isPump: false, currentChain });
       }
     })()
   }, [tradeInfo]);

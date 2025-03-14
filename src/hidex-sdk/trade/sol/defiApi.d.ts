@@ -1,5 +1,5 @@
 import { CurrentSymbol, IDefiApi } from '../interfaces';
-import { BlockhashWithExpiryBlockHeight, Transaction } from '@solana/web3.js';
+import { BlockhashWithExpiryBlockHeight, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { INetworkService } from '../../network/interfaces';
 declare class DefiApi implements IDefiApi {
     clearTimer: NodeJS.Timeout | null;
@@ -11,11 +11,10 @@ declare class DefiApi implements IDefiApi {
         swapTransaction: string;
         outAmount: string;
     }>;
-    submitSwap(currentSymbol: CurrentSymbol, transaction: Transaction): Promise<{
+    submitSwap(currentSymbol: CurrentSymbol, transaction: VersionedTransaction): Promise<{
         success: boolean;
         hash: string;
         currentSymbol: CurrentSymbol;
-        transaction: Transaction;
     }>;
     submitSwapByJito(transactions: Array<Transaction>): Promise<{
         success: boolean;

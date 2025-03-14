@@ -181,12 +181,11 @@ export const solService = (HS) => {
             const owner = HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress));
             console.log('compileUse', compileUse);
             if (compileUse) {
-                const isSupport = isInstructionsSupportReset(compile['message']);
+                const isSupport = isInstructionsSupportReset(compileUse['message']);
                 if (isSupport) {
-                    resetResult = resetInstructions(compile['message'], BigInt(amountIn), BigInt(amountOutMin));
+                    resetResult = resetInstructions(compileUse['message'], BigInt(amountIn), BigInt(amountOutMin));
                     txArray = await getTransactionsSignature(resetResult, compileUse['addressesLookup'], defiApi.lastBlockHash.blockhash, currentSymbol, owner, HS);
                 }
-                console.log('isSupport', isSupport);
             }
             if (txArray.length === 0) {
                 const { success, swapTransaction } = await defiApi.swapRoute(currentSymbol, accountAddress);
@@ -194,8 +193,13 @@ export const solService = (HS) => {
                     throw new Error('Failed to swap' + path);
                 }
                 compileUse = await compileTransaction(swapTransaction, HS);
-                resetResult = compileUse['message'];
-                console.log('defiApi.lastBlockHash.blockhash', defiApi.lastBlockHash);
+                const isSupport = isInstructionsSupportReset(compileUse['message']);
+                if (isSupport) {
+                    resetResult = resetInstructions(compileUse['message'], BigInt(amountIn), BigInt(amountOutMin));
+                }
+                else {
+                    resetResult = compileUse['message'];
+                }
                 txArray = await getTransactionsSignature(resetResult, compileUse['addressesLookup'], defiApi.lastBlockHash.blockhash, currentSymbol, owner, HS);
             }
             console.time('timer simulateTransaction');

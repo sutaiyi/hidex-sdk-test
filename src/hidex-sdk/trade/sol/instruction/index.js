@@ -135,9 +135,6 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
         }
     }
     else {
-        const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(DEFAULD_SOLANA_SWAP_LIMIT, priorityFee);
-        transactionMessage.instructions.splice(0, 0, addPriorityLimitIx);
-        transactionMessage.instructions.splice(0, 0, addPriorityPriceIx);
         const swapPrepareTx = await versionedTra([swapPrepareIx], owner, recentBlockhash, addressLookupTableAccounts);
         const swapTx = await versionedTra(transactionMessage.instructions, owner, recentBlockhash, addressLookupTableAccounts);
         const swaCompletedTx = await versionedTra([swapCompletedIx], owner, recentBlockhash, addressLookupTableAccounts);
