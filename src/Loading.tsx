@@ -1,7 +1,7 @@
 function Laoding() {
   return (
     <div className="Laoding">
-      loading
+      loading...
     </div>
   );
 }
