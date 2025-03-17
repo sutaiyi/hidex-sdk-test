@@ -22,7 +22,7 @@ const Rend = () => {
       } catch (error) {
         const {code, message} = utils.getErrorMessage(error)
         if (code === 13001) {
-          alert(message + ', 点击 Wallet 下的解锁即可')
+          alert(message + ', 进入《Hidex SDK 调试》点击 Wallet 下的解锁即可')
         }
         setLoading(false);
       }
