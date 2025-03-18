@@ -13,11 +13,16 @@ const root = ReactDOM.createRoot(
 
 const Rend = () => {
   const [loading, setLoading] = React.useState(true)
-  const { utils } = HidexSDK;
+  const { utils, trade } = HidexSDK;
 	useEffect(() => {
 		const initLoading = async () => {
 			try {
         await HidexSDK.init();
+        trade.checkHash.on('HashStatusEvent', (data) => {
+          console.log('HashStatusEvent', data)
+          console.timeEnd('tradeFullTimer');
+          alert('交易状态: ' + data.status)
+        })
         setLoading(false);
       } catch (error) {
         const {code, message} = utils.getErrorMessage(error)

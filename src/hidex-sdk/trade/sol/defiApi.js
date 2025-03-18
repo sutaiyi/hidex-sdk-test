@@ -107,16 +107,19 @@ class DefiApi {
             if (response.status === 200 && response.data?.code === 0) {
                 const { data } = response.data;
                 if (data.expired) {
-                    return 'expired';
+                    return 'Expired';
                 }
-                if (data.success) {
-                    return 'success';
+                if (data.success && !data.err) {
+                    return 'Confirmed';
+                }
+                if (data.failed) {
+                    return 'Failed';
                 }
             }
-            throw new Error('Error');
+            throw new Error('Get Transaction Status Error');
         }
         catch (error) {
-            return 'error' + error;
+            return 'Pending';
         }
     }
 }

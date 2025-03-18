@@ -31,7 +31,6 @@ export default defineConfig({
 				target: 'https://hidex.open.name',
 				changeOrigin: true,
 			},
-
 			'/gmgn': {
 				target: 'https://hidex.open.name',
 				changeOrigin: true,

@@ -173,32 +173,40 @@ const walletTest: any = {
     }
   },
   清空钱包: async () => {
-    try {
-      await wallet.clearWallet('123123')
-      alert('清空成功')
-    } catch (error) {
-      console.error(error);
-      alert(error);
+    if (window.confirm('确定要清空钱包吗？')) {
+      try {
+        await wallet.clearWallet('123123')
+        alert('清空成功')
+      } catch (error) {
+        console.error(error);
+        alert(error);
+      }
     }
   },
   删除单个钱包: async () => {
-    try {
-      const walletId = 0;
-      await wallet.deleteWallet('123123', walletId)
-      alert('删除成功')
-    } catch (error) {
-      console.error(error);
-      alert(error);
+    if (window.confirm('确定要删除单个钱包吗？')) {
+      try {
+        const walletId = 0;
+        await wallet.deleteWallet('123123', walletId)
+        alert('删除成功')
+      } catch (error) {
+        console.error(error);
+        alert(error);
+      }
     }
+
   },
   删除单个账号: async () => {
-    try {
-      await wallet.deleteWalletAccount('123123', 0, 0)
-      alert('删除成功')
-    } catch (error) {
-      console.error(error);
-      alert(error);
+    if (window.confirm('确定要删除单个账号吗？')) {
+      try {
+        await wallet.deleteWalletAccount('123123', 0, 0)
+        alert('删除成功')
+      } catch (error) {
+        console.error(error);
+        alert(error);
+      }
     }
+
   },
 
 }

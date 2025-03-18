@@ -1,10 +1,11 @@
 import { ethService } from './eth/index';
 import { solService } from './sol/index';
-import { defaultChainID } from '../common/config';
+import { defaultChainID, ETH_SERIES } from '../common/config';
 import ApproveService from './utils/approve';
 import { compileTransaction, resetInstructions, getTransactionsSignature, isInstructionsSupportReset } from './sol/instruction/index';
 import EventEmitter from '../common/eventEmitter';
 import DefiApi from './sol/defiApi';
+import TradeHashStatusService from './TradeHashStatusService';
 class TradeService extends EventEmitter {
     app;
     chainId;
@@ -12,12 +13,14 @@ class TradeService extends EventEmitter {
     HS;
     approve;
     defiApi;
+    checkHash;
     constructor(options) {
         super();
         this.chainId = defaultChainID;
         this.app = defaultChainID === 102 ? solService(options) : ethService(options);
         this.HS = options;
         this.approve = new ApproveService({ ...options, trade: this });
+        this.checkHash = new TradeHashStatusService({ ...options, trade: this });
         this.defiApi = DefiApi;
         this.defiApi.getLatestBlockhash(this.HS.network);
     }
@@ -125,7 +128,7 @@ class TradeService extends EventEmitter {
         throw new Error('app undefined');
     };
     swap = async (currentSymbol, transaction, accountAddress) => {
-        console.log('执行参数');
+        console.log('Swap执行参数');
         console.log(currentSymbol, transaction, accountAddress);
         const result = await this.app?.swap(currentSymbol, transaction, accountAddress);
         if (result) {
@@ -133,5 +136,11 @@ class TradeService extends EventEmitter {
         }
         throw new Error('app undefined');
     };
+    getHashStatus(hash, chain) {
+        if (ETH_SERIES.includes(this.HS.network.get(chain).chain)) {
+            return ethService(this.HS).hashStatus(hash, chain);
+        }
+        return solService(this.HS).hashStatus(hash);
+    }
 }
 export default TradeService;

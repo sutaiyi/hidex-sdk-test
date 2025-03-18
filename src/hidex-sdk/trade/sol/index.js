@@ -161,12 +161,11 @@ export const solService = (HS) => {
         },
         getSwapPath: async (currentSymbol) => {
             let minOutAmount = '0';
-            const slipPersent = currentSymbol.isPump ? 1 : currentSymbol.slipPersent;
             if (currentSymbol.isBuy && currentSymbol.currentPrice) {
-                minOutAmount = (Math.floor(Number(currentSymbol.amountIn) / Number(currentSymbol.currentPrice) * slipPersent)).toString();
+                minOutAmount = (Math.floor(Number(currentSymbol.amountIn) / Number(currentSymbol.currentPrice))).toString();
             }
             if (!currentSymbol.isBuy && currentSymbol.currentPrice) {
-                minOutAmount = (Math.floor(Number(currentSymbol.amountIn) * Number(currentSymbol.currentPrice) * slipPersent)).toString();
+                minOutAmount = (Math.floor(Number(currentSymbol.amountIn) * Number(currentSymbol.currentPrice))).toString();
             }
             return {
                 minOutAmount,
@@ -202,17 +201,7 @@ export const solService = (HS) => {
                 }
                 txArray = await getTransactionsSignature(resetResult, compileUse['addressesLookup'], defiApi.lastBlockHash.blockhash, currentSymbol, owner, HS);
             }
-            console.time('timer simulateTransaction');
-            const vertransaction = txArray.length === 5 ? txArray[4] : txArray[0];
-            if (vertransaction) {
-                const connection = await network.getProviderByChain(102);
-                const simulateResponse = await connection.simulateTransaction(vertransaction, simulateConfig);
-                console.log('交易 - 预估', simulateResponse);
-                if (simulateResponse && simulateResponse?.value?.err) {
-                    throw new Error(JSON.stringify(simulateResponse.value.logs));
-                }
-            }
-            console.timeEnd('timer simulateTransaction');
+            console.log('txArray: ===>', txArray);
             return {
                 gasLimit: 0,
                 data: {
@@ -222,7 +211,7 @@ export const solService = (HS) => {
         },
         getSwapFees: async (currentSymbol) => {
             const { networkFee, dexFeeAmount } = currentSymbol;
-            const netFee = networkFee ? networkFee.value * 4 : 0.000024;
+            const netFee = networkFee ? networkFee.value * (currentSymbol.tradeType === 0 ? 4 : 2) : 0.000024;
             const dexFee = Number(dexFeeAmount) / Math.pow(10, 9);
             const mitToken = (2139280 * 2) / Math.pow(10, 9);
             const accountSave = 890880 / Math.pow(10, 9);
@@ -231,14 +220,27 @@ export const solService = (HS) => {
         },
         swap: async (currentSymbol, transaction) => {
             const { vertransactions } = transaction?.data;
-            let result = { success: false, hash: '' };
+            let submitPro = null;
             if (vertransactions?.length >= 4) {
-                result = await defiApi.submitSwapByJito(vertransactions.splice(0, 4));
+                submitPro = defiApi.submitSwapByJito(vertransactions.splice(0, 4));
             }
             else {
-                result = await defiApi.submitSwap(currentSymbol, vertransactions[0]);
+                submitPro = defiApi.submitSwap(currentSymbol, vertransactions[0]);
             }
-            return { error: !result.success, result: { hash: result.hash, vertransactions } };
+            const connection = await network.getProviderByChain(102);
+            const vertransaction = vertransactions.length === 5 ? vertransactions[4] : vertransactions[0];
+            const simulateResponsePro = connection.simulateTransaction(vertransaction, simulateConfig);
+            const [submitResult, simulateResponse] = await Promise.all([submitPro, simulateResponsePro]);
+            console.timeEnd('tradeTimer');
+            console.log('交易 - 预估', simulateResponse);
+            if (simulateResponse && simulateResponse?.value?.err) {
+                throw new Error(JSON.stringify(simulateResponse.value.logs));
+            }
+            return { error: !submitResult.success, result: { hash: submitResult.hash, vertransactions } };
+        },
+        hashStatus: async (hash) => {
+            const status = await defiApi.getSwapStatus(hash);
+            return { status };
         }
     };
 };

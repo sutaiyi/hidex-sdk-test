@@ -1,4 +1,4 @@
 import { OptionsCommon } from "../../main/interfaces";
-import { ITradeFunctions } from "../interfaces";
-export declare const ethService: (HS: OptionsCommon) => ITradeFunctions;
+import { ITradeAbout } from "../interfaces";
+export declare const ethService: (HS: OptionsCommon) => ITradeAbout;
 //# sourceMappingURL=index.d.ts.map

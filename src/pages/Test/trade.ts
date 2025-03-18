@@ -1,4 +1,6 @@
 import HidexSDK from "@/hidexService"
+import { HashStatus } from 'hidex-sdk';
+
 import { swapSign } from "./utils";
 import { getBeforeTradeData, getCurrentSymbolTest } from './solTrade'
 
@@ -152,6 +154,7 @@ const tradeFun: any = {
       if (!info) {
         alert('请选择代币');
       }
+      console.time('tradeFullTimer');
       console.time('tradeTimer');
       const { chainName, account, token, balance, priceUSD } = info;
       const isBuy = true; // 买入
@@ -217,19 +220,27 @@ const tradeFun: any = {
       const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
       console.timeEnd('tradeswapTimer');
       if (!error) {
-        alert('交易成功' + result.hash)
+        alert('交易已提交：' + result.hash)
+        const hashItem = {
+          chain: currentChain.chain,
+          hash: result.hash,
+          createTime: new Date().getTime(),
+          data: result.data
+        }
+        trade.checkHash.action(hashItem)
       }
-      console.log('交易结果==>', error, result);
+      console.log('交易HASH：', result)
     } catch (error) {
       console.log(utils.getErrorMessage(error).message)
       alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
     }
   },
-  '卖出0.01': async (info: any) => {
+  '卖出0.001': async (info: any) => {
     try {
       if (!info) {
         alert('请选择代币');
       }
+      console.time('tradeFullTimer');
       console.time('tradeTimer');
       const { chainName, account, token, balance, priceUSD } = info;
       const isBuy = false; // 卖出
@@ -290,19 +301,58 @@ const tradeFun: any = {
       const needFee = await trade.getSwapFees(currentSymbol);
       console.log('最少得有多少母币余额（未加上用户支付的母币数量）==>', needFee);
       console.timeEnd('getNetWorkFeesTimer');
-
       console.time('tradeswapTimer');
       const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
       console.timeEnd('tradeswapTimer');
       if (!error) {
-        alert('交易成功' + result.hash)
+        alert('交易已提交：' + result.hash)
+        const hashItem = {
+          chain: currentChain.chain,
+          hash: result.hash,
+          createTime: new Date().getTime(),
+          data: result.data
+        }
+        trade.checkHash.action(hashItem)
       }
-      console.log('交易结果==>', error, result);
+      console.log('交易HASH：', result)
     } catch (error) {
       console.log(utils.getErrorMessage(error).message)
       alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
     }
   },
+  '后台多条Hash状态查询': async () => {
+    try {
+      const hashItem1 = {
+        chain: 102,
+        hash: '42vm63Hz9vc2ekr9vNQ6EmS1RdEJzxPhu642Q1KaBumPFbgRrVHX7GQpkpREmfpJB5AyZNrmPqABP9ABZGEDvsmM',
+        createTime: new Date().getTime(),
+      }
+      const hashItem2 = {
+        chain: 102,
+        hash: '27Nhtf5dp6D8F4nmuAX5akXbwtMAiDViHyH9afVB2sdsdvNHgGHsahyGpj43AdUpZcdnmhRMtZJA6vPiY63yLPGL',
+        createTime: new Date().getTime(),
+      }
+      trade.checkHash.action(hashItem1)
+
+      setTimeout(() => {
+        trade.checkHash.action(hashItem2)
+      }, 1000)
+    } catch (error) {
+      console.log(utils.getErrorMessage(error).message)
+      alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
+    }
+  },
+  '单次Hash状态查询': async () => {
+    try {
+      const hashArr = ['SOLANA', '42vm63Hz9vc2ekr9vNQ6EmS1RdEJzxPhu642Q1KaBumPFbgRrVHX7GQpkpREmfpJB5AyZNrmPqABP9ABZGEDvsmV'] // SOLANA
+      // const hashArr = ['BASE', '0x78c2a5f7e7f8e40fc96492575e6794dc3976b81e21c7ed4e060b82ef9c7f3903'] // BASE
+      const result = await trade.getHashStatus(hashArr[1], hashArr[0])
+      console.log('Hash状态查询结果==>', result)
+    } catch (error) {
+      console.log(utils.getErrorMessage(error).message)
+      alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
+    }
+  }
 }
 
 export default tradeFun

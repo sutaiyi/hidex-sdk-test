@@ -29,7 +29,7 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentChain }: 
     slipPersent: 0.05, // 滑点5%
     amountOutMin: '0', // 最少得到数量
     dexFeeAmount: '0', // 交易手续费
-    priorityFee: (0.0002 * Math.pow(10, 9)).toString(), // 优先费
+    priorityFee: (0.0001 * Math.pow(10, 9)).toString(), // 优先费
     inviter, // 邀请地址
     isBuy,
     networkFee: {

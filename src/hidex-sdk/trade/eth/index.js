@@ -48,7 +48,7 @@ export const ethService = (HS) => {
         },
         getBalanceMultiple: async (chain, accountAddress, tokens) => {
             try {
-                const currentNetWork = await network.choose(chain);
+                const currentNetWork = await network.get(chain);
                 if (Object.entries(network.sysProviderRpcs).length === 0 && !network.sysProviderRpcs[chain]) {
                     const provider = await network.getFastestProviderByChain(chain);
                     const chillSwapContract = new ethers.Contract(currentNetWork.deTrade, abis.chillSwapABI, provider);
@@ -430,6 +430,26 @@ export const ethService = (HS) => {
             const receipt = await walletProvider.sendTransaction(sendParams);
             console.timeEnd('tradeTimer');
             return { error: null, result: receipt };
+        },
+        hashStatus: async (hash, chain = 1) => {
+            const profun = network.sysProviderRpcs[chain].map((v) => {
+                return v.getTransaction(hash).then((res) => {
+                    console.log(res);
+                    if (res && res.blockHash) {
+                        return res;
+                    }
+                    return Promise.reject('error hash');
+                }).catch((error) => {
+                    return Promise.reject(error);
+                });
+                ;
+            });
+            const statusResult = await Promise.any(profun);
+            console.log('ETH 状态查询 tradeStatus===', statusResult);
+            if (statusResult?.confirmations >= 2) {
+                return { status: 'Confirmed' };
+            }
+            return { status: 'Pending' };
         }
     };
 };

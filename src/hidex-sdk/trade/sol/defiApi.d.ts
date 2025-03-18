@@ -1,4 +1,4 @@
-import { CurrentSymbol, IDefiApi } from '../interfaces';
+import { CurrentSymbol, HashStatus, IDefiApi } from '../interfaces';
 import { BlockhashWithExpiryBlockHeight, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { INetworkService } from '../../network/interfaces';
 declare class DefiApi implements IDefiApi {
@@ -20,7 +20,7 @@ declare class DefiApi implements IDefiApi {
         success: boolean;
         hash: string;
     }>;
-    getSwapStatus(hash: string): Promise<any>;
+    getSwapStatus(hash: string): Promise<HashStatus>;
 }
 declare const _default: DefiApi;
 export default _default;

@@ -95,6 +95,16 @@ export function getTotalFee(currentSymbol) {
     const total = BigInt(Math.floor(fee)) + BigInt(5000 * 4);
     return total.toString();
 }
+export function deleteTransactionGasInstruction(instructions) {
+    let countToDelete = 0;
+    for (let i = 0; i < instructions.length; i++) {
+        const txIx = instructions[i];
+        if (txIx.programId.toBase58() == ComputeBudgetProgram.programId.toBase58()) {
+            countToDelete++;
+        }
+    }
+    instructions.splice(0, countToDelete);
+}
 export async function createSwapPrepareInstruction(currentSymbol, owner, network) {
     if (currentSymbol.isBuy) {
         return createBuySwapPrepareInstruction(currentSymbol, owner, network);
@@ -161,7 +171,7 @@ export async function createSaleSwapCompletedInstruction(currentSymbol, owner, n
     const type = new anchor.BN(currentSymbol.isPump ? 2 : 1);
     const dexCommissionRateBN = new anchor.BN(currentSymbol.feeRate);
     const inviterCommissionRateBN = new anchor.BN((currentSymbol.commissionRate || 0) * 10000);
-    const tradeType = new anchor.BN(currentSymbol.tradeType ? 1 : 0);
+    const tradeType = new anchor.BN(currentSymbol.tradeType > 0 ? 0 : 1);
     return program.methods
         .saleSwapCompleted(bump3, amount, tradeType, type, dexCommissionRateBN, inviterCommissionRateBN)
         .accounts({

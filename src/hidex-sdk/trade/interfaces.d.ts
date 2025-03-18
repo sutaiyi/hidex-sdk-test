@@ -1,5 +1,8 @@
 import { AddressLookupTableAccount, BlockhashWithExpiryBlockHeight, Transaction, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
 import { ChainItem, INetworkService, Provider } from '../network/interfaces';
+import { ICatcher } from '../catch/interfaces';
+import EventEmitter from '../common/eventEmitter';
+export type HashStatus = 'Confirmed' | 'Pending' | 'Failed' | 'Expired';
 export interface ITradeOthersFunction {
     defiApi: IDefiApi;
     changeTradeService(currentNetwork: ChainItem): void;
@@ -10,9 +13,13 @@ export interface ITradeOthersFunction {
         addressesLookup: AddressLookupTableAccount[];
     }>;
     getTransactionsSignature(transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any): Promise<Array<VersionedTransaction>>;
+    getHashStatus(hash: string, chain: string | number): Promise<{
+        status: HashStatus;
+    }>;
 }
 export interface ITradeService extends ITradeFunctions, ITradeOthersFunction {
     approve: IApproveService;
+    checkHash: ITradeHashStatusService;
 }
 export interface ITradeFunctions {
     getBalance(accountAddress: string, tokenAddress?: string, provider?: Provider): Promise<string>;
@@ -44,6 +51,25 @@ export interface ITradeFunctions {
         result: any;
     }>;
 }
+export interface ITradeAbout extends ITradeFunctions {
+    hashStatus(hash: string, chain?: string | number): Promise<{
+        status: HashStatus;
+    }>;
+}
+export interface ITradeHashStatusService extends EventEmitter {
+    getHashes: () => Promise<Array<HashStatusParams>>;
+    setHash: (catcher: ICatcher, hashItem: HashStatusParams) => Promise<boolean>;
+    action: (hashItem: HashStatusParams) => Promise<void>;
+}
+export type HashStatusParams = {
+    hash: string;
+    chain: string | number;
+    status?: HashStatus;
+    createTime: number;
+    updateTime?: number;
+    timer?: any;
+    data?: any;
+};
 export interface IDexFeeService {
 }
 export interface IDefiApi {

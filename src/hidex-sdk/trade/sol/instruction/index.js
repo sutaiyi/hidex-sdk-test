@@ -1,6 +1,6 @@
 import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount, PublicKey, } from "@solana/web3.js";
 import { SUPPORT_CHANGE_PROGRAM_IDS, HIDEX_ADDRESS_LOOK_UP, SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, DEFAULT_SWAP_SOL_LAMPORTS, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, BASE_ACCOUNT_INIT_FEE, SUPPORT_CHANGE_INSTRUCTION_START_INDEXES, PUEM_INSTRUCTION_PREFIX, PUMP_PROGRAM_ID, GMGN_PRIORITY_FEE_Collect_ID, SOLANA_TX_SERIALIZE_SIGN, JITO_FEE_ACCOUNT, DEFAULD_SOLANA_SWAP_LIMIT, TIP_MINI_IN_PRIORITY, DEFAULT_SWAP_PUMP_LAMPORTS, SOLANA_MAX_TX_SERIALIZE_SIGN } from '../config';
-import { createSwapCompleteInstruction, createSwapPrepareInstruction, createTipTransferInstruction, priorityFeeInstruction, versionedTra } from "./InstructionCreator";
+import { createSwapCompleteInstruction, createSwapPrepareInstruction, createTipTransferInstruction, deleteTransactionGasInstruction, priorityFeeInstruction, versionedTra } from "./InstructionCreator";
 export function resetInstructions(transactionMessage, newInputAmount, newOutputAmount) {
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
         const tempInstruction = transactionMessage.instructions[i];
@@ -108,7 +108,7 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
     const swapPrepareIx = await createSwapPrepareInstruction(currentSymbol, owner, HS.network);
     const swapCompletedIx = await createSwapCompleteInstruction(currentSymbol, owner, HS.network);
     let priorityFee = Number(currentSymbol.priorityFee);
-    transactionMessage.instructions.splice(0, 2);
+    deleteTransactionGasInstruction(transactionMessage.instructions);
     if (currentSymbol.tradeType != 0) {
         transactionMessage.instructions.splice(0, 0, swapPrepareIx);
         transactionMessage.instructions.push(swapCompletedIx);

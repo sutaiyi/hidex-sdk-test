@@ -3,9 +3,9 @@ import { ChainItem, INetworkService } from "../network/interfaces";
 import { IDexFeeService } from "../trade/interfaces";
 import { IUtilsService } from "../utils/interfaces";
 import { IWalletService } from "../wallet/interfaces";
-export { ChainItem, INetworkService } from '../network/interfaces';
-export { WalletCache, WalletAccount, WalletList, WalletCacheResult, IWalletService } from '../wallet/interfaces';
-export { ITradeService, CurrentSymbol, TokenInfo, NetWorkFee } from '../trade/interfaces';
+export * from '../network/interfaces';
+export * from '../wallet/interfaces';
+export * from '../trade/interfaces';
 type HidexService = {
     init(): Promise<void>;
     environmental(production: any, uat: any, development: any): any;

@@ -71,8 +71,8 @@ class WalletService {
             console.log('walletRest');
             const maxPathIndex = bootedOss.pathIndex;
             let id = 0;
-            console.log('bootedOsssss', bootedOss);
-            for (const key of Object.keys(bootedOss.walletBooted)) {
+            const walletBootedArr = Object.keys(bootedOss.walletBooted);
+            for (const key of walletBootedArr) {
                 if (key.includes('MNEMONIC_HASH')) {
                     id++;
                     const hash = key.split('_')[2];
@@ -83,11 +83,14 @@ class WalletService {
                     }
                 }
             }
+            if (walletBootedArr.length === 0) {
+                this.setWalletStore(defalutWalletStore);
+            }
         }
     }
     async createPassword(password, oldPassword) {
-        const walletStore = await this.getWalletStore();
-        const bootedOss = await this.getBootedOss();
+        const walletStore = this.getWalletStore();
+        const bootedOss = this.getBootedOss();
         const hasBooted = bootedOss?.booted;
         if (hasBooted && !oldPassword) {
             throw new Error(JSON.stringify({ code: 10009, message: 'Password already exists!' }));
@@ -101,7 +104,7 @@ class WalletService {
         if (oldPassword) {
             updataWalletBootedResult = await this.updateWalletBooted(oldPassword, bootedOss);
         }
-        const update = { ...walletStore, booted, isUnlocked: true };
+        const update = { ...walletStore, isUnlocked: true };
         if (updataWalletBootedResult) {
             bootedOss.walletBooted = updataWalletBootedResult;
         }
@@ -363,7 +366,6 @@ class WalletService {
     }
     getWalletStore() {
         const walletStore = mapWalletCache.get('walletDataByMap');
-        console.log(deepCopy(walletStore), 'walletStore');
         return walletStore;
     }
     async setWalletStore(walletStore) {
@@ -371,7 +373,7 @@ class WalletService {
         global.clearTimeout(this.setWalletTimer);
         this.setWalletTimer = global.setTimeout(() => {
             this.setWalletCatch(this.HS.catcher, 'all', walletStore);
-        }, 500);
+        }, 200);
     }
     getBootedOss() {
         const bootedOssStore = this.mapBootedOss.get('bootedOssByMap') || defaluBoootedOss;
