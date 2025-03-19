@@ -21,3 +21,9 @@ export function strToNumberByDecimals(str: string, decimals: number) {
   return Number(str) / Math.pow(10, decimals);
 
 }
+
+export const queryStringify = (obj: any) => {
+  return JSON.stringify(obj)
+    .replace(/"([^"]+)":/g, '$1:')
+    .replace(/"([^"]*)"/g, '"$1"');
+}

@@ -127,6 +127,7 @@ export type CurrentSymbol = {
     compile?: any;
     currentPrice?: string;
     tokenBalance?: string;
+    cryptoPriceUSD: number;
 };
 export type TokenInfo = {
     symbol: string;

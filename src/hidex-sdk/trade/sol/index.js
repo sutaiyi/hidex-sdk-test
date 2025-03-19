@@ -1,5 +1,5 @@
 import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { smTokenAddress, sTokenAddress } from "../../common/config";
+import { smTokenAddress } from "../../common/config";
 import { getTokenOwner, sendSolanaTransaction } from "./utils";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createTransferInstruction, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { simulateConfig, TOKEN_2022_OWNER } from "./config";
@@ -14,7 +14,7 @@ export const solService = (HS) => {
         getBalance: async (accountAddress, tokenAddress = '') => {
             const currentNetwork = network.get();
             try {
-                if ((tokenAddress && (tokenAddress === smTokenAddress || tokenAddress === sTokenAddress)) || !tokenAddress) {
+                if ((tokenAddress && (tokenAddress === smTokenAddress)) || !tokenAddress) {
                     const pk = new PublicKey(accountAddress);
                     const balanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
                         return v.getBalance(pk).then((res) => {
@@ -162,10 +162,11 @@ export const solService = (HS) => {
         getSwapPath: async (currentSymbol) => {
             let minOutAmount = '0';
             if (currentSymbol.isBuy && currentSymbol.currentPrice) {
-                minOutAmount = (Math.floor(Number(currentSymbol.amountIn) / Number(currentSymbol.currentPrice))).toString();
+                const amountInUSD = Number(currentSymbol.amountIn) * currentSymbol.cryptoPriceUSD;
+                minOutAmount = (Math.floor(amountInUSD / Number(currentSymbol.currentPrice) * Math.pow(10, currentSymbol.out.decimals))).toString();
             }
             if (!currentSymbol.isBuy && currentSymbol.currentPrice) {
-                minOutAmount = (Math.floor(Number(currentSymbol.amountIn) * Number(currentSymbol.currentPrice))).toString();
+                minOutAmount = (Math.floor(Number(currentSymbol.amountIn) * Number(currentSymbol.currentPrice) / currentSymbol.cryptoPriceUSD * Math.pow(10, currentSymbol.in.decimals))).toString();
             }
             return {
                 minOutAmount,

@@ -156,7 +156,7 @@ const tradeFun: any = {
       }
       console.time('tradeFullTimer');
       console.time('tradeTimer');
-      const { chainName, account, token, balance, priceUSD } = info;
+      const { chainName, account, token, balance, balanceStr, tokenBalanceStr, priceUSD, cryptoPriceUSD } = info;
       const isBuy = true; // 买入
       const { address } = account
       const currentChain = await network.choose(chainName);
@@ -170,7 +170,11 @@ const tradeFun: any = {
       // 实际购买金额
       currentSymbol.amountIn = (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
 
-      // 当前时时价格
+      // 当前代币时时价格
+      currentSymbol.tokenBalance = isBuy ? balanceStr : tokenBalanceStr;
+      // 当前母币时时价格
+      currentSymbol.cryptoPriceUSD = cryptoPriceUSD
+
       currentSymbol.currentPrice = priceUSD;
 
       console.time('swapPath&swapSignTimer');
@@ -242,7 +246,7 @@ const tradeFun: any = {
       }
       console.time('tradeFullTimer');
       console.time('tradeTimer');
-      const { chainName, account, token, balance, priceUSD } = info;
+      const { chainName, account, token, balance, priceUSD, cryptoPriceUSD } = info;
       const isBuy = false; // 卖出
       const { address } = account
       const currentChain = await network.choose(chainName);
@@ -256,8 +260,10 @@ const tradeFun: any = {
       // 实际卖出金额
       currentSymbol.amountIn = (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
 
-      // 当前时时价格
+      // 当前代币时时价格
       currentSymbol.currentPrice = priceUSD
+      // 当前母币时时价格
+      currentSymbol.cryptoPriceUSD = cryptoPriceUSD
 
       console.time('swapPath&swapSignTimer');
       const [swapPath, signRes] = await Promise.all([

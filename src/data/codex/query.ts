@@ -15,6 +15,40 @@ export const tokenPrices = async (inputs: string) => {
   }, axiosConfig)
   return axiosResponse(res)
 }
+
+export const getTokenInfo = async (inputs: string) => {
+  const res = await axios.post(codexUrl, {
+    query: `query {
+      token(
+        input: ${inputs}
+      ) {
+        id
+        address
+        cmcId
+        decimals
+        name
+        symbol
+        totalSupply,
+        launchpad {
+          completed
+          completedAt
+          completedSlot
+          graduationPercent
+          migrated
+          migratedAt
+          migratedPoolAddress
+          migratedSlot
+          poolAddress
+        },
+        info {
+          circulatingSupply
+          imageThumbUrl
+        }
+      }
+    }`
+  }, axiosConfig)
+  return axiosResponse(res)
+}
 export const balances = async (accountAddress: string, chainId: number, cursor: any = null) => {
   const res = await axios.post(codexUrl, {
     query: `{

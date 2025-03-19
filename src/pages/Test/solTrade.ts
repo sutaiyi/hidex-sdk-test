@@ -48,23 +48,24 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentChain }: 
   }
 }
 const setBeforeTradeData = async (info: any, { isBuy, isPump, currentChain }: { isBuy: boolean, isPump: boolean, currentChain: ChainItem }) => {
-  const { token } = info;
+  const { token, tokenBalanceStr } = info;
   const { currentSymbol, address } = await getCurrentSymbolTest(info, { isBuy, isPump, currentChain });
-  console.log(currentSymbol, address)
-  const { success, swapTransaction } = await trade.defiApi.swapRoute(currentSymbol, address)
-  if (!success) {
-    return;
+  if (isBuy || (!isBuy && Number(tokenBalanceStr))) {
+    const { success, swapTransaction } = await trade.defiApi.swapRoute(currentSymbol, address)
+    if (!success) {
+      return;
+    }
+    const compile = await trade.compileTransaction(swapTransaction)
+    const mapItems = beforeTradeDataMap.get('compiles') || {};
+    mapItems[`${isBuy ? 'buy' : 'sell'}_${currentChain.chain}_${token.address}`] = compile
+    beforeTradeDataMap.set('compiles', mapItems);
   }
-  const compile = await trade.compileTransaction(swapTransaction)
-  const mapItems = beforeTradeDataMap.get('compiles') || {};
-  mapItems[`${isBuy}_${currentChain.chain}_${token.address}`] = compile
-  beforeTradeDataMap.set('compiles', mapItems)
 }
 
 
 const getBeforeTradeData = (isBuy: boolean, chainName: string, tokenAddress: string) => {
   const mapItems = beforeTradeDataMap.get('compiles')
-  return mapItems[`${isBuy}_${chainName}_${tokenAddress}`];
+  return mapItems[`${isBuy ? 'buy' : 'sell'}_${chainName}_${tokenAddress}`];
 }
 
 

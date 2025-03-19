@@ -1,7 +1,9 @@
 import { codex } from '@/data';
 import React, { useState, useEffect } from 'react';
 import hidexService from '@/hidexService';
-import { simpleAddress, strToNumberByDecimals } from '@/common/utils';
+import { queryStringify, simpleAddress, strToNumberByDecimals } from '@/common/utils';
+import { getChainsTokenPriceUsd } from '@/data/api';
+import { getTokenInfo } from '@/data/codex/query';
 
 
 
@@ -99,17 +101,31 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
         const currentNetwork = await network.choose(chainName)
         const { accountItem }: {accountItem: any} = await wallet.getCurrentWallet()
         const account = accountItem[chainName]
-        const [balance, tokenBalance] = await Promise.all([trade.getBalance(account.address), trade.getBalance(account.address, result?.token.address)])
+        const [balance, tokenBalance, wbalance, priceWeiItem, tokenInfo] = await Promise.all([
+          trade.getBalance(account.address),
+          trade.getBalance(account.address,result?.token.address),
+          trade.getBalance(account.address, currentNetwork.tokens[1].address),
+          getChainsTokenPriceUsd(network.getChainIds()),
+          getTokenInfo(queryStringify({address: result?.token.address, networkId: network.getCodexChainIdByChain(currentNetwork.chain)}))
+        ])
+        console.log(tokenInfo?.data?.token?.launchpad?.completed)
+        const isPump = tokenInfo?.data?.token?.launchpad?.completed === false
+        const cryptoPriceUSD = 1 / Number(priceWeiItem[currentNetwork.chainID]) * 10 ** currentNetwork.tokens[0].decimals;
         const tradeInfo = {
           ...result, 
           account: account,
           chainName,
           chainId: network.getChainIdByChainName(chainName),
           balance: strToNumberByDecimals(balance, currentNetwork.tokens[0].decimals), 
+          wbalance: strToNumberByDecimals(wbalance, currentNetwork.tokens[1].decimals), 
           tokenBalance: strToNumberByDecimals(tokenBalance, result?.token.decimals),
           balanceStr: balance,
+          wbalanceStr: wbalance,
+          cryptoPriceUSD,
           tokenBalanceStr: tokenBalance,
-          symbol: network.get().tokens[0].symbol
+          symbol: network.get(chainName).tokens[0].symbol,
+          wSymbol: network.get(chainName).tokens[1].symbol,
+          isPump,
         }
         setSelected(tradeInfo)
         onResultSelect(tradeInfo);
@@ -217,10 +233,12 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           代币地址：{selected?.token?.address} <br/>
           代币精度：{selected?.token?.decimals} <br/>
           代币价格：${selected?.priceUSD} <br/>
-          所属链：{network.getChainNameByChainId(selected?.token?.networkId)} <br/>
-          当前钱包地址：{selected?.account?.address}
+          所属链：{network.getChainNameByChainId(selected?.token?.networkId)} (母币价格：${selected.cryptoPriceUSD?.toFixed(6)})<br/>
+          当前钱包地址：{selected?.account?.address}<br/>
+          是否为Pump未毕业：{selected?.isPump ? '是' : '否'}<br/>
           <br/>
           钱包余额：{selected?.balance} {selected.symbol}<br/>
+          {selected?.wSymbol}余额：{selected?.wbalance} {selected.wSymbol}<br/>
           代币余额：{selected?.tokenBalance} {selected?.token?.symbol}
         </pre>
       </div>

@@ -39,15 +39,12 @@ class NetworkController extends EventEmitter {
     getChainIdByChainName(chainName) {
         return this.HS.chains(chainName)?.chainID || defaultChainID;
     }
-    getCodexChainIdByChainName(chainName) {
-        let name = this.HS.chains(chainName)?.chainID;
-        if (!name) {
-            const item = this.HS.chains().find((v) => v.chain === chainName);
-            if (item) {
-                name = item.codexChainId;
-            }
+    getCodexChainIdByChain(chain) {
+        let item = this.HS.chains(chain);
+        if (item) {
+            return item.codexChainId;
         }
-        return name || defaultChainID;
+        throw new Error('chain not found');
     }
     get sysProviderRpcs() {
         if (this._sysProviderRpcs['ETH'] === undefined || this._sysProviderRpcs['ETH'].length === 0) {

@@ -8,7 +8,7 @@ export interface INetworkService {
     getFastestProviderByChain(chain: string | number, commitment?: string): Promise<Provider | null>;
     getChainNameByChainId(chainId: number): string;
     getChainIdByChainName(chainName: string): number;
-    getCodexChainIdByChainName(chainName: string): number;
+    getCodexChainIdByChain(chain: string | number): number;
     getChainIds(): Array<number>;
     getCodexChainIds(): Array<number>;
     getFastestRpc(chain: string | number): Promise<string>;

@@ -12,7 +12,7 @@ declare class NetworkController extends EventEmitter implements INetworkService 
     constructor(options: OptionsCommon);
     getChainNameByChainId(chainId: number): string;
     getChainIdByChainName(chainName: string): number;
-    getCodexChainIdByChainName(chainName: string): number;
+    getCodexChainIdByChain(chain: string | number): number;
     get sysProviderRpcs(): SysProviderRpcsFace;
     set sysProviderRpcs(value: SysProviderRpcsFace);
     choose(chain: string | number): Promise<ChainItem>;
