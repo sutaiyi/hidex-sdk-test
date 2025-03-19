@@ -224,7 +224,7 @@ const tradeFun: any = {
       const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
       console.timeEnd('tradeswapTimer');
       if (!error) {
-        alert('交易已提交：' + result.hash)
+        console.log('交易已提交：' + result.hash)
         const hashItem = {
           chain: currentChain.chain,
           hash: result.hash,
@@ -311,7 +311,7 @@ const tradeFun: any = {
       const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
       console.timeEnd('tradeswapTimer');
       if (!error) {
-        alert('交易已提交：' + result.hash)
+        console.log('交易已提交：' + result.hash)
         const hashItem = {
           chain: currentChain.chain,
           hash: result.hash,

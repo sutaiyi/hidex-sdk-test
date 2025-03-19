@@ -162,11 +162,11 @@ export const solService = (HS) => {
         getSwapPath: async (currentSymbol) => {
             let minOutAmount = '0';
             if (currentSymbol.isBuy && currentSymbol.currentPrice) {
-                const amountInUSD = Number(currentSymbol.amountIn) * currentSymbol.cryptoPriceUSD;
+                const amountInUSD = Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.in.decimals) * currentSymbol.cryptoPriceUSD;
                 minOutAmount = (Math.floor(amountInUSD / Number(currentSymbol.currentPrice) * Math.pow(10, currentSymbol.out.decimals))).toString();
             }
             if (!currentSymbol.isBuy && currentSymbol.currentPrice) {
-                minOutAmount = (Math.floor(Number(currentSymbol.amountIn) * Number(currentSymbol.currentPrice) / currentSymbol.cryptoPriceUSD * Math.pow(10, currentSymbol.in.decimals))).toString();
+                minOutAmount = (Math.floor(Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.out.decimals) * Number(currentSymbol.currentPrice) / currentSymbol.cryptoPriceUSD * Math.pow(10, currentSymbol.in.decimals))).toString();
             }
             return {
                 minOutAmount,
