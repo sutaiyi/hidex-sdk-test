@@ -4,7 +4,7 @@ import { ComputeBudgetProgram, PublicKey, SystemProgram, TransactionMessage, Ver
 import abis from '../../../common/abis';
 import CustomWallet from '../../../wallet/custom';
 import { sTokenAddress, zero } from '../../../common/config';
-import { AssociateTokenProgram, PROGRAMID, SEED_DATA, SEED_SWAP, SEED_TRADE } from '../config';
+import { AssociateTokenProgram, PROGRAMID, SEED_DATA, SEED_SWAP, SEED_TRADE, TOKEN_PROGRAM_OWNS } from '../config';
 export const isBuy = (currentSymbol) => {
     return !!currentSymbol.isBuy;
 };
@@ -196,4 +196,31 @@ export async function createTipTransferInstruction(from, to, lamports) {
         toPubkey: to,
         lamports: lamports,
     });
+}
+export function numberToLittleEndianHex(num, byteLength) {
+    if (num < 0 || num > 0xffffff) {
+        throw new Error('Number must be between 0 and 16777215 for 3 bytes');
+    }
+    const buffer = new ArrayBuffer(4);
+    const view = new DataView(buffer);
+    view.setUint32(0, num, true);
+    const bytes = new Uint8Array(buffer).slice(0, byteLength);
+    return Array.from(bytes)
+        .map(byte => byte.toString(16).padStart(2, '0'))
+        .join('');
+}
+export async function checkAccountCloseInstruction(currentSymbol, instruction, owner, network) {
+    if (currentSymbol.isBuy)
+        return false;
+    if (TOKEN_PROGRAM_OWNS.indexOf(instruction.programId.toBase58()) < 0)
+        return false;
+    if (BigInt(currentSymbol.tokenBalance || '0') == BigInt(currentSymbol.amountIn))
+        return false;
+    const { userAtaAccount } = await information(currentSymbol, owner, network);
+    const deleteAta = instruction.keys[0].pubkey.toBase58();
+    if (userAtaAccount.toBase58() == deleteAta) {
+        console.log("deleteAta被删除");
+        return true;
+    }
+    return false;
 }

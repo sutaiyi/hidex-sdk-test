@@ -182,7 +182,7 @@ export const solService = (HS) => {
             if (compileUse) {
                 const isSupport = isInstructionsSupportReset(compileUse['message']);
                 if (isSupport) {
-                    resetResult = resetInstructions(compileUse['message'], BigInt(amountIn), BigInt(amountOutMin));
+                    resetResult = resetInstructions(currentSymbol, compileUse['message'], BigInt(amountIn), BigInt(amountOutMin));
                     txArray = await getTransactionsSignature(resetResult, compileUse['addressesLookup'], defiApi.lastBlockHash.blockhash, currentSymbol, owner, HS);
                 }
             }
@@ -194,7 +194,7 @@ export const solService = (HS) => {
                 compileUse = await compileTransaction(swapTransaction, HS);
                 const isSupport = isInstructionsSupportReset(compileUse['message']);
                 if (isSupport) {
-                    resetResult = resetInstructions(compileUse['message'], BigInt(amountIn), BigInt(amountOutMin));
+                    resetResult = resetInstructions(currentSymbol, compileUse['message'], BigInt(amountIn), BigInt(amountOutMin));
                 }
                 else {
                     resetResult = compileUse['message'];
@@ -231,7 +231,6 @@ export const solService = (HS) => {
             const vertransaction = vertransactions.length === 5 ? vertransactions[4] : vertransactions[0];
             const simulateResponsePro = connection.simulateTransaction(vertransaction, simulateConfig);
             const [submitResult, simulateResponse] = await Promise.all([submitPro, simulateResponsePro]);
-            console.timeEnd('tradeTimer');
             console.log('交易 - 预估', simulateResponse);
             if (simulateResponse && simulateResponse?.value?.err) {
                 throw new Error(JSON.stringify(simulateResponse.value.logs));

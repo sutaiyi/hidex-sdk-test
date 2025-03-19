@@ -24,8 +24,8 @@ class TradeService extends EventEmitter {
         this.defiApi = DefiApi;
         this.defiApi.getLatestBlockhash(this.HS.network);
     }
-    resetInstructions = (transactionMessage, newInputAmount, newOutputAmount) => {
-        return resetInstructions(transactionMessage, newInputAmount, newOutputAmount);
+    resetInstructions = (currentSymbol, transactionMessage, newInputAmount, newOutputAmount) => {
+        return resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount);
     };
     getTransactionsSignature = (transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner) => {
         return getTransactionsSignature(transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner, this.HS);

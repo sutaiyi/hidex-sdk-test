@@ -25,8 +25,20 @@ export const SUPPORT_CHANGE_PROGRAM_IDS = [
     "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C",
     "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc",
     "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo",
+    "Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB",
+    "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
     "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P",
-    "Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB"
+];
+export const SUPPORT_CHANGE_INSTRUCTION_START_INDEXES = [
+    2, 16, 16, 16, 16, 16, 38, 38
+];
+export const NON_CALCULATE_SLIPPAGE_PROGRAM_IDS = [
+    "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+    "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P",
+];
+export const TOKEN_PROGRAM_OWNS = [
+    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
 ];
 export const JITO_FEE_ACCOUNT = [
     "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe",
@@ -37,9 +49,6 @@ export const JITO_FEE_ACCOUNT = [
     "ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49",
     "3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT",
     "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt"
-];
-export const SUPPORT_CHANGE_INSTRUCTION_START_INDEXES = [
-    2, 16, 16, 16, 16, 16, 16,
 ];
 export const HIDEX_ADDRESS_LOOK_UP = new PublicKey("5ZF8nmsRMPB24j5UDU7ztjvxVBJ7pprZJvzbujZ5nKpQ");
 export const SOLANA_SYSTEM_PROGRAM_ID = new PublicKey("11111111111111111111111111111111");

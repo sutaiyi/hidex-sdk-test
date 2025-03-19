@@ -6,7 +6,7 @@ export type HashStatus = 'Confirmed' | 'Pending' | 'Failed' | 'Expired';
 export interface ITradeOthersFunction {
     defiApi: IDefiApi;
     changeTradeService(currentNetwork: ChainItem): void;
-    resetInstructions(transactionMessage: TransactionMessage, newInputAmount: bigint, newOutputAmount: bigint): TransactionMessage;
+    resetInstructions(currentSymbol: CurrentSymbol, transactionMessage: TransactionMessage, newInputAmount: bigint, newOutputAmount: bigint): TransactionMessage;
     isInstructionsSupportReset(transactionMessage: TransactionMessage): boolean;
     compileTransaction(swapBase64Str: string): Promise<{
         message: TransactionMessage;
@@ -126,6 +126,7 @@ export type CurrentSymbol = {
     commissionRate?: number;
     compile?: any;
     currentPrice?: string;
+    tokenBalance?: string;
 };
 export type TokenInfo = {
     symbol: string;

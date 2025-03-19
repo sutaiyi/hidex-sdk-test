@@ -11,7 +11,7 @@ declare class TradeService extends EventEmitter implements ITradeService {
     defiApi: IDefiApi;
     checkHash: ITradeHashStatusService;
     constructor(options: OptionsCommon);
-    resetInstructions: (transactionMessage: TransactionMessage, newInputAmount: bigint, newOutputAmount: bigint) => TransactionMessage;
+    resetInstructions: (currentSymbol: CurrentSymbol, transactionMessage: TransactionMessage, newInputAmount: bigint, newOutputAmount: bigint) => TransactionMessage;
     getTransactionsSignature: (transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any) => Promise<import("@solana/web3.js").VersionedTransaction[]>;
     compileTransaction: (swapBase64Str: string) => Promise<{
         message: TransactionMessage;

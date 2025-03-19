@@ -33,4 +33,6 @@ export declare function createBuySwapCompletedInstruction(currentSymbol: Current
 export declare function createSaleSwapPrepareInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function createSaleSwapCompletedInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function createTipTransferInstruction(from: PublicKey, to: PublicKey, lamports: bigint): Promise<TransactionInstruction>;
+export declare function numberToLittleEndianHex(num: number, byteLength: number): string;
+export declare function checkAccountCloseInstruction(currentSymbol: CurrentSymbol, instruction: TransactionInstruction, owner: any, network: INetworkService): Promise<boolean>;
 //# sourceMappingURL=InstructionCreator.d.ts.map
