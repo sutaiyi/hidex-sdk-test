@@ -234,9 +234,9 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           代币精度：{selected?.token?.decimals} <br/>
           代币价格：${selected?.priceUSD} <br/>
           所属链：{network.getChainNameByChainId(selected?.token?.networkId)} (母币价格：${selected.cryptoPriceUSD?.toFixed(6)})<br/>
-          当前钱包地址：{selected?.account?.address}<br/>
           是否为Pump未毕业：{selected?.isPump ? '是' : '否'}<br/>
           <br/>
+          当前钱包地址：{selected?.account?.address}<br/>
           钱包余额：{selected?.balance} {selected.symbol}<br/>
           {selected?.wSymbol}余额：{selected?.wbalance} {selected.wSymbol}<br/>
           代币余额：{selected?.tokenBalance} {selected?.token?.symbol}
