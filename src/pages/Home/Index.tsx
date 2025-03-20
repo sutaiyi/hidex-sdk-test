@@ -12,7 +12,7 @@ function App() {
       <p>
         Tydodo
       </p>
-      <div className='flex'>
+      <div style={{ marginTop: '50px' }}>
         <div
           className="link-action"
           style={{ marginBottom: '80px' }}

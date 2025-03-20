@@ -21,7 +21,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
   const [isLoading, setIsLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
-  const [defalutAddresses, setDefalutAddresses] = useState<Array<{chainName: string, address: string}>>([
+  const [defalutAddresses, setDefalutAddresses] = useState<Array<{chainName: string, address: string, symbol?: string}>>([
     {
       chainName: 'SOLANA',
       address: '6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN',
@@ -214,7 +214,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
             defalutAddresses.map((item: any) => {
               return <div key={item.address} style={{cursor: 'pointer', color: '#666', fontSize: '14px'}} onClick={() => {
                 setInputValue(item.address)
-              }}><span style={{color: '#999'}}>{item.chainName}</span>：{simpleAddress(item.address, 2)}</div>
+              }}><span style={{color: '#999'}}>{item.chainName}{item.symbol ? `(${item.symbol})` : ''}</span>：{simpleAddress(item.address, 2)}</div>
             })
           }
         </div>

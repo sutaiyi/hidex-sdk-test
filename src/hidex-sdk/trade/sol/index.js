@@ -160,6 +160,9 @@ export const solService = (HS) => {
             }
         },
         getSwapPath: async (currentSymbol) => {
+            if (parseFloat(currentSymbol.amountIn) <= 0) {
+                throw new Error('amountIn must be greater than 0');
+            }
             let minOutAmount = '0';
             if (currentSymbol.isBuy && currentSymbol.currentPrice) {
                 const amountInUSD = Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.in.decimals) * currentSymbol.cryptoPriceUSD;

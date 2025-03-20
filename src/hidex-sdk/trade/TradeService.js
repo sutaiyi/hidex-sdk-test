@@ -6,6 +6,7 @@ import { compileTransaction, resetInstructions, getTransactionsSignature, isInst
 import EventEmitter from '../common/eventEmitter';
 import DefiApi from './sol/defiApi';
 import TradeHashStatusService from './TradeHashStatusService';
+import { wExchange } from './utils/nativeTokenTrade';
 class TradeService extends EventEmitter {
     app;
     chainId;
@@ -141,6 +142,10 @@ class TradeService extends EventEmitter {
             return ethService(this.HS).hashStatus(hash, chain);
         }
         return solService(this.HS).hashStatus(hash);
+    }
+    async wrappedExchange(chain, accountAddress, type, amount = '0') {
+        const privateKey = await this.HS.wallet.ownerKey(accountAddress);
+        return await wExchange(chain, privateKey, type, amount, this.HS);
     }
 }
 export default TradeService;

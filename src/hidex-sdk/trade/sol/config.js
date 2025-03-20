@@ -19,6 +19,7 @@ export const simulateConfig = {
 export const SEED_SWAP = 'chill_swap';
 export const SEED_DATA = 'chill_data';
 export const SEED_TRADE = "trade_config_data";
+export const WSOL_MINT = new PublicKey("So11111111111111111111111111111111111111112");
 export const SUPPORT_CHANGE_PROGRAM_IDS = [
     "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
     "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK",

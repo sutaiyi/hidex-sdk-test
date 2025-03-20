@@ -15,10 +15,10 @@ const Test = React.memo( () => {
   useEffect(() => {
     (async () => {
       if (tradeInfo?.token?.address) {
-        const currentChain = await network.choose(tradeInfo.chainName)
+        const currentNetwork = await network.choose(tradeInfo.chainName)
         console.log('代币信息：', tradeInfo)
-        setBeforeTradeData(tradeInfo, { isBuy: true, isPump: tradeInfo.isPump, currentChain });
-        setBeforeTradeData(tradeInfo, { isBuy: false, isPump: tradeInfo.isPump, currentChain });
+        setBeforeTradeData(tradeInfo, { isBuy: true, isPump: tradeInfo.isPump, currentNetwork });
+        setBeforeTradeData(tradeInfo, { isBuy: false, isPump: tradeInfo.isPump, currentNetwork });
       }
     })()
   }, [tradeInfo]);

@@ -4,6 +4,7 @@ import './assets/App.css';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from './pages/Home/Index';
 import Test from './pages/Test/Index';
+import Login from './pages/Login/IIndex';
 
 
 
@@ -15,6 +16,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/test" element={<Test />} />
+          <Route path="/login" element={<Login />} />
         </Routes>
       </div>
     </Router>

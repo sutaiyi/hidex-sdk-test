@@ -41,7 +41,7 @@ export class TradeHashStatusService extends EventEmitter {
                 return;
             }
             hashItem.timer && global.clearTimeout(hashItem.timer);
-            hashItem.timer = global.setTimeout(checkCreate, 500);
+            hashItem.timer = global.setTimeout(checkCreate, 50);
         };
         HashStatusMap.set(hashItem.hash, checkCreate());
     };

@@ -3,7 +3,6 @@ import { mTokenAddress } from "../../common/config";
 import abis from "../../common/abis";
 import { getBaseFeePerGas, getUseGasPrice } from "./utils";
 import { NETWORK_FEE_RATES, networkWeight } from "./config";
-import { isMotherTrad, motherCurrencyTrade } from "../utils/nativeTokenTrade";
 import { abiInFun, actionNameAndValue } from "./abiFun";
 export const ethService = (HS) => {
     const { network, wallet } = HS;
@@ -297,14 +296,6 @@ export const ethService = (HS) => {
             if (parseFloat(currentSymbol?.amountIn.toString()) <= 0) {
                 throw new Error('amountIn must be greater than 0');
             }
-            const motherTrade = isMotherTrad(currentSymbol, network);
-            console.log('motherTrade==>', motherTrade);
-            if (motherTrade) {
-                return {
-                    minOutAmount: currentSymbol.amountIn,
-                    data: {},
-                };
-            }
             const currentNetWork = network.get();
             let inAddress = currentSymbol.in.address;
             let outAddress = currentSymbol.out.address;
@@ -398,10 +389,6 @@ export const ethService = (HS) => {
             const walletProvider = new ethers.Wallet(ownerKey, provider);
             const { amountIn, networkFee } = currentSymbol;
             const { value } = actionNameAndValue(currentSymbol.in.address, currentSymbol.out.address, amountIn);
-            const way = isMotherTrad(currentSymbol, network);
-            if (way) {
-                return await motherCurrencyTrade(currentSymbol, ownerKey, way, network);
-            }
             const defaultParams = {
                 chainId: currentNetWork.chainID,
                 from: accountAddress,

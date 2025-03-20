@@ -93,7 +93,8 @@ class DexFeeService {
         const dexFeeAmount = Number(amountOut) * (1 - dexWalletFee);
         return Math.floor(dexFeeAmount);
     }
-    async getDexFeeAmount({ isBuy, buyAmount, inviter }) {
+    async getDexFeeAmount(currentSymbol, buyAmount) {
+        const { isBuy, inviter } = currentSymbol;
         const { dexFee, inviterDiscount } = await this.getDexFee();
         const useDexFee = inviter && inviter !== zero ? inviterDiscount : dexFee;
         if (isBuy) {

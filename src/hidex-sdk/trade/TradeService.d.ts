@@ -50,6 +50,12 @@ declare class TradeService extends EventEmitter implements ITradeService {
     getHashStatus(hash: string, chain: string | number): Promise<{
         status: HashStatus;
     }>;
+    wrappedExchange(chain: string | number, accountAddress: string, type: number, amount?: string): Promise<{
+        error: any;
+        result: {
+            hash: string | null;
+        } & any;
+    }>;
 }
 export default TradeService;
 //# sourceMappingURL=TradeService.d.ts.map

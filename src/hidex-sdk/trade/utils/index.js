@@ -6,3 +6,6 @@ export const getSingleContensBytes = (contents, signature) => {
         signReult: signatureUint8Array
     };
 };
+export const isSol = (chain) => {
+    return (typeof chain === 'number' && chain === 102) || (typeof chain === 'string' && chain === 'SOLANA');
+};

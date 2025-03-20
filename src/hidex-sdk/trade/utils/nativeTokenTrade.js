@@ -1,11 +1,14 @@
-import { ethers } from 'ethers';
-import { wethAbi } from '../eth/abiFun';
 import { mTokenAddress } from '../../common/config';
+import { SystemProgram, Transaction } from '@solana/web3.js';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createCloseAccountInstruction, createSyncNativeInstruction, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { WSOL_MINT } from '../sol/config';
+import { isSol } from './index';
 export const isMotherTrad = (currentSymbol, network) => {
     const currentNetWork = network.get();
     const inAddress = currentSymbol.in.address.toLowerCase();
     const outAddress = currentSymbol.out.address.toLowerCase();
-    if (inAddress === mTokenAddress.toLowerCase() && outAddress === currentNetWork.tokens[1].address.toLowerCase()) {
+    console.log(currentNetWork, inAddress, outAddress);
+    if (inAddress === currentNetWork.tokens[0].address.toLowerCase() && outAddress === currentNetWork.tokens[1].address.toLowerCase()) {
         return 'MBTOWMB';
     }
     if (inAddress === currentNetWork.tokens[1].address.toLowerCase() && outAddress === mTokenAddress.toLowerCase()) {
@@ -13,56 +16,68 @@ export const isMotherTrad = (currentSymbol, network) => {
     }
     return '';
 };
-const convertEthToWeth = async (wethAddress, amountInWei, privateKey, network) => {
-    const tx = {
-        to: wethAddress,
-        value: amountInWei,
+const convertSolToWsol = async (amountIn, keyPair, network) => {
+    const connection = network.getProviderByChain(102);
+    const publicKey = keyPair.publicKey;
+    const lamports = BigInt(amountIn);
+    const associatedTokenAccount = await getAssociatedTokenAddress(WSOL_MINT, publicKey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+    const transaction = new Transaction();
+    const accountInfo = await connection.getAccountInfo(associatedTokenAccount);
+    if (!accountInfo) {
+        transaction.add(createAssociatedTokenAccountInstruction(publicKey, associatedTokenAccount, publicKey, WSOL_MINT, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID));
+    }
+    transaction.add(SystemProgram.transfer({
+        fromPubkey: publicKey,
+        toPubkey: associatedTokenAccount,
+        lamports,
+    }));
+    transaction.add(createSyncNativeInstruction(associatedTokenAccount));
+    const signature = await connection.sendTransaction(transaction, [keyPair], {
+        skipPreflight: true,
+        preflightCommitment: 'processed'
+    });
+    return {
+        error: null,
+        result: {
+            hash: signature,
+        }
     };
-    console.log(tx);
-    const currentNetWork = await network.get();
-    const provider = network.getProviderByChain(currentNetWork.chain);
-    const walletProvider = new ethers.Wallet(privateKey, provider);
+};
+const convertWsolToSol = async (keyPair, network) => {
+    const connection = network.getProviderByChain(102);
+    const publicKey = keyPair.publicKey;
     try {
-        const txResponse = await walletProvider.sendTransaction(tx);
-        await txResponse.wait();
-        return txResponse;
+        const wsolAccount = await getAssociatedTokenAddress(WSOL_MINT, publicKey);
+        const closeInstruction = createCloseAccountInstruction(wsolAccount, publicKey, publicKey, [], TOKEN_PROGRAM_ID);
+        const tx = new Transaction().add(closeInstruction);
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        tx.feePayer = publicKey;
+        tx.sign(keyPair);
+        const txSignature = await connection.sendRawTransaction(tx.serialize(), {
+            skipPreflight: true,
+            preflightCommitment: 'processed'
+        });
+        return {
+            error: null,
+            result: {
+                hash: txSignature,
+            }
+        };
     }
     catch (error) {
         console.error(error);
         throw new Error('交易失败请重试' + error);
     }
 };
-const convertWethToEth = async (wethAddress, amountInWei, privateKey, network) => {
-    const currentNetWork = await network.get();
-    const provider = network.getProviderByChain(currentNetWork.chain);
-    const walletProvider = new ethers.Wallet(privateKey, provider);
-    const wethContract = new ethers.Contract(wethAddress, wethAbi, walletProvider);
-    try {
-        const txResponse = await wethContract.withdraw(amountInWei);
-        await txResponse.wait();
-        return txResponse;
-    }
-    catch (error) {
-        console.error(error);
-        throw new Error('交易失败请重试' + error);
-    }
-};
-export async function motherCurrencyTrade(currentSymbol, privateKey, way, network) {
-    const { amountIn } = currentSymbol;
-    const currentNetWork = network.get();
-    if (way === 'MBTOWMB') {
-        const tx = await convertEthToWeth(currentNetWork.tokens[1].address, amountIn, privateKey, network);
-        return {
-            error: null,
-            result: { hash: tx },
-        };
-    }
-    if (way === 'WMBTOMB') {
-        const tx = await convertWethToEth(currentNetWork.tokens[1].address, amountIn, privateKey, network);
-        return {
-            error: null,
-            result: { hash: tx },
-        };
+export async function wExchange(chain, owner, type, amount, HS) {
+    if (isSol(chain)) {
+        const keyPair = HS.utils.ownerKeypair(owner);
+        if (type === 0) {
+            return await convertSolToWsol(amount, keyPair, HS.network);
+        }
+        if (type === 1) {
+            return await convertWsolToSol(keyPair, HS.network);
+        }
     }
     return {
         error: null,

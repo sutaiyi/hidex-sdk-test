@@ -4,7 +4,7 @@ import './assets/index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import HidexSDK from './hidexService'
-import Loading from './Loading';
+import Loading from './pages/Loading';
 
 
 const root = ReactDOM.createRoot(

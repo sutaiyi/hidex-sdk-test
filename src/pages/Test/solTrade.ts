@@ -3,16 +3,16 @@ import { ChainItem, CurrentSymbol } from "hidex-sdk";
 
 const beforeTradeDataMap = new Map<string, any>();
 const { trade, network, wallet, dexFee, utils } = HidexSDK;
-const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentChain }: { isBuy: boolean, isPump: boolean, currentChain: ChainItem }): Promise<{
+const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentNetwork }: { isBuy: boolean, isPump: boolean, currentNetwork: ChainItem }): Promise<{
   currentSymbol: CurrentSymbol,
-  currentChain: ChainItem,
+  currentNetwork: ChainItem,
   address: string
 }> => {
-  const { token, account, tokenBalanceStr, inviter } = info;
+  const { token, account, tokenBalanceStr, inviter, cryptoPriceUSD } = info;
   const { address } = account;
   const tokenAddress = token.address;
   const decimals = token.decimals;
-  const inToken = currentChain?.tokens[1]; // Wrapped 代币
+  const inToken = currentNetwork?.tokens[1];
   const outToken = {
     address: tokenAddress,
     decimals,
@@ -39,25 +39,27 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentChain }: 
     bribeFee: '',  // 贿赂费给平台比如（jito...）
     tradeType: 1,
     isPump,
+    chain: currentNetwork.chain,
+    cryptoPriceUSD,
     TOKEN_2022: false,
   };
   return {
     currentSymbol,
-    currentChain,
+    currentNetwork,
     address
   }
 }
-const setBeforeTradeData = async (info: any, { isBuy, isPump, currentChain }: { isBuy: boolean, isPump: boolean, currentChain: ChainItem }) => {
+const setBeforeTradeData = async (info: any, { isBuy, isPump, currentNetwork }: { isBuy: boolean, isPump: boolean, currentNetwork: ChainItem }) => {
   const { token, tokenBalanceStr } = info;
-  const { currentSymbol, address } = await getCurrentSymbolTest(info, { isBuy, isPump, currentChain });
-  if (isBuy || (!isBuy && Number(tokenBalanceStr))) {
+  const { currentSymbol, address } = await getCurrentSymbolTest(info, { isBuy, isPump, currentNetwork });
+  if ((isBuy || (!isBuy && Number(tokenBalanceStr))) && currentSymbol.in.address !== currentSymbol.out.address) {
     const { success, swapTransaction } = await trade.defiApi.swapRoute(currentSymbol, address)
     if (!success) {
       return;
     }
     const compile = await trade.compileTransaction(swapTransaction)
     const mapItems = beforeTradeDataMap.get('compiles') || {};
-    mapItems[`${isBuy ? 'buy' : 'sell'}_${currentChain.chain}_${token.address}`] = compile
+    mapItems[`${isBuy ? 'buy' : 'sell'}_${currentNetwork.chain}_${token.address}`] = compile
     beforeTradeDataMap.set('compiles', mapItems);
   }
 }
@@ -65,7 +67,10 @@ const setBeforeTradeData = async (info: any, { isBuy, isPump, currentChain }: { 
 
 const getBeforeTradeData = (isBuy: boolean, chainName: string, tokenAddress: string) => {
   const mapItems = beforeTradeDataMap.get('compiles')
-  return mapItems[`${isBuy ? 'buy' : 'sell'}_${chainName}_${tokenAddress}`];
+  if (mapItems && typeof mapItems === 'object') {
+    return mapItems[`${isBuy ? 'buy' : 'sell'}_${chainName}_${tokenAddress}`];
+  }
+  return null;
 }
 
 

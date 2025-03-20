@@ -16,6 +16,12 @@ export interface ITradeOthersFunction {
     getHashStatus(hash: string, chain: string | number): Promise<{
         status: HashStatus;
     }>;
+    wrappedExchange(chain: string | number, accountAddress: string, type: number, amount?: string): Promise<{
+        error: any;
+        result: {
+            hash: string | null;
+        } & any;
+    }>;
 }
 export interface ITradeService extends ITradeFunctions, ITradeOthersFunction {
     approve: IApproveService;
@@ -101,6 +107,7 @@ export type SendTransactionParams = {
     tokenAddress?: string;
 };
 export type CurrentSymbol = {
+    chain: string | number;
     in: TokenInfo;
     out: TokenInfo;
     amountIn: string;
