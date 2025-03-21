@@ -16,7 +16,7 @@ export interface ITradeOthersFunction {
     getHashStatus(hash: string, chain: string | number): Promise<{
         status: HashStatus;
     }>;
-    wrappedExchange(chain: string | number, accountAddress: string, type: number, amount?: string): Promise<{
+    wrappedExchange(chain: string | number, accountAddress: string, type: number, priorityFee: string, amount?: string): Promise<{
         error: any;
         result: {
             hash: string | null;

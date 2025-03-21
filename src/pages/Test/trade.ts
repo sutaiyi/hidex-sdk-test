@@ -74,11 +74,11 @@ const tradeFun: any = {
       const chain = 'SOLANA';
       const type = 0; // 0: SOL换WSOL 1: WSOL换SOL
       const amount = 0.001;
-      const priorityFee = 0.0001 * Math.pow(10, 9); // 优先费
+
       const { accountItem } = await wallet.getCurrentWallet();
       console.log(accountItem)
       const currentBalance = trade.getBalance(accountItem[chain].address);
-
+      const priorityFee = 0.0002 * Math.pow(10, 9); // 优先费
       const maxTransferLamports = Number(currentBalance) - RENT_EXEMPTION_MIN - 5000 - priorityFee;
       const requestedLamports = amount * LAMPORTS_PER_SOL;
 
@@ -86,7 +86,7 @@ const tradeFun: any = {
         alert(`余额不足。最大可转换金额：${maxTransferLamports / LAMPORTS_PER_SOL} SOL`);
       }
 
-      const { error, result } = await trade.wrappedExchange(chain, accountItem[chain].address, type, requestedLamports.toString())
+      const { error, result } = await trade.wrappedExchange(chain, accountItem[chain].address, type, priorityFee.toString(), requestedLamports.toString())
       if (!error) {
         const hashItem = {
           chain,
@@ -106,7 +106,14 @@ const tradeFun: any = {
       const chain = 'SOLANA';
       const type = 1; // 0: SOL换WSOL 1: WSOL换SOL
       const { accountItem } = await wallet.getCurrentWallet();
-      const { error, result } = await trade.wrappedExchange(chain, accountItem[chain].address, type)
+      const currentBalance = trade.getBalance(accountItem[chain].address);
+      const priorityFee = 0.0002 * Math.pow(10, 9); // 优先费
+      const maxTransferLamports = Number(currentBalance);
+      const requestedLamports = 5000 + priorityFee;
+      if (maxTransferLamports < requestedLamports) {
+        alert('燃料费用不足，请充值SOL大于 ' + (requestedLamports / Math.pow(10, 9)).toFixed(6));
+      }
+      const { error, result } = await trade.wrappedExchange(chain, accountItem[chain].address, type, priorityFee.toString())
       if (!error) {
         const hashItem = {
           chain,

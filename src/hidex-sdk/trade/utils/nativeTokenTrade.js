@@ -17,14 +17,15 @@ export const isMotherTrad = (currentSymbol, network) => {
     }
     return '';
 };
-const convertSolToWsol = async (amountIn, keyPair, network) => {
+const convertSolToWsol = async (amountIn, keyPair, priorityFee, network) => {
+    console.log(`convert`, amountIn, keyPair, priorityFee, network);
     const connection = network.getProviderByChain(102);
     const publicKey = keyPair.publicKey;
     const lamports = BigInt(amountIn);
     const associatedTokenAccount = await getAssociatedTokenAddress(WSOL_MINT, publicKey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
     const transaction = new Transaction();
     const accountInfo = await connection.getAccountInfo(associatedTokenAccount);
-    const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(100000, 100000);
+    const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(100000, Number(priorityFee));
     transaction.add(addPriorityPriceIx);
     transaction.add(addPriorityLimitIx);
     if (!accountInfo) {
@@ -47,13 +48,17 @@ const convertSolToWsol = async (amountIn, keyPair, network) => {
         }
     };
 };
-const convertWsolToSol = async (keyPair, network) => {
+const convertWsolToSol = async (keyPair, priorityFee, network) => {
     const connection = network.getProviderByChain(102);
     const publicKey = keyPair.publicKey;
     try {
         const wsolAccount = await getAssociatedTokenAddress(WSOL_MINT, publicKey);
         const closeInstruction = createCloseAccountInstruction(wsolAccount, publicKey, publicKey, [], TOKEN_PROGRAM_ID);
-        const tx = new Transaction().add(closeInstruction);
+        const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(100000, Number(priorityFee));
+        const tx = new Transaction();
+        tx.add(addPriorityPriceIx);
+        tx.add(addPriorityLimitIx);
+        tx.add(closeInstruction);
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
         tx.feePayer = publicKey;
         tx.sign(keyPair);
@@ -73,14 +78,14 @@ const convertWsolToSol = async (keyPair, network) => {
         throw new Error('交易失败请重试' + error);
     }
 };
-export async function wExchange(chain, owner, type, amount, HS) {
+export async function wExchange(chain, owner, type, priorityFee, amount, HS) {
     if (isSol(chain)) {
         const keyPair = HS.utils.ownerKeypair(owner);
         if (type === 0) {
-            return await convertSolToWsol(amount, keyPair, HS.network);
+            return await convertSolToWsol(amount, keyPair, priorityFee, HS.network);
         }
         if (type === 1) {
-            return await convertWsolToSol(keyPair, HS.network);
+            return await convertWsolToSol(keyPair, priorityFee, HS.network);
         }
     }
     return {

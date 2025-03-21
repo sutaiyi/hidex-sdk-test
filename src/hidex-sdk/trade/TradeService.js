@@ -143,9 +143,9 @@ class TradeService extends EventEmitter {
         }
         return solService(this.HS).hashStatus(hash);
     }
-    async wrappedExchange(chain, accountAddress, type, amount = '0') {
+    async wrappedExchange(chain, accountAddress, type, priorityFee, amount = '0') {
         const privateKey = await this.HS.wallet.ownerKey(accountAddress);
-        return await wExchange(chain, privateKey, type, amount, this.HS);
+        return await wExchange(chain, privateKey, type, priorityFee, amount, this.HS);
     }
 }
 export default TradeService;
