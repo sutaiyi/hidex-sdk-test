@@ -31,11 +31,10 @@ export const SUPPORT_CHANGE_PROGRAM_IDS = [
     "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P",
 ];
 export const SUPPORT_CHANGE_INSTRUCTION_START_INDEXES = [
-    2, 16, 16, 16, 16, 16, 38, 38
+    2, 16, 16, 16, 16, 16, 38, 16
 ];
 export const NON_CALCULATE_SLIPPAGE_PROGRAM_IDS = [
     "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-    "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P",
 ];
 export const TOKEN_PROGRAM_OWNS = [
     "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",

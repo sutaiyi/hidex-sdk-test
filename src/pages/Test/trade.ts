@@ -2,7 +2,7 @@ import HidexSDK from "@/hidexService"
 import { CurrentSymbol, HashStatus } from 'hidex-sdk';
 
 import { swapSign } from "./utils";
-import { getBeforeTradeData, getCurrentSymbolTest } from './solTrade'
+import { getBeforeTradeData, getCurrentSymbolTest, setBeforeTradeData } from './solTrade'
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 const { trade, network, wallet, dexFee, utils } = HidexSDK;
@@ -73,12 +73,13 @@ const tradeFun: any = {
       const RENT_EXEMPTION_MIN = 2_039_280;
       const chain = 'SOLANA';
       const type = 0; // 0: SOL换WSOL 1: WSOL换SOL
-      const amount = 0.001
+      const amount = 0.001;
+      const priorityFee = 0.0001 * Math.pow(10, 9); // 优先费
       const { accountItem } = await wallet.getCurrentWallet();
       console.log(accountItem)
       const currentBalance = trade.getBalance(accountItem[chain].address);
 
-      const maxTransferLamports = Number(currentBalance) - RENT_EXEMPTION_MIN - 5000;
+      const maxTransferLamports = Number(currentBalance) - RENT_EXEMPTION_MIN - 5000 - priorityFee;
       const requestedLamports = amount * LAMPORTS_PER_SOL;
 
       if (maxTransferLamports < requestedLamports) {
@@ -216,6 +217,9 @@ const tradeFun: any = {
       console.time('tradeswapTimer');
       const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
       console.timeEnd('tradeswapTimer');
+
+
+
       if (!error) {
         console.log('交易已提交：' + result.hash)
         const hashItem = {
@@ -227,6 +231,8 @@ const tradeFun: any = {
         trade.checkHash.action(hashItem)
       }
       console.log('交易HASH：', result)
+      // 更新交易预请求数据
+      setBeforeTradeData(info, { isBuy, isPump: currentSymbol.isPump, currentNetwork })
     } catch (error) {
       console.log(utils.getErrorMessage(error).message)
       alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
@@ -322,6 +328,8 @@ const tradeFun: any = {
         trade.checkHash.action(hashItem)
       }
       console.log('交易HASH：', result)
+      // 更新交易预请求数据
+      setBeforeTradeData(info, { isBuy, isPump: currentSymbol.isPump, currentNetwork })
     } catch (error) {
       console.log(utils.getErrorMessage(error).message)
       alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)

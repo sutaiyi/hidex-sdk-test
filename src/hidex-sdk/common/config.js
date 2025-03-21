@@ -1,7 +1,7 @@
 export const dexWalletFee = 0.01;
 export const mTokenAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 export const smTokenAddress = 'SoEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-export const sTokenAddress = 'So11111111111111111111111111111111111111112';
+export const sTokenAddress = "So11111111111111111111111111111111111111112";
 export const zero = '0x0000000000000000000000000000000000000000';
 export const ethRpcKey = '952c535fa7d7487a80eb600457d80ea0';
 export const defaultChain = 'SOLANA';

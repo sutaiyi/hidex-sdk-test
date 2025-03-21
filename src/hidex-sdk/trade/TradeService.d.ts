@@ -17,7 +17,7 @@ declare class TradeService extends EventEmitter implements ITradeService {
         message: TransactionMessage;
         addressesLookup: AddressLookupTableAccount[];
     }>;
-    isInstructionsSupportReset: (transactionMessage: TransactionMessage) => boolean;
+    isInstructionsSupportReset: (transactionMessage: TransactionMessage, currentSymbol: CurrentSymbol) => boolean;
     changeTradeService: (currentNetwork: ChainItem) => void;
     getBalance: (accountAddress: string, tokenAddress?: string) => Promise<string>;
     getBalanceMultiple: (chain: string, accountAddress: string, tokens: Array<string>) => Promise<Array<string>>;

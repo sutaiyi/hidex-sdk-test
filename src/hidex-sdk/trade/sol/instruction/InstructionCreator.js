@@ -44,6 +44,8 @@ export async function information(currentSymbol, owner, network) {
     const wSol = new PublicKey(sTokenAddress);
     const swapWsolPdaAta = await getAssociatedTokenAddress(wSol, swap_pda, true);
     const userwSolAta = await getAssociatedTokenAddress(wSol, owner.publicKey, false);
+    console.log("userwSolAta = " + userwSolAta.toBase58());
+    console.log("wSol = " + wSol.toBase58());
     const info = {
         program,
         dataPda: data_pda,

@@ -3,6 +3,7 @@ import { SystemProgram, Transaction } from '@solana/web3.js';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createCloseAccountInstruction, createSyncNativeInstruction, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { WSOL_MINT } from '../sol/config';
 import { isSol } from './index';
+import { priorityFeeInstruction } from '../sol/instruction/InstructionCreator';
 export const isMotherTrad = (currentSymbol, network) => {
     const currentNetWork = network.get();
     const inAddress = currentSymbol.in.address.toLowerCase();
@@ -23,6 +24,9 @@ const convertSolToWsol = async (amountIn, keyPair, network) => {
     const associatedTokenAccount = await getAssociatedTokenAddress(WSOL_MINT, publicKey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
     const transaction = new Transaction();
     const accountInfo = await connection.getAccountInfo(associatedTokenAccount);
+    const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(100000, 100000);
+    transaction.add(addPriorityPriceIx);
+    transaction.add(addPriorityLimitIx);
     if (!accountInfo) {
         transaction.add(createAssociatedTokenAccountInstruction(publicKey, associatedTokenAccount, publicKey, WSOL_MINT, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID));
     }

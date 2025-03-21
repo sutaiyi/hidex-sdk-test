@@ -7,7 +7,7 @@ export interface ITradeOthersFunction {
     defiApi: IDefiApi;
     changeTradeService(currentNetwork: ChainItem): void;
     resetInstructions(currentSymbol: CurrentSymbol, transactionMessage: TransactionMessage, newInputAmount: bigint, newOutputAmount: bigint): TransactionMessage;
-    isInstructionsSupportReset(transactionMessage: TransactionMessage): boolean;
+    isInstructionsSupportReset(transactionMessage: TransactionMessage, currentSymbol: CurrentSymbol): boolean;
     compileTransaction(swapBase64Str: string): Promise<{
         message: TransactionMessage;
         addressesLookup: AddressLookupTableAccount[];

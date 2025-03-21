@@ -5,6 +5,6 @@ export declare function compileTransaction(swapBase64Str: string, HS: OptionsCom
     message: TransactionMessage;
     addressesLookup: AddressLookupTableAccount[];
 }>;
-export declare function isInstructionsSupportReset(transactionMessage: TransactionMessage): boolean;
+export declare function isInstructionsSupportReset(transactionMessage: TransactionMessage, currentSymbol: CurrentSymbol): boolean;
 export declare function getTransactionsSignature(transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any, HS: OptionsCommon): Promise<Array<VersionedTransaction>>;
 //# sourceMappingURL=index.d.ts.map

@@ -34,8 +34,8 @@ class TradeService extends EventEmitter {
     compileTransaction = (swapBase64Str) => {
         return compileTransaction(swapBase64Str, this.HS);
     };
-    isInstructionsSupportReset = (transactionMessage) => {
-        return isInstructionsSupportReset(transactionMessage);
+    isInstructionsSupportReset = (transactionMessage, currentSymbol) => {
+        return isInstructionsSupportReset(transactionMessage, currentSymbol);
     };
     changeTradeService = (currentNetwork) => {
         this.chainId = currentNetwork.chainID;

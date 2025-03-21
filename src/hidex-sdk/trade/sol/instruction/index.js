@@ -38,6 +38,7 @@ export function resetInstructions(currentSymbol, transactionMessage, newInputAmo
         }
         const dexProgramIndex = SUPPORT_CHANGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58());
         if (dexProgramIndex >= 0) {
+            console.log("data = " + tempInstruction.data.toString("hex"));
             let beforeInput = dataHex.substring(SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex], SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16);
             const nonSlippageIndex = NON_CALCULATE_SLIPPAGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58());
             if (nonSlippageIndex >= 0) {
@@ -53,6 +54,8 @@ export function resetInstructions(currentSymbol, transactionMessage, newInputAmo
             const beforeOutputHex = beforeOutput.match(/.{2}/g)?.reverse().join("") || "";
             const bigIntBeforeOutput = BigInt("0x" + beforeOutputHex);
             console.log("修改前输出的代币数量 = " + bigIntBeforeOutput);
+            console.log("传入的输入的代币数量 = " + newInputAmount);
+            console.log("传入的输出的代币数量 = " + newOutputAmount);
             const precision = BigInt(10000);
             let numerator = BigInt(Math.round(currentSymbol.slipPersent * Number(precision)));
             if (NON_CALCULATE_SLIPPAGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58()) == -1) {
@@ -119,11 +122,34 @@ export async function compileTransaction(swapBase64Str, HS) {
     });
     return { message: transactionMessage, addressesLookup: addressLookupTableAccounts };
 }
-export function isInstructionsSupportReset(transactionMessage) {
+export function isInstructionsSupportReset(transactionMessage, currentSymbol) {
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
-        const transactionInstruction = transactionMessage.instructions[i];
-        if (SUPPORT_CHANGE_PROGRAM_IDS.indexOf(transactionInstruction.programId.toBase58()) >= 0) {
-            return true;
+        const tempInstruction = transactionMessage.instructions[i];
+        const dexProgramIndex = SUPPORT_CHANGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58());
+        if (dexProgramIndex >= 0) {
+            const dataHex = tempInstruction.data.toString("hex");
+            let beforeInput = dataHex.substring(SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex], SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16);
+            const nonSlippageIndex = NON_CALCULATE_SLIPPAGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58());
+            if (nonSlippageIndex >= 0) {
+                beforeInput = dataHex.substring(dataHex.length - SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex], dataHex.length - SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16);
+            }
+            const beforeInputHex = beforeInput.match(/.{2}/g)?.reverse().join("") || "";
+            const bigIntBeforeInput = BigInt("0x" + beforeInputHex);
+            console.log("检测指令中输入的代币数量 = " + bigIntBeforeInput);
+            if (currentSymbol.isBuy) {
+                if ((tempInstruction.programId.toBase58() == PUMP_PROGRAM_ID.toBase58() && bigIntBeforeInput == DEFAULT_SWAP_PUMP_LAMPORTS) ||
+                    (tempInstruction.programId.toBase58() != PUMP_PROGRAM_ID.toBase58() && bigIntBeforeInput == DEFAULT_SWAP_SOL_LAMPORTS)) {
+                    console.log("买入指令检测成功 = " + bigIntBeforeInput);
+                    return true;
+                }
+            }
+            else {
+                if (tempInstruction.programId.toBase58() == PUMP_PROGRAM_ID.toBase58() ||
+                    (tempInstruction.programId.toBase58() != PUMP_PROGRAM_ID.toBase58() && bigIntBeforeInput == BigInt(currentSymbol.tokenBalance || '0'))) {
+                    console.log("卖出指令检测成功 = " + bigIntBeforeInput);
+                    return true;
+                }
+            }
         }
     }
     return false;
