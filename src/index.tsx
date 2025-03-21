@@ -35,10 +35,11 @@ const Rend = () => {
         const {code, message} = utils.getErrorMessage(error)
         if (code === 13001) {
           alert(message + ', 进入《Hidex SDK 调试》点击 Wallet 下的解锁即可')
+          return;
         }
         if (code === 13002) {
           setHasToken(false);
-          return
+          return;
         }
         alert(code + '-' + message)
         
