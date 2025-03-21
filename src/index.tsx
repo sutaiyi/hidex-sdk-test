@@ -42,7 +42,6 @@ const Rend = () => {
           return;
         }
         alert(code + '-' + message)
-        
       }
 		};
 		initLoading();
