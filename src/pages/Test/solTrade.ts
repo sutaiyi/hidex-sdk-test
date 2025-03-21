@@ -42,6 +42,8 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentNetwork }
     chain: currentNetwork.chain,
     cryptoPriceUSD,
     TOKEN_2022: false,
+    preAmountIn: '0',
+    preAmountOut: '0'
   };
   return {
     currentSymbol,
@@ -54,13 +56,17 @@ const setBeforeTradeData = async (info: any, { isBuy, isPump, currentNetwork }: 
   const { token, tokenBalanceStr } = info;
   const { currentSymbol, address } = await getCurrentSymbolTest(info, { isBuy, isPump, currentNetwork });
   if ((isBuy || (!isBuy && Number(tokenBalanceStr))) && currentSymbol.in.address !== currentSymbol.out.address) {
-    const { success, swapTransaction } = await trade.defiApi.swapRoute(currentSymbol, address)
+    const { success, swapTransaction, data } = await trade.defiApi.swapRoute(currentSymbol, address)
     if (!success) {
       return;
     }
     const compile = await trade.compileTransaction(swapTransaction)
     const mapItems = beforeTradeDataMap.get('compiles') || {};
-    mapItems[`${isBuy ? 'buy' : 'sell'}_${currentNetwork.chain}_${token.address}`] = compile
+    mapItems[`${isBuy ? 'buy' : 'sell'}_${currentNetwork.chain}_${token.address}`] = {
+      compile,
+      preAmountIn: data.inAmount,
+      preAmountOut: data.otherAmountThreshold
+    }
     beforeTradeDataMap.set('compiles', mapItems);
   }
 }

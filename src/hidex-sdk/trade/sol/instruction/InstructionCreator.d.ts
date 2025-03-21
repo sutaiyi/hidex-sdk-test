@@ -35,4 +35,9 @@ export declare function createSaleSwapCompletedInstruction(currentSymbol: Curren
 export declare function createTipTransferInstruction(from: PublicKey, to: PublicKey, lamports: bigint): Promise<TransactionInstruction>;
 export declare function numberToLittleEndianHex(num: number, byteLength: number): string;
 export declare function checkAccountCloseInstruction(currentSymbol: CurrentSymbol, instruction: TransactionInstruction, owner: any, network: INetworkService): Promise<boolean>;
+export declare function getInstructionAmounts(currentSymbol: CurrentSymbol, instruction: TransactionInstruction): {
+    input: bigint;
+    output: bigint;
+};
+export declare function getInstructionReplaceDataHex(currentSymbol: CurrentSymbol, programId: string, dataHex: string, inputHex: string, outputHex: string): string;
 //# sourceMappingURL=InstructionCreator.d.ts.map

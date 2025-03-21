@@ -20,20 +20,18 @@ export const SEED_SWAP = 'chill_swap';
 export const SEED_DATA = 'chill_data';
 export const SEED_TRADE = "trade_config_data";
 export const WSOL_MINT = new PublicKey("So11111111111111111111111111111111111111112");
-export const SUPPORT_CHANGE_PROGRAM_IDS = [
-    "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
-    "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK",
-    "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C",
-    "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc",
-    "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo",
-    "Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB",
-    "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-    "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P",
-];
-export const SUPPORT_CHANGE_INSTRUCTION_START_INDEXES = [
-    2, 16, 16, 16, 16, 16, 38, 16
-];
-export const NON_CALCULATE_SLIPPAGE_PROGRAM_IDS = [
+export const SUPPORT_CHANGE_PROGRAM_IDS = new Map([
+    ["675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8", 2],
+    ["CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK", 16],
+    ["CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C", 16],
+    ["whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc", 16],
+    ["LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo", 16],
+    ["Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB", 16],
+    ["JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4", 38],
+    ["6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P", 16],
+    ["pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA", 16],
+]);
+export const NEED_CHANGE_SLIPPAGE_PROGRAM_IDS = [
     "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
 ];
 export const TOKEN_PROGRAM_OWNS = [
@@ -53,6 +51,8 @@ export const JITO_FEE_ACCOUNT = [
 export const HIDEX_ADDRESS_LOOK_UP = new PublicKey("5ZF8nmsRMPB24j5UDU7ztjvxVBJ7pprZJvzbujZ5nKpQ");
 export const SOLANA_SYSTEM_PROGRAM_ID = new PublicKey("11111111111111111111111111111111");
 export const PUMP_PROGRAM_ID = new PublicKey("6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P");
+export const JUPITER_PROGRAM_ID = new PublicKey("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4");
+export const PUMP_AMM_PROGRAM_ID = new PublicKey("pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA");
 export const GMGN_PRIORITY_FEE_Collect_ID = new PublicKey("BB5dnY55FXS1e1NXqZDwCzgdYJdMCj3B92PU6Q5Fb6DT");
 export const PUEM_INSTRUCTION_PREFIX = "66063d1201daebea";
 export const SOLANA_SYSTEM_PROGRAM_TRANSFER_ID = 0X02;

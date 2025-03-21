@@ -4,7 +4,7 @@ import { ComputeBudgetProgram, PublicKey, SystemProgram, TransactionMessage, Ver
 import abis from '../../../common/abis';
 import CustomWallet from '../../../wallet/custom';
 import { sTokenAddress, zero } from '../../../common/config';
-import { AssociateTokenProgram, PROGRAMID, SEED_DATA, SEED_SWAP, SEED_TRADE, TOKEN_PROGRAM_OWNS } from '../config';
+import { AssociateTokenProgram, JUPITER_PROGRAM_ID, PROGRAMID, PUEM_INSTRUCTION_PREFIX, PUMP_AMM_PROGRAM_ID, PUMP_PROGRAM_ID, SEED_DATA, SEED_SWAP, SEED_TRADE, SUPPORT_CHANGE_PROGRAM_IDS, TOKEN_PROGRAM_OWNS } from '../config';
 export const isBuy = (currentSymbol) => {
     return !!currentSymbol.isBuy;
 };
@@ -225,4 +225,50 @@ export async function checkAccountCloseInstruction(currentSymbol, instruction, o
         return true;
     }
     return false;
+}
+export function getInstructionAmounts(currentSymbol, instruction) {
+    const dataHex = instruction.data.toString("hex");
+    const programId = instruction.programId.toBase58();
+    let beforeInput = "";
+    let beforeOutput = "";
+    const indexInSupportingArr = SUPPORT_CHANGE_PROGRAM_IDS.get(programId) ?? 0;
+    if ((programId == PUMP_AMM_PROGRAM_ID.toBase58() || programId == PUMP_PROGRAM_ID.toBase58()) && currentSymbol.isBuy) {
+        beforeInput = dataHex.substring(indexInSupportingArr + 16, indexInSupportingArr + 16 * 2);
+        beforeOutput = dataHex.substring(indexInSupportingArr, indexInSupportingArr + 16);
+    }
+    else if (programId == JUPITER_PROGRAM_ID.toBase58()) {
+        beforeInput = dataHex.substring(dataHex.length - indexInSupportingArr, dataHex.length - indexInSupportingArr + 16);
+        beforeOutput = dataHex.substring(dataHex.length - indexInSupportingArr + 16, dataHex.length - indexInSupportingArr + 16 * 2);
+    }
+    else {
+        beforeInput = dataHex.substring(indexInSupportingArr, indexInSupportingArr + 16);
+        beforeOutput = dataHex.substring(indexInSupportingArr + 16, indexInSupportingArr + 16 * 2);
+    }
+    const beforeInputHex = beforeInput.match(/.{2}/g)?.reverse().join("") || "";
+    const bigIntBeforeInput = BigInt("0x" + beforeInputHex);
+    const beforeOutputHex = beforeOutput.match(/.{2}/g)?.reverse().join("") || "";
+    const bigIntBeforeOutput = BigInt("0x" + beforeOutputHex);
+    return { input: bigIntBeforeInput, output: bigIntBeforeOutput };
+}
+export function getInstructionReplaceDataHex(currentSymbol, programId, dataHex, inputHex, outputHex) {
+    let replaceHex = inputHex.concat(outputHex);
+    if ((programId == PUMP_PROGRAM_ID.toBase58() ||
+        programId == PUMP_AMM_PROGRAM_ID.toBase58()) &&
+        dataHex.startsWith(PUEM_INSTRUCTION_PREFIX) &&
+        currentSymbol.isBuy) {
+        replaceHex = outputHex.concat(inputHex);
+    }
+    const indexInSupportingArr = SUPPORT_CHANGE_PROGRAM_IDS.get(programId) ?? 0;
+    let finalData;
+    if (programId == JUPITER_PROGRAM_ID.toBase58()) {
+        finalData = dataHex.slice(0, dataHex.length - indexInSupportingArr) +
+            replaceHex +
+            dataHex.slice(dataHex.length - indexInSupportingArr + 16 * 2);
+    }
+    else {
+        finalData = dataHex.slice(0, indexInSupportingArr) +
+            replaceHex +
+            dataHex.slice(indexInSupportingArr + 16 * 2);
+    }
+    return finalData;
 }

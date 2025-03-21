@@ -33,6 +33,7 @@ class DefiApi {
                 success: true,
                 swapTransaction: raw_tx.swapTransaction,
                 outAmount: quote.outAmount,
+                data: { ...quote }
             };
         }
         if (response.status === 200 && response.data?.code !== 0) {

@@ -10,6 +10,7 @@ declare class DefiApi implements IDefiApi {
         success: boolean;
         swapTransaction: string;
         outAmount: string;
+        data: any;
     }>;
     submitSwap(currentSymbol: CurrentSymbol, transaction: VersionedTransaction): Promise<{
         success: boolean;

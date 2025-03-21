@@ -85,6 +85,7 @@ export interface IDefiApi {
         success: boolean;
         swapTransaction: string;
         outAmount: string;
+        data: any;
     }>;
     submitSwap(currentSymbol: CurrentSymbol, transaction: VersionedTransaction): Promise<{
         success: boolean;
@@ -135,6 +136,8 @@ export type CurrentSymbol = {
     currentPrice?: string;
     tokenBalance?: string;
     cryptoPriceUSD: number;
+    preAmountIn: string;
+    preAmountOut: string;
 };
 export type TokenInfo = {
     symbol: string;

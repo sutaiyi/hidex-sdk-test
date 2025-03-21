@@ -36,13 +36,13 @@ const tradeFun = () => {
     ETH系转账: async (info: any) => {
       try {
         // 假设用户选择了网络费用列表中的第一档
-        const networkFeeList = await tradeFun.获取转账网络费用列表(info);
+        const networkFeeList = await tradeFun().获取转账网络费用列表(info);
         const networkFee = networkFeeList[0];
         console.log(networkFee)
         const { token, account } = info;
 
-
-        const totalFee = await trade.getSendFees(networkFee)
+        const toAddress = '0x996AfF191D128b8f36b828573Fb02944cD1b357e'
+        const totalFee = await trade.getSendFees(networkFee, toAddress, token.address)
         console.log('总的手续费' + totalFee)
 
         // 判断母币是否足够
@@ -52,7 +52,7 @@ const tradeFun = () => {
 
         const data = await trade.sendTransaction({
           from: account.address,
-          to: '0x996AfF191D128b8f36b828573Fb02944cD1b357e', // 自己转给自己
+          to: toAddress, // 自己转给自己
           amount: String(0.0001 * Math.pow(10, token.decimals)), // 实际转转数量
           tokenAddress: token.address,  // 发送母币种地址或者其他代币地址  注意：为空代表母币种
           currentNetWorkFee: networkFee,
@@ -166,7 +166,10 @@ const tradeFun = () => {
         const buyAmount = (0.0001 * Math.pow(10, currentNetwork.tokens[1].decimals)).toString();
         currentSymbol.chain = currentNetwork.chain;
         currentSymbol.slipPersent = 0.05; // 滑点5%
-        currentSymbol.compile = getBeforeTradeData(isBuy, chainName, token.address)
+        const { compile, preAmountIn, preAmountOut } = getBeforeTradeData(isBuy, chainName, token.address)
+        currentSymbol.compile = compile;
+        currentSymbol.preAmountIn = preAmountIn;
+        currentSymbol.preAmountOut = preAmountOut;
         // 交易手续费用
         currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount(currentSymbol, buyAmount);
 
@@ -263,7 +266,10 @@ const tradeFun = () => {
         currentSymbol.slipPersent = 0.05; // 滑点5%
         // 实际卖出金额
         const buyAmount = (Math.floor(Number(tokenBalanceStr) * 0.2)).toString();
-        currentSymbol.compile = getBeforeTradeData(isBuy, chainName, token.address)
+        const { compile, preAmountIn, preAmountOut } = getBeforeTradeData(isBuy, chainName, token.address)
+        currentSymbol.compile = compile;
+        currentSymbol.preAmountIn = preAmountIn;
+        currentSymbol.preAmountOut = preAmountOut;
         // 交易手续费用
         currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount(currentSymbol, buyAmount);
         // 实际卖出金额

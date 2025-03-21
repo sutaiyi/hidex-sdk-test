@@ -1,6 +1,6 @@
 import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount, PublicKey, } from "@solana/web3.js";
-import { SUPPORT_CHANGE_PROGRAM_IDS, HIDEX_ADDRESS_LOOK_UP, SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, DEFAULT_SWAP_SOL_LAMPORTS, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, BASE_ACCOUNT_INIT_FEE, SUPPORT_CHANGE_INSTRUCTION_START_INDEXES, PUEM_INSTRUCTION_PREFIX, PUMP_PROGRAM_ID, GMGN_PRIORITY_FEE_Collect_ID, SOLANA_TX_SERIALIZE_SIGN, JITO_FEE_ACCOUNT, DEFAULD_SOLANA_SWAP_LIMIT, TIP_MINI_IN_PRIORITY, DEFAULT_SWAP_PUMP_LAMPORTS, SOLANA_MAX_TX_SERIALIZE_SIGN, NON_CALCULATE_SLIPPAGE_PROGRAM_IDS } from '../config';
-import { checkAccountCloseInstruction, createSwapCompleteInstruction, createSwapPrepareInstruction, createTipTransferInstruction, deleteTransactionGasInstruction, numberToLittleEndianHex, priorityFeeInstruction, versionedTra } from "./InstructionCreator";
+import { HIDEX_ADDRESS_LOOK_UP, SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, DEFAULT_SWAP_SOL_LAMPORTS, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, BASE_ACCOUNT_INIT_FEE, GMGN_PRIORITY_FEE_Collect_ID, SOLANA_TX_SERIALIZE_SIGN, JITO_FEE_ACCOUNT, DEFAULD_SOLANA_SWAP_LIMIT, TIP_MINI_IN_PRIORITY, DEFAULT_SWAP_PUMP_LAMPORTS, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, PUMP_PROGRAM_ID } from '../config';
+import { checkAccountCloseInstruction, createSwapCompleteInstruction, createSwapPrepareInstruction, createTipTransferInstruction, deleteTransactionGasInstruction, getInstructionAmounts, getInstructionReplaceDataHex, numberToLittleEndianHex, priorityFeeInstruction, versionedTra } from "./InstructionCreator";
 export function resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount) {
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
         const tempInstruction = transactionMessage.instructions[i];
@@ -36,29 +36,17 @@ export function resetInstructions(currentSymbol, transactionMessage, newInputAmo
                 }
             }
         }
-        const dexProgramIndex = SUPPORT_CHANGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58());
-        if (dexProgramIndex >= 0) {
+        const dexProgramIndex = SUPPORT_CHANGE_PROGRAM_IDS.get(tempInstruction.programId.toBase58()) ?? 0;
+        if (dexProgramIndex > 0) {
             console.log("data = " + tempInstruction.data.toString("hex"));
-            let beforeInput = dataHex.substring(SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex], SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16);
-            const nonSlippageIndex = NON_CALCULATE_SLIPPAGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58());
-            if (nonSlippageIndex >= 0) {
-                beforeInput = dataHex.substring(dataHex.length - SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex], dataHex.length - SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16);
-            }
-            let beforeOutput = dataHex.substring(SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16, SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16 * 2);
-            if (nonSlippageIndex >= 0) {
-                beforeOutput = dataHex.substring(dataHex.length - SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16, dataHex.length - SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 32);
-            }
-            const beforeInputHex = beforeInput.match(/.{2}/g)?.reverse().join("") || "";
-            const bigIntBeforeInput = BigInt("0x" + beforeInputHex);
-            console.log("修改前输入的代币数量 = " + bigIntBeforeInput);
-            const beforeOutputHex = beforeOutput.match(/.{2}/g)?.reverse().join("") || "";
-            const bigIntBeforeOutput = BigInt("0x" + beforeOutputHex);
-            console.log("修改前输出的代币数量 = " + bigIntBeforeOutput);
+            const amountsResult = getInstructionAmounts(currentSymbol, tempInstruction);
+            console.log("修改前输入的代币数量 = " + amountsResult.input);
+            console.log("修改前输出的代币数量 = " + amountsResult.output);
             console.log("传入的输入的代币数量 = " + newInputAmount);
             console.log("传入的输出的代币数量 = " + newOutputAmount);
             const precision = BigInt(10000);
             let numerator = BigInt(Math.round(currentSymbol.slipPersent * Number(precision)));
-            if (NON_CALCULATE_SLIPPAGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58()) == -1) {
+            if (NEED_CHANGE_SLIPPAGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58()) == -1) {
                 newOutputAmount = newOutputAmount - (newOutputAmount * numerator / precision);
             }
             else {
@@ -70,28 +58,12 @@ export function resetInstructions(currentSymbol, transactionMessage, newInputAmo
             const swapInstructionBuffer = Buffer.alloc(8);
             swapInstructionBuffer.writeBigUInt64LE(newInputAmount);
             const newInputReverseHex = swapInstructionBuffer.toString("hex");
-            console.log("修改后输入的代币数量 = " + newInputAmount);
+            console.log("计算滑点后输入的代币数量 = " + newInputAmount);
             swapInstructionBuffer.writeBigUInt64LE(newOutputAmount);
             const newOutputReverseHex = swapInstructionBuffer.toString("hex");
-            console.log("修改后输出的代币数量 = " + newOutputAmount);
-            let replaceHex = newInputReverseHex.concat(newOutputReverseHex);
-            console.log("replaceHex = " + replaceHex);
-            if (tempInstruction.programId.toBase58() ==
-                PUMP_PROGRAM_ID.toBase58() &&
-                dataHex.startsWith(PUEM_INSTRUCTION_PREFIX)) {
-                replaceHex = newOutputReverseHex.concat(newInputReverseHex);
-            }
-            let finalData;
-            if (NON_CALCULATE_SLIPPAGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58()) >= 0) {
-                finalData = dataHex.slice(0, dataHex.length - SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex]) +
-                    replaceHex +
-                    dataHex.slice(dataHex.length - SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16 * 2);
-            }
-            else {
-                finalData = dataHex.slice(0, SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex]) +
-                    replaceHex +
-                    dataHex.slice(SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16 * 2);
-            }
+            console.log("计算滑点后输出的代币数量 = " + newOutputAmount);
+            let finalData = getInstructionReplaceDataHex(currentSymbol, tempInstruction.programId.toBase58(), dataHex, newInputReverseHex, newOutputReverseHex);
+            console.log("finalData = " + finalData);
             tempInstruction.data = Buffer.from(finalData, "hex");
             console.log("data3 = " + tempInstruction.data.toString("hex"));
         }
@@ -125,28 +97,28 @@ export async function compileTransaction(swapBase64Str, HS) {
 export function isInstructionsSupportReset(transactionMessage, currentSymbol) {
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
         const tempInstruction = transactionMessage.instructions[i];
-        const dexProgramIndex = SUPPORT_CHANGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58());
-        if (dexProgramIndex >= 0) {
-            const dataHex = tempInstruction.data.toString("hex");
-            let beforeInput = dataHex.substring(SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex], SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16);
-            const nonSlippageIndex = NON_CALCULATE_SLIPPAGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58());
-            if (nonSlippageIndex >= 0) {
-                beforeInput = dataHex.substring(dataHex.length - SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex], dataHex.length - SUPPORT_CHANGE_INSTRUCTION_START_INDEXES[dexProgramIndex] + 16);
-            }
-            const beforeInputHex = beforeInput.match(/.{2}/g)?.reverse().join("") || "";
-            const bigIntBeforeInput = BigInt("0x" + beforeInputHex);
-            console.log("检测指令中输入的代币数量 = " + bigIntBeforeInput);
-            if (currentSymbol.isBuy) {
-                if ((tempInstruction.programId.toBase58() == PUMP_PROGRAM_ID.toBase58() && bigIntBeforeInput == DEFAULT_SWAP_PUMP_LAMPORTS) ||
-                    (tempInstruction.programId.toBase58() != PUMP_PROGRAM_ID.toBase58() && bigIntBeforeInput == DEFAULT_SWAP_SOL_LAMPORTS)) {
-                    console.log("买入指令检测成功 = " + bigIntBeforeInput);
+        const programId = tempInstruction.programId.toBase58();
+        console.log("********************************************************************************");
+        const dexProgramIndex = SUPPORT_CHANGE_PROGRAM_IDS.get(programId) ?? 0;
+        if (dexProgramIndex > 0) {
+            console.log("dexId", programId);
+            console.log("data", tempInstruction.data.toString("hex"));
+            const amounts = getInstructionAmounts(currentSymbol, tempInstruction);
+            console.log("检测指令中输入的代币数量 = " + amounts.input);
+            console.log("检测指令中输出的代币数量 = " + amounts.output);
+            console.log("检测指令中传入的输入的代币数量 = " + BigInt(currentSymbol.preAmountIn));
+            console.log("检测指令中传入的输出的代币数量 = " + BigInt(currentSymbol.preAmountOut));
+            let preAmountInBigInt = BigInt(currentSymbol.preAmountIn);
+            let preAmountOutBigInt = BigInt(currentSymbol.preAmountOut);
+            if (programId != PUMP_AMM_PROGRAM_ID.toBase58() && programId != PUMP_PROGRAM_ID.toBase58()) {
+                if (amounts.input == preAmountInBigInt && amounts.output == preAmountOutBigInt) {
+                    console.log("买入指令检测成功 = " + amounts.input);
                     return true;
                 }
             }
             else {
-                if (tempInstruction.programId.toBase58() == PUMP_PROGRAM_ID.toBase58() ||
-                    (tempInstruction.programId.toBase58() != PUMP_PROGRAM_ID.toBase58() && bigIntBeforeInput == BigInt(currentSymbol.tokenBalance || '0'))) {
-                    console.log("卖出指令检测成功 = " + bigIntBeforeInput);
+                if (amounts.input == preAmountInBigInt || amounts.output == preAmountOutBigInt) {
+                    console.log("买入指令检测成功 = " + amounts.input);
                     return true;
                 }
             }

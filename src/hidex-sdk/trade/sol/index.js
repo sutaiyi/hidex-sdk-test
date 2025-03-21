@@ -176,7 +176,7 @@ export const solService = (HS) => {
                 minOutAmount = (Math.floor(amountInUSD / Number(currentSymbol.currentPrice) * Math.pow(10, currentSymbol.out.decimals))).toString();
             }
             if (!currentSymbol.isBuy && currentSymbol.currentPrice) {
-                minOutAmount = (Math.floor(Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.out.decimals) * Number(currentSymbol.currentPrice) / currentSymbol.cryptoPriceUSD * Math.pow(10, currentSymbol.in.decimals))).toString();
+                minOutAmount = (Math.floor(Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.in.decimals) * Number(currentSymbol.currentPrice) / currentSymbol.cryptoPriceUSD * Math.pow(10, currentSymbol.out.decimals))).toString();
             }
             return {
                 minOutAmount,
