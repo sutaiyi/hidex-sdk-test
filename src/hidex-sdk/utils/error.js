@@ -9,6 +9,12 @@ export default (error) => {
             message: '密码错误/丢失'
         };
     }
+    if (strMessage.includes('Failed get s3 store')) {
+        return {
+            code: 13002,
+            message: 'TOKEN丢失/过期'
+        };
+    }
     if (strMessage.includes('transfer amount exceeds balance')) {
         return {
             code: 14001,

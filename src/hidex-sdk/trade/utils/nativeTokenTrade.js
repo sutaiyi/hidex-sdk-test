@@ -18,7 +18,6 @@ export const isMotherTrad = (currentSymbol, network) => {
     return '';
 };
 const convertSolToWsol = async (amountIn, keyPair, priorityFee, network) => {
-    console.log(`convert`, amountIn, keyPair, priorityFee, network);
     const connection = network.getProviderByChain(102);
     const publicKey = keyPair.publicKey;
     const lamports = BigInt(amountIn);

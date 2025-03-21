@@ -74,9 +74,9 @@ class TradeService extends EventEmitter {
         }
         throw new Error('app undefined');
     };
-    getSendFees = async (networkFee) => {
+    getSendFees = async (networkFee, toAddress, tokenAddress) => {
         console.log('获取发送手续费参数', networkFee);
-        const result = await this.app?.getSendFees(networkFee);
+        const result = await this.app?.getSendFees(networkFee, toAddress, tokenAddress);
         if (result) {
             return result;
         }

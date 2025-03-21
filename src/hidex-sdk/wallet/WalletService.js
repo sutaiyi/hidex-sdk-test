@@ -79,7 +79,7 @@ class WalletService {
                     const mmcoi = await this.getEncryptionWallet(this.password, 1, hash);
                     for (const pathIndex of Array.from({ length: maxPathIndex + 1 }, (_, i) => i)) {
                         console.log('pathIndex', pathIndex);
-                        await this.createWallet(mmcoi, pathIndex, '', id);
+                        await this.createMnemonicWallet(mmcoi, pathIndex, '', id);
                     }
                 }
             }
@@ -192,6 +192,21 @@ class WalletService {
         return apt;
     }
     async createWallet(mnemonic, pathIndex = 0, walletName = '', id = 0) {
+        const bootedOss = this.getBootedOss();
+        let useMnemonic = mnemonic;
+        const walletBootedArr = Object.keys(bootedOss.walletBooted);
+        if (walletBootedArr.length > 0) {
+            const item = walletBootedArr.find(v => v.includes('MNEMONIC_HASH_'));
+            if (item && item.split('_')[2] !== useMnemonic) {
+                throw new Error(JSON.stringify({ code: 10018, message: '助记词账户已创建' }));
+            }
+            if (isValidSHA256(useMnemonic)) {
+                useMnemonic = await this.getEncryptionWallet(this.password, 1, useMnemonic);
+            }
+        }
+        return await this.createMnemonicWallet(useMnemonic, pathIndex, walletName, id);
+    }
+    async createMnemonicWallet(mnemonic, pathIndex = 0, walletName = '', id = 0) {
         await this.verifyPassword(this.password);
         const account = {};
         const items = [];

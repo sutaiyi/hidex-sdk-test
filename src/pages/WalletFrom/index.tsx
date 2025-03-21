@@ -1,4 +1,4 @@
-import hidexService from '@/hidexService';
+import {HidexSDK} from '@/hidexService';
 import { useEffect, useState } from 'react';
 
 
@@ -10,7 +10,7 @@ interface SearchComponentProps {
 }
 
 const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => {
-  const { network, wallet, trade } = hidexService;
+  const { network, wallet, trade } = HidexSDK;
   const [inputValue, setInputValue] = useState('');
   const [results, setResults] = useState<any>([]);
 

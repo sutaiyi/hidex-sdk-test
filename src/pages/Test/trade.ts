@@ -1,380 +1,384 @@
-import HidexSDK from "@/hidexService"
-import { CurrentSymbol, HashStatus } from 'hidex-sdk';
 
+import { HidexSDK } from "@/hidexService"
 import { swapSign } from "./utils";
+
 import { getBeforeTradeData, getCurrentSymbolTest, setBeforeTradeData } from './solTrade'
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
-const { trade, network, wallet, dexFee, utils } = HidexSDK;
-const tradeFun: any = {
-  获取转账网络费用列表: async (info: any) => {
-    try {
-      const chain = 'BSC'
-      if (!info || info.chainName !== chain) {
-        alert(`请选择${chain}代币`);
+const tradeFun = () => {
+  const { trade, network, wallet, dexFee, utils } = HidexSDK;
+  return {
+    获取转账网络费用列表: async (info: any) => {
+      try {
+        const chain = 'BSC'
+        if (!info || info.chainName !== chain) {
+          alert(`请选择${chain}代币`);
+          return;
+        }
+        const { token, account } = info;
+        // 选择链网络
+        await network.choose(chain);
+        // 先预估交易
+        const { gasLimit } = await trade.getSendEstimateGas({
+          from: account.address,
+          to: '0x8588511aac7Ee60c0833529BF39Dc3e0E0736f3f',
+          amount: String(0.000001 * Math.pow(10, token.decimals)), // 模拟交易数量
+          tokenAddress: token.address,  // 发送母币种地址或者其他代币地址  注意：为空代表母币种
+        })
+        console.log('预估交易费用===>', gasLimit);
+        const feeArray = await trade.getNetWorkFees(gasLimit);
+        console.log(`网络费用列表===>`, feeArray);
+        return feeArray;
+      } catch (error) {
+        alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
+      }
+    },
+    ETH系转账: async (info: any) => {
+      try {
+        // 假设用户选择了网络费用列表中的第一档
+        const networkFeeList = await tradeFun.获取转账网络费用列表(info);
+        const networkFee = networkFeeList[0];
+        console.log(networkFee)
+        const { token, account } = info;
+
+
+        const totalFee = await trade.getSendFees(networkFee)
+        console.log('总的手续费' + totalFee)
+
+        // 判断母币是否足够
+        // ...TODO: 
+        // 1、如果是转母必币，需要将“总的手续费” 加上 “转出的母币数量”  判断母币余额是否足够
+        // 2、如果是转代币，判断余额是否大于“总的手续费”
+
+        const data = await trade.sendTransaction({
+          from: account.address,
+          to: '0x996AfF191D128b8f36b828573Fb02944cD1b357e', // 自己转给自己
+          amount: String(0.0001 * Math.pow(10, token.decimals)), // 实际转转数量
+          tokenAddress: token.address,  // 发送母币种地址或者其他代币地址  注意：为空代表母币种
+          currentNetWorkFee: networkFee,
+        })
+        console.log('转账结果===>', data);
+        if (!data.error) {
+          throw new Error(data.error?.toString());
+        }
+        alert('发送成功' + data.result.hash)
+      } catch (error) {
+        alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
+      }
+    },
+    SOL转账: async () => {
+    },
+    'SOL换WSOL(0.001)': async () => {
+      try {
+        console.time('tradeFullTimer');
+        const RENT_EXEMPTION_MIN = 2_039_280;
+        const chain = 'SOLANA';
+        const type = 0; // 0: SOL换WSOL 1: WSOL换SOL
+        const amount = 0.001;
+
+        const { accountItem } = await wallet.getCurrentWallet();
+        console.log(accountItem)
+        const currentBalance = trade.getBalance(accountItem[chain].address);
+        const priorityFee = 0.0002 * Math.pow(10, 9); // 优先费
+        const maxTransferLamports = Number(currentBalance) - RENT_EXEMPTION_MIN - 5000 - priorityFee;
+        const requestedLamports = amount * LAMPORTS_PER_SOL;
+
+        if (maxTransferLamports < requestedLamports) {
+          alert(`余额不足。最大可转换金额：${maxTransferLamports / LAMPORTS_PER_SOL} SOL`);
+        }
+
+        const { error, result } = await trade.wrappedExchange(chain, accountItem[chain].address, type, priorityFee.toString(), requestedLamports.toString())
+        if (!error) {
+          const hashItem = {
+            chain,
+            hash: result.hash,
+            createTime: new Date().getTime(),
+            data: result.data
+          }
+          trade.checkHash.action(hashItem)
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    },
+    'WSOL换SOL': async () => {
+      try {
+        console.time('tradeFullTimer');
+        const chain = 'SOLANA';
+        const type = 1; // 0: SOL换WSOL 1: WSOL换SOL
+        const { accountItem } = await wallet.getCurrentWallet();
+        const currentBalance = trade.getBalance(accountItem[chain].address);
+        const priorityFee = 0.0002 * Math.pow(10, 9); // 优先费
+        const maxTransferLamports = Number(currentBalance);
+        const requestedLamports = 5000 + priorityFee;
+        if (maxTransferLamports < requestedLamports) {
+          alert('燃料费用不足，请充值SOL大于 ' + (requestedLamports / Math.pow(10, 9)).toFixed(6));
+        }
+        const { error, result } = await trade.wrappedExchange(chain, accountItem[chain].address, type, priorityFee.toString())
+        if (!error) {
+          const hashItem = {
+            chain,
+            hash: result.hash,
+            createTime: new Date().getTime(),
+            data: result.data
+          }
+          trade.checkHash.action(hashItem)
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    },
+    检测代币授权情况: async (info: any) => {
+      if (!info) {
+        alert(`请选择代币`);
         return;
       }
-      const { token, account } = info;
-      // 选择链网络
-      await network.choose(chain);
-      // 先预估交易
-      const { gasLimit } = await trade.getSendEstimateGas({
-        from: account.address,
-        to: '0x8588511aac7Ee60c0833529BF39Dc3e0E0736f3f',
-        amount: String(0.000001 * Math.pow(10, token.decimals)), // 模拟交易数量
-        tokenAddress: token.address,  // 发送母币种地址或者其他代币地址  注意：为空代表母币种
-      })
-      console.log('预估交易费用===>', gasLimit);
-      const feeArray = await trade.getNetWorkFees(gasLimit);
-      console.log(`网络费用列表===>`, feeArray);
-      return feeArray;
-    } catch (error) {
-      alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
-    }
-  },
-  ETH系转账: async (info: any) => {
-    try {
-      // 假设用户选择了网络费用列表中的第一档
-      const networkFeeList = await tradeFun.获取转账网络费用列表(info);
-      const networkFee = networkFeeList[0];
-      console.log(networkFee)
-      const { token, account } = info;
-
-
-      const totalFee = await trade.getSendFees(networkFee)
-      console.log('总的手续费' + totalFee)
-
-      // 判断母币是否足够
-      // ...TODO: 
-      // 1、如果是转母必币，需要将“总的手续费” 加上 “转出的母币数量”  判断母币余额是否足够
-      // 2、如果是转代币，判断余额是否大于“总的手续费”
-
-      const data = await trade.sendTransaction({
-        from: account.address,
-        to: '0x996AfF191D128b8f36b828573Fb02944cD1b357e', // 自己转给自己
-        amount: String(0.0001 * Math.pow(10, token.decimals)), // 实际转转数量
-        tokenAddress: token.address,  // 发送母币种地址或者其他代币地址  注意：为空代表母币种
-        currentNetWorkFee: networkFee,
-      })
-      console.log('转账结果===>', data);
-      if (!data.error) {
-        throw new Error(data.error?.toString());
+      try {
+        console.log('授权数量查询...');
+        const { chainName, account, token } = info;
+        const currentNetWork = await network.choose(chainName);
+        const { tokenAddress, accountAddress, authorizedAddress } = {
+          tokenAddress: token.address,
+          accountAddress: account.address,
+          // uat: 0x8D349A8a122b14a5fDd7f8AEe085AD47605395D8
+          // pro: 0xd59Dca2923AC747bbe478032F61C00202cfED5D8
+          authorizedAddress: currentNetWork.deTrade
+        };
+        const allowance = await trade.getAllowance(tokenAddress, accountAddress, authorizedAddress);
+        console.log(`===>${chainName}链，账户地址 ${accountAddress}，给合约地址 ${authorizedAddress}, 授权了 ${allowance} 个的代币`);
+      } catch (error) {
+        console.log('error==>', error);
       }
-      alert('发送成功' + data.result.hash)
-    } catch (error) {
-      alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
-    }
-  },
-  SOL转账: async () => {
-  },
-  'SOL换WSOL(0.001)': async () => {
-    try {
-      console.time('tradeFullTimer');
-      const RENT_EXEMPTION_MIN = 2_039_280;
-      const chain = 'SOLANA';
-      const type = 0; // 0: SOL换WSOL 1: WSOL换SOL
-      const amount = 0.001;
-
-      const { accountItem } = await wallet.getCurrentWallet();
-      console.log(accountItem)
-      const currentBalance = trade.getBalance(accountItem[chain].address);
-      const priorityFee = 0.0002 * Math.pow(10, 9); // 优先费
-      const maxTransferLamports = Number(currentBalance) - RENT_EXEMPTION_MIN - 5000 - priorityFee;
-      const requestedLamports = amount * LAMPORTS_PER_SOL;
-
-      if (maxTransferLamports < requestedLamports) {
-        alert(`余额不足。最大可转换金额：${maxTransferLamports / LAMPORTS_PER_SOL} SOL`);
-      }
-
-      const { error, result } = await trade.wrappedExchange(chain, accountItem[chain].address, type, priorityFee.toString(), requestedLamports.toString())
-      if (!error) {
-        const hashItem = {
-          chain,
-          hash: result.hash,
-          createTime: new Date().getTime(),
-          data: result.data
+    },
+    '买入0.0001': async (info: any) => {
+      try {
+        if (!info) {
+          alert('请选择代币');
         }
-        trade.checkHash.action(hashItem)
-      }
-    } catch (error) {
-      console.error(error)
-    }
-  },
-  'WSOL换SOL': async () => {
-    try {
-      console.time('tradeFullTimer');
-      const chain = 'SOLANA';
-      const type = 1; // 0: SOL换WSOL 1: WSOL换SOL
-      const { accountItem } = await wallet.getCurrentWallet();
-      const currentBalance = trade.getBalance(accountItem[chain].address);
-      const priorityFee = 0.0002 * Math.pow(10, 9); // 优先费
-      const maxTransferLamports = Number(currentBalance);
-      const requestedLamports = 5000 + priorityFee;
-      if (maxTransferLamports < requestedLamports) {
-        alert('燃料费用不足，请充值SOL大于 ' + (requestedLamports / Math.pow(10, 9)).toFixed(6));
-      }
-      const { error, result } = await trade.wrappedExchange(chain, accountItem[chain].address, type, priorityFee.toString())
-      if (!error) {
-        const hashItem = {
-          chain,
-          hash: result.hash,
-          createTime: new Date().getTime(),
-          data: result.data
+        console.time('tradeFullTimer');
+        console.time('tradeTimer');
+        const { chainName, account, token, balance, balanceStr, tokenBalanceStr, priceUSD, cryptoPriceUSD } = info;
+        const isBuy = true; // 买入
+        const { address } = account
+        const currentNetwork = await network.choose(chainName);
+        const { currentSymbol } = await getCurrentSymbolTest(info, { isBuy, isPump: false, currentNetwork });
+        // 实际买入金额
+        const buyAmount = (0.0001 * Math.pow(10, currentNetwork.tokens[1].decimals)).toString();
+        currentSymbol.chain = currentNetwork.chain;
+        currentSymbol.slipPersent = 0.05; // 滑点5%
+        currentSymbol.compile = getBeforeTradeData(isBuy, chainName, token.address)
+        // 交易手续费用
+        currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount(currentSymbol, buyAmount);
+
+        // 实际购买金额
+        currentSymbol.amountIn = (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
+
+        // 当前代币时时价格
+        currentSymbol.currentPrice = priceUSD;
+        // 当前母币时时价格
+        currentSymbol.cryptoPriceUSD = cryptoPriceUSD
+
+        currentSymbol.tokenBalance = isBuy ? balanceStr : tokenBalanceStr;
+
+
+        console.time('swapPath&swapSignTimer');
+        const [swapPath, signRes] = await Promise.all([
+          trade.getSwapPath(currentSymbol),
+          swapSign(currentNetwork.chainID, account.address),
+        ]);
+        console.timeEnd('swapPath&swapSignTimer');
+        console.time('dexFeeTimer')
+        currentSymbol.amountOutMin = await dexFee.getAmountOutMin(currentSymbol, swapPath.minOutAmount);
+        console.timeEnd('dexFeeTimer')
+
+
+        console.time('approveTimer')
+        // 交易授权
+        if (!currentSymbol.isBuy) {
+          await trade.approve.execute(currentSymbol.in.address, address, currentNetwork.deTrade);
+          console.log('Swapp Approved');
         }
-        trade.checkHash.action(hashItem)
-      }
-    } catch (error) {
-      console.error(error)
-    }
-  },
-  检测代币授权情况: async (info: any) => {
-    if (!info) {
-      alert(`请选择代币`);
-      return;
-    }
-    try {
-      console.log('授权数量查询...');
-      const { chainName, account, token } = info;
-      const currentNetWork = await network.choose(chainName);
-      const { tokenAddress, accountAddress, authorizedAddress } = {
-        tokenAddress: token.address,
-        accountAddress: account.address,
-        // uat: 0x8D349A8a122b14a5fDd7f8AEe085AD47605395D8
-        // pro: 0xd59Dca2923AC747bbe478032F61C00202cfED5D8
-        authorizedAddress: currentNetWork.deTrade
-      };
-      const allowance = await trade.getAllowance(tokenAddress, accountAddress, authorizedAddress);
-      console.log(`===>${chainName}链，账户地址 ${accountAddress}，给合约地址 ${authorizedAddress}, 授权了 ${allowance} 个的代币`);
-    } catch (error) {
-      console.log('error==>', error);
-    }
-  },
-  '买入0.0001': async (info: any) => {
-    try {
-      if (!info) {
-        alert('请选择代币');
-      }
-      console.time('tradeFullTimer');
-      console.time('tradeTimer');
-      const { chainName, account, token, balance, balanceStr, tokenBalanceStr, priceUSD, cryptoPriceUSD } = info;
-      const isBuy = true; // 买入
-      const { address } = account
-      const currentNetwork = await network.choose(chainName);
-      const { currentSymbol } = await getCurrentSymbolTest(info, { isBuy, isPump: false, currentNetwork });
-      // 实际买入金额
-      const buyAmount = (0.0001 * Math.pow(10, currentNetwork.tokens[1].decimals)).toString();
-      currentSymbol.chain = currentNetwork.chain;
-      currentSymbol.compile = getBeforeTradeData(isBuy, chainName, token.address)
-      // 交易手续费用
-      currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount(currentSymbol, buyAmount);
-
-      // 实际购买金额
-      currentSymbol.amountIn = (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
-
-      // 当前代币时时价格
-      currentSymbol.currentPrice = priceUSD;
-      // 当前母币时时价格
-      currentSymbol.cryptoPriceUSD = cryptoPriceUSD
-
-      currentSymbol.tokenBalance = isBuy ? balanceStr : tokenBalanceStr;
+        console.timeEnd('approveTimer')
 
 
-      console.time('swapPath&swapSignTimer');
-      const [swapPath, signRes] = await Promise.all([
-        trade.getSwapPath(currentSymbol),
-        swapSign(currentNetwork.chainID, account.address),
-      ]);
-      console.timeEnd('swapPath&swapSignTimer');
-      console.time('dexFeeTimer')
-      currentSymbol.amountOutMin = await dexFee.getAmountOutMin(currentSymbol, swapPath.minOutAmount);
-      console.timeEnd('dexFeeTimer')
+        // ETH系需要获取交易签名
+        Object.assign(currentSymbol, {
+          inviter: currentSymbol.inviter ? currentSymbol.inviter : signRes.inviterAddress || '',
+          feeRate: signRes.feeRate || 0,
+          commissionRate: signRes.commissionRate || 0,
+          contents: signRes.contents || '',
+          signature: signRes.signature || ''
+        });
 
 
-      console.time('approveTimer')
-      // 交易授权
-      if (!currentSymbol.isBuy) {
-        await trade.approve.execute(currentSymbol.in.address, address, currentNetwork.deTrade);
-        console.log('Swapp Approved');
-      }
-      console.timeEnd('approveTimer')
+        console.time('getSwapEstimateGasTimer');
+        const estimateResult = await trade.getSwapEstimateGas(currentSymbol, swapPath, address);
+        console.timeEnd('getSwapEstimateGasTimer');
 
 
-      // ETH系需要获取交易签名
-      Object.assign(currentSymbol, {
-        inviter: currentSymbol.inviter ? currentSymbol.inviter : signRes.inviterAddress || '',
-        feeRate: signRes.feeRate || 0,
-        commissionRate: signRes.commissionRate || 0,
-        contents: signRes.contents || '',
-        signature: signRes.signature || ''
-      });
+        console.time('getNetWorkFeesTimer');
+        const networkFeeArr = await trade.getNetWorkFees(estimateResult.gasLimit)
+        currentSymbol.networkFee = networkFeeArr[1];
+        const needFee = await trade.getSwapFees(currentSymbol);
+        console.log('最少得有多少母币余额（未加上用户支付的母币数量）==>', needFee);
+        console.timeEnd('getNetWorkFeesTimer');
 
-
-      console.time('getSwapEstimateGasTimer');
-      const estimateResult = await trade.getSwapEstimateGas(currentSymbol, swapPath, address);
-      console.timeEnd('getSwapEstimateGasTimer');
-
-
-      console.time('getNetWorkFeesTimer');
-      const networkFeeArr = await trade.getNetWorkFees(estimateResult.gasLimit)
-      currentSymbol.networkFee = networkFeeArr[1];
-      const needFee = await trade.getSwapFees(currentSymbol);
-      console.log('最少得有多少母币余额（未加上用户支付的母币数量）==>', needFee);
-      console.timeEnd('getNetWorkFeesTimer');
-
-      console.time('tradeswapTimer');
-      const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
-      console.timeEnd('tradeswapTimer');
+        console.time('tradeswapTimer');
+        const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
+        console.timeEnd('tradeswapTimer');
 
 
 
-      if (!error) {
-        console.log('交易已提交：' + result.hash)
-        const hashItem = {
-          chain: currentNetwork.chain,
-          hash: result.hash,
-          createTime: new Date().getTime(),
-          data: result.data
+        if (!error) {
+          console.log('交易已提交：' + result.hash)
+          const hashItem = {
+            chain: currentNetwork.chain,
+            hash: result.hash,
+            createTime: new Date().getTime(),
+            data: result.data
+          }
+          trade.checkHash.action(hashItem)
         }
-        trade.checkHash.action(hashItem)
+        console.log('交易HASH：', result)
+        // 更新交易预请求数据
+        setBeforeTradeData(info, { isBuy, isPump: currentSymbol.isPump, currentNetwork })
+      } catch (error) {
+        console.log(utils.getErrorMessage(error).message)
+        alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
       }
-      console.log('交易HASH：', result)
-      // 更新交易预请求数据
-      setBeforeTradeData(info, { isBuy, isPump: currentSymbol.isPump, currentNetwork })
-    } catch (error) {
-      console.log(utils.getErrorMessage(error).message)
-      alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
-    }
-  },
-  '卖出20%': async (info: any) => {
-    try {
-      if (!info) {
-        alert('请选择代币');
-      }
-      console.time('tradeFullTimer');
-      console.time('tradeTimer');
-      const { chainName, account, token, balance, priceUSD, cryptoPriceUSD, balanceStr, tokenBalanceStr } = info;
-      const isBuy = false; // 卖出
-      const { address } = account
-      const currentNetwork = await network.choose(chainName);
-      const { currentSymbol } = await getCurrentSymbolTest(info, { isBuy, isPump: false, currentNetwork });
-      // 实际卖出金额
-      const buyAmount = (Math.floor(Number(tokenBalanceStr) * 0.2)).toString();
-      currentSymbol.compile = getBeforeTradeData(isBuy, chainName, token.address)
-      // 交易手续费用
-      currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount(currentSymbol, buyAmount);
-      // 实际卖出金额
-      currentSymbol.amountIn = (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
-
-      // 当前代币时时价格
-      currentSymbol.currentPrice = priceUSD
-      // 当前母币时时价格
-      currentSymbol.cryptoPriceUSD = cryptoPriceUSD
-
-      // 实际卖出金额
-      currentSymbol.amountIn = (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
-
-      // 当前代币时时价格
-      currentSymbol.currentPrice = priceUSD
-      // 当前母币时时价格
-      currentSymbol.cryptoPriceUSD = cryptoPriceUSD
-
-      currentSymbol.tokenBalance = isBuy ? balanceStr : tokenBalanceStr;
-
-      console.time('swapPath&swapSignTimer');
-      const [swapPath, signRes] = await Promise.all([
-        trade.getSwapPath(currentSymbol),
-        swapSign(currentNetwork.chainID, account.address),
-      ]);
-      console.timeEnd('swapPath&swapSignTimer');
-      console.time('dexFeeTimer')
-      currentSymbol.amountOutMin = await dexFee.getAmountOutMin(currentSymbol, swapPath.minOutAmount);
-      console.timeEnd('dexFeeTimer')
-
-
-      console.time('approveTimer')
-      // ETH系交易授权
-      if (!currentSymbol.isBuy) {
-        await trade.approve.execute(currentSymbol.in.address, address, currentNetwork.deTrade);
-        console.log('Swapp Approved');
-      }
-      console.timeEnd('approveTimer')
-
-
-      // ETH系需要获取交易签名
-      Object.assign(currentSymbol, {
-        inviter: currentSymbol.inviter ? currentSymbol.inviter : signRes.inviterAddress || '',
-        feeRate: signRes.feeRate || 0,
-        commissionRate: signRes.commissionRate || 0,
-        contents: signRes.contents || '',
-        signature: signRes.signature || ''
-      });
-
-
-      console.time('getSwapEstimateGasTimer');
-      const estimateResult = await trade.getSwapEstimateGas(currentSymbol, swapPath, address);
-      console.timeEnd('getSwapEstimateGasTimer');
-
-
-      console.time('getNetWorkFeesTimer');
-      const networkFeeArr = await trade.getNetWorkFees(estimateResult.gasLimit)
-      currentSymbol.networkFee = networkFeeArr[1];
-      const needFee = await trade.getSwapFees(currentSymbol);
-      console.log('最少得有多少母币余额（未加上用户支付的母币数量）==>', needFee);
-      console.timeEnd('getNetWorkFeesTimer');
-      console.time('tradeswapTimer');
-      const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
-      console.timeEnd('tradeswapTimer');
-      if (!error) {
-        console.log('交易已提交：' + result.hash)
-        const hashItem = {
-          chain: currentNetwork.chain,
-          hash: result.hash,
-          createTime: new Date().getTime(),
-          data: result.data
+    },
+    '卖出20%': async (info: any) => {
+      try {
+        if (!info) {
+          alert('请选择代币');
         }
-        trade.checkHash.action(hashItem)
-      }
-      console.log('交易HASH：', result)
-      // 更新交易预请求数据
-      setBeforeTradeData(info, { isBuy, isPump: currentSymbol.isPump, currentNetwork })
-    } catch (error) {
-      console.log(utils.getErrorMessage(error).message)
-      alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
-    }
-  },
-  '后台多条Hash状态查询': async () => {
-    try {
-      const hashItem1 = {
-        chain: 102,
-        hash: '42vm63Hz9vc2ekr9vNQ6EmS1RdEJzxPhu642Q1KaBumPFbgRrVHX7GQpkpREmfpJB5AyZNrmPqABP9ABZGEDvsmM',
-        createTime: new Date().getTime(),
-      }
-      const hashItem2 = {
-        chain: 102,
-        hash: '27Nhtf5dp6D8F4nmuAX5akXbwtMAiDViHyH9afVB2sdsdvNHgGHsahyGpj43AdUpZcdnmhRMtZJA6vPiY63yLPGL',
-        createTime: new Date().getTime(),
-      }
-      trade.checkHash.action(hashItem1)
+        console.time('tradeFullTimer');
+        console.time('tradeTimer');
+        const { chainName, account, token, balance, priceUSD, cryptoPriceUSD, balanceStr, tokenBalanceStr } = info;
+        const isBuy = false; // 卖出
+        const { address } = account
+        const currentNetwork = await network.choose(chainName);
+        const { currentSymbol } = await getCurrentSymbolTest(info, { isBuy, isPump: false, currentNetwork });
+        currentSymbol.chain = currentNetwork.chain;
+        currentSymbol.slipPersent = 0.05; // 滑点5%
+        // 实际卖出金额
+        const buyAmount = (Math.floor(Number(tokenBalanceStr) * 0.2)).toString();
+        currentSymbol.compile = getBeforeTradeData(isBuy, chainName, token.address)
+        // 交易手续费用
+        currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount(currentSymbol, buyAmount);
+        // 实际卖出金额
+        currentSymbol.amountIn = (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
 
-      setTimeout(() => {
-        trade.checkHash.action(hashItem2)
-      }, 1000)
-    } catch (error) {
-      console.log(utils.getErrorMessage(error).message)
-      alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
-    }
-  },
-  '单次Hash状态查询': async () => {
-    try {
-      const hashArr = ['SOLANA', '42vm63Hz9vc2ekr9vNQ6EmS1RdEJzxPhu642Q1KaBumPFbgRrVHX7GQpkpREmfpJB5AyZNrmPqABP9ABZGEDvsmV'] // SOLANA
-      // const hashArr = ['BASE', '0x78c2a5f7e7f8e40fc96492575e6794dc3976b81e21c7ed4e060b82ef9c7f3903'] // BASE
-      const result = await trade.getHashStatus(hashArr[1], hashArr[0])
-      console.log('Hash状态查询结果==>', result)
-    } catch (error) {
-      console.log(utils.getErrorMessage(error).message)
-      alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
+        // 当前代币时时价格
+        currentSymbol.currentPrice = priceUSD
+        // 当前母币时时价格
+        currentSymbol.cryptoPriceUSD = cryptoPriceUSD
+
+        // 实际卖出金额
+        currentSymbol.amountIn = (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
+
+        // 当前代币时时价格
+        currentSymbol.currentPrice = priceUSD
+        // 当前母币时时价格
+        currentSymbol.cryptoPriceUSD = cryptoPriceUSD
+
+        currentSymbol.tokenBalance = isBuy ? balanceStr : tokenBalanceStr;
+
+        console.time('swapPath&swapSignTimer');
+        const [swapPath, signRes] = await Promise.all([
+          trade.getSwapPath(currentSymbol),
+          swapSign(currentNetwork.chainID, account.address),
+        ]);
+        console.timeEnd('swapPath&swapSignTimer');
+        console.time('dexFeeTimer')
+        currentSymbol.amountOutMin = await dexFee.getAmountOutMin(currentSymbol, swapPath.minOutAmount);
+        console.timeEnd('dexFeeTimer')
+
+
+        console.time('approveTimer')
+        // ETH系交易授权
+        if (!currentSymbol.isBuy) {
+          await trade.approve.execute(currentSymbol.in.address, address, currentNetwork.deTrade);
+          console.log('Swapp Approved');
+        }
+        console.timeEnd('approveTimer')
+
+
+        // ETH系需要获取交易签名
+        Object.assign(currentSymbol, {
+          inviter: currentSymbol.inviter ? currentSymbol.inviter : signRes.inviterAddress || '',
+          feeRate: signRes.feeRate || 0,
+          commissionRate: signRes.commissionRate || 0,
+          contents: signRes.contents || '',
+          signature: signRes.signature || ''
+        });
+
+
+        console.time('getSwapEstimateGasTimer');
+        const estimateResult = await trade.getSwapEstimateGas(currentSymbol, swapPath, address);
+        console.timeEnd('getSwapEstimateGasTimer');
+
+
+        console.time('getNetWorkFeesTimer');
+        const networkFeeArr = await trade.getNetWorkFees(estimateResult.gasLimit)
+        currentSymbol.networkFee = networkFeeArr[1];
+        const needFee = await trade.getSwapFees(currentSymbol);
+        console.log('最少得有多少母币余额（未加上用户支付的母币数量）==>', needFee);
+        console.timeEnd('getNetWorkFeesTimer');
+        console.time('tradeswapTimer');
+        const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
+        console.timeEnd('tradeswapTimer');
+        if (!error) {
+          console.log('交易已提交：' + result.hash)
+          const hashItem = {
+            chain: currentNetwork.chain,
+            hash: result.hash,
+            createTime: new Date().getTime(),
+            data: result.data
+          }
+          trade.checkHash.action(hashItem)
+        }
+        console.log('交易HASH：', result)
+        // 更新交易预请求数据
+        setBeforeTradeData(info, { isBuy, isPump: currentSymbol.isPump, currentNetwork })
+      } catch (error) {
+        console.log(utils.getErrorMessage(error).message)
+        alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
+      }
+    },
+    '后台多条Hash状态查询': async () => {
+      try {
+        const hashItem1 = {
+          chain: 102,
+          hash: '42vm63Hz9vc2ekr9vNQ6EmS1RdEJzxPhu642Q1KaBumPFbgRrVHX7GQpkpREmfpJB5AyZNrmPqABP9ABZGEDvsmM',
+          createTime: new Date().getTime(),
+        }
+        const hashItem2 = {
+          chain: 102,
+          hash: '27Nhtf5dp6D8F4nmuAX5akXbwtMAiDViHyH9afVB2sdsdvNHgGHsahyGpj43AdUpZcdnmhRMtZJA6vPiY63yLPGL',
+          createTime: new Date().getTime(),
+        }
+        trade.checkHash.action(hashItem1)
+
+        setTimeout(() => {
+          trade.checkHash.action(hashItem2)
+        }, 1000)
+      } catch (error) {
+        console.log(utils.getErrorMessage(error).message)
+        alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
+      }
+    },
+    '单次Hash状态查询': async () => {
+      try {
+        const hashArr = ['SOLANA', '42vm63Hz9vc2ekr9vNQ6EmS1RdEJzxPhu642Q1KaBumPFbgRrVHX7GQpkpREmfpJB5AyZNrmPqABP9ABZGEDvsmV'] // SOLANA
+        // const hashArr = ['BASE', '0x78c2a5f7e7f8e40fc96492575e6794dc3976b81e21c7ed4e060b82ef9c7f3903'] // BASE
+        const result = await trade.getHashStatus(hashArr[1], hashArr[0])
+        console.log('Hash状态查询结果==>', result)
+      } catch (error) {
+        console.log(utils.getErrorMessage(error).message)
+        alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
+      }
     }
   }
 }
-
 export default tradeFun

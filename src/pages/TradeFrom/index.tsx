@@ -1,6 +1,6 @@
 import { codex } from '@/data';
 import React, { useState, useEffect } from 'react';
-import hidexService from '@/hidexService';
+import { HidexSDK } from '@/hidexService';
 import { queryStringify, simpleAddress, strToNumberByDecimals } from '@/common/utils';
 import { getChainsTokenPriceUsd } from '@/data/api';
 import { getTokenInfo } from '@/data/codex/query';
@@ -14,7 +14,7 @@ interface SearchComponentProps {
 }
 
 const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => {
-  const { network, wallet, trade } = hidexService;
+  const { network, wallet, trade } = HidexSDK;
   const [inputValue, setInputValue] = useState('');
   const [results, setResults] = useState<any>([]);
   const [selected, setSelected] = useState<any>(null);
@@ -155,6 +155,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
         style={{
           width: '100%',
           padding: '8px',
+          color: '#333',
           fontSize: '16px',
           borderRadius: '4px',
           boxSizing: 'border-box',

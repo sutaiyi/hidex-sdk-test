@@ -5,7 +5,7 @@ export default class UtilsService {
     constructor() {
     }
     getErrorMessage(error) {
-        console.error(error.message);
+        console.error('Hidex SDK: ' + error.message);
         return ErrorService(error);
     }
     ownerKeypair(key) {

@@ -1,7 +1,9 @@
 import { HidexService } from 'hidex-sdk';
 
+let HidexSDK: HidexService;
 const serviceInit = () => {
-  const HidexSDK = new HidexService({
+  const ENV = process.env.NODE_ENV;
+  HidexSDK = HidexSDK || new HidexService({
     rpcList: [{
       chainId: 102,
       chainName: 'SOLANA',
@@ -22,11 +24,14 @@ const serviceInit = () => {
       chainName: 'BASE',
       rpc: '/api/llamarpc,/api/meowrpc,/api/offical,/api/devaccess',
     }],
-    env: 'development', // development、uat、production
+    env: ENV === 'development' ? 'development' : ENV === 'test' ? 'uat' : 'production', // development、uat、production
     apparatus: 'web',
-    token: 'eyJhbGciOiJIUzI1NiJ9.eyJsb2dpbl91c2VyX2tleSI6ImMzNGJmOGQ3YjBkNjQyNjRiYTg5NWU3Y2NiZGFlY2U3In0.FdpLK02cpFymSRAE97mW9OAxZ-4UR0iX6eWrsKHixNA',
+    token: localStorage.getItem('access_token') || '',
   });
   return HidexSDK;
 }
-
-export default serviceInit();
+// eyJhbGciOiJIUzI1NiJ9.eyJsb2dpbl91c2VyX2tleSI6ImMzNGJmOGQ3YjBkNjQyNjRiYTg5NWU3Y2NiZGFlY2U3In0.FdpLK02cpFymSRAE97mW9OAxZ-4UR0iX6eWrsKHixNA
+export {
+  serviceInit,
+  HidexSDK,
+};

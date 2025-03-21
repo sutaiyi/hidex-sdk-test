@@ -28,6 +28,7 @@ declare class WalletService implements IWalletService {
     generateMnemonic(): string;
     private getChainsPath;
     createWallet(mnemonic: string, pathIndex?: number, walletName?: string, id?: number): Promise<WalletList>;
+    private createMnemonicWallet;
     createPrivateWallet(privateKey: string): Promise<WalletList>;
     private setWalletList;
     setWalletName(walletId: number, name: string): Promise<boolean>;

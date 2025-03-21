@@ -7,7 +7,7 @@ import walletTest from './wallet';
 import TradeFrom from '../TradeFrom';
 import WalletFrom from '../WalletFrom';
 import { setBeforeTradeData } from './solTrade'
-import HidexSDK from '../../hidexService'
+import { HidexSDK } from '@/hidexService'
 
 const Test = React.memo( () => {
   const { network } = HidexSDK;
@@ -24,9 +24,9 @@ const Test = React.memo( () => {
   }, [tradeInfo]);
 
   const btns:any = {
-    network: networkTest,
-    wallet: walletTest,
-    trade: tradeTest
+    network: networkTest(),
+    wallet: walletTest(),
+    trade: tradeTest()
   }
 
   return (

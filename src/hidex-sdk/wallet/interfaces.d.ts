@@ -73,7 +73,7 @@ export type WalletAccount = {
     money?: number;
 } & Record<string, any>;
 export type WalletList = {
-    mnemonic?: string;
+    mnemonic: string;
     usePrivateKey?: boolean;
     walletName?: string;
     accountList: WalletAccount[];

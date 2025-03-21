@@ -1,8 +1,8 @@
-import HidexSDK from "@/hidexService"
+import { HidexSDK } from "@/hidexService"
 import { ChainItem, CurrentSymbol } from "hidex-sdk";
 
 const beforeTradeDataMap = new Map<string, any>();
-const { trade, network, wallet, dexFee, utils } = HidexSDK;
+
 const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentNetwork }: { isBuy: boolean, isPump: boolean, currentNetwork: ChainItem }): Promise<{
   currentSymbol: CurrentSymbol,
   currentNetwork: ChainItem,
@@ -26,7 +26,7 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentNetwork }
     in: isBuy ? inToken : outToken,
     out: isBuy ? outToken : inToken,
     amountIn, // 兑换数量
-    slipPersent: 0.05, // 滑点5%
+    slipPersent: 0, // 兑换滑点
     amountOutMin: '0', // 最少得到数量
     dexFeeAmount: '0', // 交易手续费
     priorityFee: (0.0001 * Math.pow(10, 9)).toString(), // 优先费
@@ -50,6 +50,7 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentNetwork }
   }
 }
 const setBeforeTradeData = async (info: any, { isBuy, isPump, currentNetwork }: { isBuy: boolean, isPump: boolean, currentNetwork: ChainItem }) => {
+  const { trade } = HidexSDK;
   const { token, tokenBalanceStr } = info;
   const { currentSymbol, address } = await getCurrentSymbolTest(info, { isBuy, isPump, currentNetwork });
   if ((isBuy || (!isBuy && Number(tokenBalanceStr))) && currentSymbol.in.address !== currentSymbol.out.address) {

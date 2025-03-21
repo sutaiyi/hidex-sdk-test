@@ -36,7 +36,7 @@ export interface ITradeFunctions {
     getSendEstimateGas(sendParams: SendTransactionParams): Promise<{
         gasLimit: number;
     }>;
-    getSendFees(networkFee: NetWorkFee): Promise<number>;
+    getSendFees(networkFee: NetWorkFee, toAddress: string, tokenAddress: string): Promise<number>;
     sendTransaction(sendParams: SendTransactionParams & {
         currentNetWorkFee: NetWorkFee;
     }): Promise<{

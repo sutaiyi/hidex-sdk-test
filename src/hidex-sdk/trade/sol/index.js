@@ -10,52 +10,53 @@ import { compileTransaction, getTransactionsSignature, isInstructionsSupportRese
 const utils = new UtilsService();
 export const solService = (HS) => {
     const { network, wallet } = HS;
-    return {
-        getBalance: async (accountAddress, tokenAddress = '') => {
-            const currentNetwork = network.get();
-            try {
-                if ((tokenAddress && (tokenAddress === smTokenAddress)) || !tokenAddress) {
-                    const pk = new PublicKey(accountAddress);
-                    const balanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
-                        return v.getBalance(pk).then((res) => {
-                            return res;
-                        }).catch((error) => {
-                            return Promise.reject(error);
-                        });
-                    });
-                    const balance = await Promise.any(balanceProm);
-                    if (balance.error) {
-                        return '0';
-                    }
-                    return balance.toString();
-                }
-                const apk = new PublicKey(accountAddress);
-                const tpk = new PublicKey(tokenAddress);
-                const connection = await network.getFastestProviderByChain(102);
-                const tokenOwnerAddress = await getTokenOwner(tokenAddress, connection);
-                let userAta = await getAssociatedTokenAddress(tpk, apk, false);
-                if (tokenOwnerAddress === TOKEN_2022_OWNER) {
-                    userAta = await getAssociatedTokenAddress(tpk, apk, false, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
-                }
-                const tokenBalanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
-                    return v.getTokenAccountBalance(userAta)
-                        .then((res) => {
+    const getBalance = async (accountAddress, tokenAddress = '') => {
+        const currentNetwork = network.get();
+        try {
+            if ((tokenAddress && (tokenAddress === smTokenAddress)) || !tokenAddress) {
+                const pk = new PublicKey(accountAddress);
+                const balanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
+                    return v.getBalance(pk).then((res) => {
                         return res;
-                    })
-                        .catch((error) => {
+                    }).catch((error) => {
                         return Promise.reject(error);
                     });
                 });
-                const tokenBalance = await Promise.any(tokenBalanceProm);
-                if (tokenBalance.error) {
+                const balance = await Promise.any(balanceProm);
+                if (balance.error) {
                     return '0';
                 }
-                return tokenBalance.value.amount;
+                return balance.toString();
             }
-            catch (error) {
+            const apk = new PublicKey(accountAddress);
+            const tpk = new PublicKey(tokenAddress);
+            const connection = await network.getFastestProviderByChain(102);
+            const tokenOwnerAddress = await getTokenOwner(tokenAddress, connection);
+            let userAta = await getAssociatedTokenAddress(tpk, apk, false);
+            if (tokenOwnerAddress === TOKEN_2022_OWNER) {
+                userAta = await getAssociatedTokenAddress(tpk, apk, false, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+            }
+            const tokenBalanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
+                return v.getTokenAccountBalance(userAta)
+                    .then((res) => {
+                    return res;
+                })
+                    .catch((error) => {
+                    return Promise.reject(error);
+                });
+            });
+            const tokenBalance = await Promise.any(tokenBalanceProm);
+            if (tokenBalance.error) {
                 return '0';
             }
-        },
+            return tokenBalance.value.amount;
+        }
+        catch (error) {
+            return '0';
+        }
+    };
+    return {
+        getBalance,
         getBalanceMultiple: async (chain, accountAddress, tokens) => {
             const tokensAta = tokens.map((token) => token.toLowerCase() === smTokenAddress.toLowerCase()
                 ? new PublicKey(accountAddress)
@@ -108,11 +109,17 @@ export const solService = (HS) => {
         getSendEstimateGas: async () => {
             return { gasLimit: 100000 };
         },
-        getSendFees: async (networkFee) => {
+        getSendFees: async (networkFee, toAddress, tokenAddress) => {
             const netFee = networkFee.value;
             const dexFee = 0;
+            const priorityFee = 100000 / Math.pow(10, 9);
+            let ataCreateFee = 0;
+            const balanceWsol = await getBalance(toAddress, tokenAddress);
+            if (Number(balanceWsol) === 0) {
+                ataCreateFee = 2039280 / Math.pow(10, 9);
+            }
             const accountSave = 890880 / Math.pow(10, 9);
-            return netFee + dexFee + accountSave;
+            return netFee + dexFee + accountSave + priorityFee + ataCreateFee;
         },
         sendTransaction: async (sendParams) => {
             const { from, to, amount, tokenAddress } = sendParams;
