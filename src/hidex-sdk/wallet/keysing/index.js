@@ -27,18 +27,23 @@ class KeysingController extends EventEmitter {
     }
     lock(catcher) {
         this.secretCode = null;
-        keyRuntime.sendMessage({ type: keysingMessage['set'], key: keysingMessage['key'], value: null }, () => { }, catcher);
+        keyRuntime.sendMessage({ type: keysingMessage['set'], key: keysingMessage['key'], value: null }, () => { }, catcher, 0);
     }
-    booted(password, catcher) {
+    async isLocked(catcher) {
+        const result = await keyRuntime.initKeyRuntime(catcher);
+        console.log('initKeyRuntime', result.value);
+        return !!result?.value;
+    }
+    booted(password, catcher, expires) {
         this.secretCode = password;
-        keyRuntime.sendMessage({ type: keysingMessage['set'], key: keysingMessage['key'], value: this.secretCode }, () => { }, catcher);
+        keyRuntime.sendMessage({ type: keysingMessage['set'], key: keysingMessage['key'], value: this.secretCode }, () => { }, catcher, expires);
     }
     getSecretCode(catcher) {
         try {
             keyRuntime.sendMessage({ type: keysingMessage['get'], key: keysingMessage['key'] }, (response) => {
                 this.secretCode = response?.value;
                 this.emit('EventSecretCode', this.secretCode);
-            }, catcher);
+            }, catcher, 0);
             if (this.secretCode)
                 return this.secretCode;
         }

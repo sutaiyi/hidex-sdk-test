@@ -189,3 +189,12 @@ export function environmental(production, uat, development) {
 export function globalSet(key, value) {
     global.window[key] = value;
 }
+export const isValidJSON = (str) => {
+    try {
+        JSON.parse(str);
+        return true;
+    }
+    catch (e) {
+        return false;
+    }
+};

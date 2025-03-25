@@ -2,7 +2,7 @@ import { ICatcher } from "../catch/interfaces";
 import { OptionsCommon } from "../main/interfaces";
 export interface IWalletService {
     walletInit(): Promise<void>;
-    getWalletCatch(catcher: ICatcher, key?: string): Promise<WalletCacheResult>;
+    getWalletCatch(catcher: ICatcher, key?: string): Promise<WalletStore>;
     cloudBootedOss(): {
         getBootedOssItem: (HS: OptionsCommon, key?: string) => Promise<BootedOssStore>;
         setBootedOssItem: (HS: OptionsCommon, key: string, value: BootedOssStore) => Promise<boolean>;
@@ -12,6 +12,8 @@ export interface IWalletService {
     verifyPassword(password: string): Promise<void>;
     unlock(password: string): Promise<void>;
     setLocked(): Promise<void>;
+    setUnLockedExpires(expires: number): Promise<boolean>;
+    getUnLockedExpires(): Promise<number>;
     generateMnemonic(): string;
     createWallet(mnemonic: string, pathIndex: number, walletName?: string, id?: number): Promise<WalletList>;
     createPrivateWallet(privateKey: string): Promise<WalletList>;
@@ -42,16 +44,17 @@ export interface IWalletService {
     ownerKey(accountAddress: string): Promise<string>;
     exportMnemonics(password: string, walletId: number): Promise<string>;
     exportPrivateKey(password: string, walletId: number, accountId: number, chainName: string): Promise<string>;
-    isUnlocked(): boolean;
+    isUnlocked(): Promise<boolean>;
     isSetPassword(): boolean;
     hasWallet(): boolean;
     signMessage(message: string, address: string): Promise<string>;
 }
-export type WalletCache = {
+export type WalletStore = {
     walletList: WalletList[];
     isUnlocked: boolean;
     upgrade: boolean;
     pathIndex: number;
+    unLockedExpiresDay: number;
 };
 export type BootedOssStore = {
     walletBooted: any;
@@ -59,7 +62,7 @@ export type BootedOssStore = {
     currentWalletId: string;
     booted: string;
 };
-export type WalletCacheResult = WalletCache | WalletCache[keyof WalletCache];
+export type WalletStoreKeyOf = WalletStore | WalletStore[keyof WalletStore];
 export type WalletAccount = {
     ARBITRUM?: AccountItem;
     BASE: AccountItem;

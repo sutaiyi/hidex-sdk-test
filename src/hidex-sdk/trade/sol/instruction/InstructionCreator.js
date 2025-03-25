@@ -124,12 +124,13 @@ export async function createSwapCompleteInstruction(currentSymbol, owner, networ
     }
 }
 export async function createBuySwapPrepareInstruction(currentSymbol, owner, network) {
-    const { program, tradePda, userAtaAccount } = await information(currentSymbol, owner, network);
+    const { program, tradePda, userAtaAccount, userwSolAta } = await information(currentSymbol, owner, network);
     return program.methods
         .buySwapPrepare()
         .accounts({
         tradeConfigPda: tradePda,
         userTokenAtaAccount: userAtaAccount,
+        userWsolAtaAccount: userwSolAta,
         user: owner.publicKey
     })
         .instruction();
@@ -137,18 +138,20 @@ export async function createBuySwapPrepareInstruction(currentSymbol, owner, netw
 export function signTransaction() {
 }
 export async function createBuySwapCompletedInstruction(currentSymbol, owner, network) {
-    const { program, dataPda, swapPda, tradePda, amount, userAtaAccount, inviterPublic } = await information(currentSymbol, owner, network);
+    const { program, dataPda, swapPda, tradePda, userAtaAccount, userwSolAta, inviterPublic } = await information(currentSymbol, owner, network);
     const type = new anchor.BN(currentSymbol.isPump ? 2 : 1);
     const dexCommissionRateBN = new anchor.BN(currentSymbol.feeRate);
     const inviterCommissionRateBN = new anchor.BN((currentSymbol.commissionRate || 0) * 10000);
+    const tradeType = new anchor.BN(currentSymbol.tradeType > 0 ? 0 : 1);
     return program.methods
-        .buySwapCompleted(amount, type, dexCommissionRateBN, inviterCommissionRateBN)
+        .buySwapCompleted(tradeType, type, dexCommissionRateBN, inviterCommissionRateBN)
         .accounts({
         swapPda: swapPda,
         configPda: dataPda,
         tradeConfigPda: tradePda,
         user: owner.publicKey,
         userAtaAccount: userAtaAccount,
+        userWsolAtaAccount: userwSolAta,
         inviter: inviterPublic,
         associateTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         tokenProgram: TOKEN_PROGRAM_ID,

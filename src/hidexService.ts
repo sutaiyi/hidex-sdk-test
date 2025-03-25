@@ -1,4 +1,4 @@
-import { HidexService } from 'hidex-sdk';
+import { Apparatus, HidexService } from 'hidex-sdk';
 
 let HidexSDK: HidexService;
 const serviceInit = () => {
@@ -25,7 +25,7 @@ const serviceInit = () => {
       rpc: '/api/llamarpc,/api/meowrpc,/api/offical,/api/devaccess',
     }],
     env: ENV === 'development' ? 'development' : ENV === 'test' ? 'uat' : 'production', // development、uat、production
-    apparatus: 'web',
+    apparatus: Apparatus.WEB,
     token: localStorage.getItem('access_token') || '',
   });
   return HidexSDK;

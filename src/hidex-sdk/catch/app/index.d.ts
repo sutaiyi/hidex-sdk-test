@@ -1,5 +1,5 @@
-import { ICatcher } from "../interfaces";
-declare class appCatcher implements ICatcher {
+import { ICatcherFun } from "../interfaces";
+declare class appCatcher implements ICatcherFun {
     private storage;
     constructor();
     setItem(key: string, value: any): Promise<boolean>;

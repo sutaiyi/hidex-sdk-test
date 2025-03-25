@@ -4,6 +4,7 @@ import './Test.css';
 import tradeTest from './trade'
 import networkTest from './network';
 import walletTest from './wallet';
+import catcherTest from './catcher';
 import TradeFrom from '../TradeFrom';
 import WalletFrom from '../WalletFrom';
 import { setBeforeTradeData } from './solTrade'
@@ -26,7 +27,8 @@ const Test = React.memo( () => {
   const btns:any = {
     network: networkTest(),
     wallet: walletTest(),
-    trade: tradeTest()
+    trade: tradeTest(),
+    catcher: catcherTest(),
   }
 
   return (

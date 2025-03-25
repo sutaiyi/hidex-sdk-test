@@ -31,4 +31,5 @@ export declare function toLzString(input: string): string;
 export declare function lzStringTo(input: string): string;
 export declare function environmental(production: any, uat: any, development: any): any;
 export declare function globalSet(key: string, value: any): void;
+export declare const isValidJSON: (str: string) => boolean;
 //# sourceMappingURL=utils.d.ts.map

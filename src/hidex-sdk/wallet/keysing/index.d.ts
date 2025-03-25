@@ -11,7 +11,8 @@ declare class KeysingController extends EventEmitter {
         value: any;
     }, callback: (arg0: string, arg1: {}) => void): void;
     lock(catcher: ICatcher): void;
-    booted(password: string, catcher: ICatcher): void;
+    isLocked(catcher: ICatcher): Promise<boolean>;
+    booted(password: string, catcher: ICatcher, expires: number): void;
     getSecretCode(catcher: ICatcher): string | undefined;
 }
 declare const _default: KeysingController;

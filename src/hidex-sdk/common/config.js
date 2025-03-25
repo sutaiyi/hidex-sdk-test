@@ -210,7 +210,7 @@ export const ENCRYPTION_NAME = {
     0: 'ADDRESS_',
     1: 'MNEMONIC_HASH_',
 };
-export const defalutWalletStore = { pathIndex: 0, walletList: [], isUnlocked: false, upgrade: false };
+export const defalutWalletStore = { pathIndex: 0, walletList: [], isUnlocked: false, upgrade: false, unLockedExpiresDay: 7 };
 export const defaluBoootedOss = {
     walletBooted: {},
     pathIndex: 0,

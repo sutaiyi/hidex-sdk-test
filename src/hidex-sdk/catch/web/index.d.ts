@@ -1,5 +1,5 @@
-import { ICatcher } from "../interfaces";
-declare class webCatcher implements ICatcher {
+import { ICatcherFun } from "../interfaces";
+declare class webCatcher implements ICatcherFun {
     constructor();
     setItem(key: string, value: any): Promise<boolean>;
     getItem(key: string): Promise<any>;

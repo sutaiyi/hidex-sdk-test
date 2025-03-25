@@ -1,4 +1,4 @@
-import { WalletAccount, WalletList, IWalletService, WalletCacheResult, BootedOssStore } from './interfaces';
+import { WalletAccount, WalletList, IWalletService, WalletStore, BootedOssStore } from './interfaces';
 import { OptionsCommon } from '..';
 import { ICatcher } from '../catch/interfaces';
 declare class WalletService implements IWalletService {
@@ -8,14 +8,20 @@ declare class WalletService implements IWalletService {
     private HS;
     private setWalletTimer;
     private setBootdOsssTimer;
-    private mapBootedOss;
+    private walletMap;
+    private walletStore;
+    private bootedOss;
     constructor(options: OptionsCommon);
     cloudBootedOss(): {
         getBootedOssItem: (HS: OptionsCommon, key?: string) => Promise<BootedOssStore>;
         setBootedOssItem: (HS: OptionsCommon, key: string, value: BootedOssStore) => Promise<boolean>;
     };
-    getWalletCatch(catcher: ICatcher, key?: string): Promise<WalletCacheResult>;
+    getWalletCatch(catcher: ICatcher, key?: string): Promise<WalletStore>;
     private setWalletCatch;
+    private getWalletStore;
+    private setWalletStore;
+    private getBootedOss;
+    private setBootedOss;
     walletInit(): Promise<void>;
     createPassword(password: string, oldPassword?: string): Promise<boolean>;
     resetPassword(oldPassword: string, password: string): Promise<boolean>;
@@ -23,6 +29,8 @@ declare class WalletService implements IWalletService {
     verifyPassword(password: string): Promise<void>;
     unlock(password: string): Promise<void>;
     private setUnlocked;
+    setUnLockedExpires(expires: number): Promise<boolean>;
+    getUnLockedExpires(): Promise<number>;
     setLocked(): Promise<void>;
     ownerKey(address: string): Promise<string>;
     generateMnemonic(): string;
@@ -39,10 +47,6 @@ declare class WalletService implements IWalletService {
         accountId?: number;
     }>;
     getWalletList(): WalletList[];
-    private getWalletStore;
-    private setWalletStore;
-    private getBootedOss;
-    private setBootedOss;
     getCurrentWallet(): Promise<{
         walletItem: WalletList;
         accountItem: WalletAccount;
@@ -71,7 +75,7 @@ declare class WalletService implements IWalletService {
     private createEthSeriesPrivateKey;
     private generatePrivateKeyByChain;
     private getPublicKey;
-    isUnlocked(): boolean;
+    isUnlocked(): Promise<boolean>;
     isSetPassword(): boolean;
     hasWallet(): boolean;
     signMessage(message: string, address: string): Promise<string>;

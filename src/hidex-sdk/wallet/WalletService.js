@@ -10,7 +10,6 @@ import * as bip39 from 'bip39';
 import bs58 from 'bs58';
 import { derivePath } from 'ed25519-hd-key';
 import nacl from 'tweetnacl';
-let mapWalletCache = new Map();
 class WalletService {
     password;
     atpkeys;
@@ -18,7 +17,9 @@ class WalletService {
     HS;
     setWalletTimer;
     setBootdOsssTimer;
-    mapBootedOss = new Map();
+    walletMap = new Map();
+    walletStore;
+    bootedOss;
     constructor(options) {
         this.setWalletTimer = null;
         this.setBootdOsssTimer = null;
@@ -26,6 +27,9 @@ class WalletService {
         this.atpkeys = [];
         this.HS = options;
         this.ADDRESS_PATH_TYPE = this.getChainsPath();
+        console.log(0, 'default wallet');
+        this.walletStore = defalutWalletStore;
+        this.bootedOss = defaluBoootedOss;
     }
     cloudBootedOss() {
         return {
@@ -33,7 +37,8 @@ class WalletService {
                 try {
                     const { token, apparatus } = HS;
                     const res = await ossStore.getBootedOssItem(token, apparatus, key);
-                    this.mapBootedOss = ossStore.getBootedOssCacheMap();
+                    this.walletMap = ossStore.getWalletMap();
+                    this.bootedOss = this.walletMap.get('WalletBooted');
                     return res;
                 }
                 catch (error) {
@@ -43,15 +48,18 @@ class WalletService {
             setBootedOssItem: async (HS, key, value) => {
                 const { token, apparatus } = HS;
                 const res = await ossStore.setBootedOssItem(token, apparatus, key, value);
-                this.mapBootedOss = ossStore.getBootedOssCacheMap();
+                this.walletMap = ossStore.getWalletMap();
+                this.bootedOss = this.walletMap.get('WalletBooted');
                 return res;
             },
         };
     }
     async getWalletCatch(catcher, key) {
         try {
-            const res = await ossStore.getWalletItem(catcher, key);
-            mapWalletCache = await ossStore.getWalletCacheMap();
+            const res = await ossStore.getWalletStoreItem(catcher, key);
+            this.walletMap = ossStore.getWalletMap();
+            console.log(1, this.walletMap.get('WalletStore'));
+            this.walletStore = this.walletMap.get('WalletStore');
             return res;
         }
         catch (error) {
@@ -59,9 +67,31 @@ class WalletService {
         }
     }
     async setWalletCatch(catcher, key, value) {
-        const res = await ossStore.setWalletItem(catcher, key, value);
-        mapWalletCache = ossStore.getWalletCacheMap();
-        return res;
+        await ossStore.setWalletStoreItem(catcher, key, value);
+        this.walletMap = ossStore.getWalletMap();
+        console.log(2, this.walletMap.get('WalletStore'));
+        this.walletStore = this.walletMap.get('WalletStore');
+    }
+    getWalletStore() {
+        return this.walletStore;
+    }
+    async setWalletStore(walletStore) {
+        console.log(3, walletStore);
+        this.walletStore = walletStore;
+        global.clearTimeout(this.setWalletTimer);
+        this.setWalletTimer = global.setTimeout(() => {
+            this.setWalletCatch(this.HS.catcher, 'all', walletStore);
+        }, 200);
+    }
+    getBootedOss() {
+        return this.bootedOss;
+    }
+    async setBootedOss(bootedOssStore) {
+        this.bootedOss = bootedOssStore;
+        global.clearTimeout(this.setBootdOsssTimer);
+        this.setBootdOsssTimer = global.setTimeout(() => {
+            this.cloudBootedOss().setBootedOssItem(this.HS, 'all', bootedOssStore);
+        }, 500);
     }
     async walletInit() {
         const walletStore = this.getWalletStore();
@@ -82,9 +112,6 @@ class WalletService {
                         await this.createMnemonicWallet(mmcoi, pathIndex, '', id);
                     }
                 }
-            }
-            if (walletBootedArr.length === 0) {
-                this.setWalletStore(defalutWalletStore);
             }
         }
     }
@@ -109,7 +136,6 @@ class WalletService {
             bootedOss.walletBooted = updataWalletBootedResult;
         }
         bootedOss.booted = booted;
-        await keysing.booted(this.password, this.HS.catcher);
         await this.setBootedOss(bootedOss);
         await this.setWalletStore(update);
         return true;
@@ -149,7 +175,8 @@ class WalletService {
         }
         await passworder.decrypt(shaPassword, encryptedBooted);
         this.password = shaPassword;
-        keysing.booted(this.password, this.HS.catcher);
+        console.log('verifyPassword', this.getWalletStore().unLockedExpiresDay);
+        keysing.booted(this.password, this.HS.catcher, this.getWalletStore().unLockedExpiresDay);
     }
     async unlock(password) {
         await this.verifyPassword(password);
@@ -157,6 +184,17 @@ class WalletService {
     }
     async setUnlocked() {
         await this.setWalletStore({ ...this.getWalletStore(), isUnlocked: true });
+    }
+    async setUnLockedExpires(expires) {
+        if (this.password) {
+            await keysing.booted(this.password, this.HS.catcher, expires);
+            await this.setWalletStore({ ...this.getWalletStore(), unLockedExpiresDay: expires });
+            return true;
+        }
+        throw new Error(JSON.stringify({ code: 10002, message: 'Password is empty' }));
+    }
+    async getUnLockedExpires() {
+        return this.getWalletStore().unLockedExpiresDay;
     }
     async setLocked() {
         this.password = '';
@@ -379,28 +417,6 @@ class WalletService {
         const walletStore = this.getWalletStore() || {};
         return walletStore.walletList || [];
     }
-    getWalletStore() {
-        const walletStore = mapWalletCache.get('walletDataByMap');
-        return walletStore;
-    }
-    async setWalletStore(walletStore) {
-        mapWalletCache.set('walletDataByMap', walletStore);
-        global.clearTimeout(this.setWalletTimer);
-        this.setWalletTimer = global.setTimeout(() => {
-            this.setWalletCatch(this.HS.catcher, 'all', walletStore);
-        }, 200);
-    }
-    getBootedOss() {
-        const bootedOssStore = this.mapBootedOss.get('bootedOssByMap') || defaluBoootedOss;
-        return bootedOssStore;
-    }
-    async setBootedOss(bootedOssStore) {
-        global.clearTimeout(this.setBootdOsssTimer);
-        this.mapBootedOss.set('bootedOssByMap', bootedOssStore);
-        this.setBootdOsssTimer = global.setTimeout(() => {
-            this.cloudBootedOss().setBootedOssItem(this.HS, 'all', bootedOssStore);
-        }, 500);
-    }
     async getCurrentWallet() {
         const bootedOss = this.getBootedOss();
         const [currentWalletId, currentAccountId] = bootedOss.currentWalletId?.split('&');
@@ -510,6 +526,7 @@ class WalletService {
         await this.setWalletStore(defalutWalletStore);
         await this.setBootedOss(defaluBoootedOss);
         await this.HS.catcher.removeItem('dataStorage');
+        await this.HS.catcher.removeCookie('dataStorage', { secure: true });
         return true;
     }
     eventSecretCode() {
@@ -748,8 +765,14 @@ class WalletService {
         const walletPrivate = new ethers.Wallet(privateKey);
         return walletPrivate.publicKey;
     }
-    isUnlocked() {
-        return this.getWalletStore().isUnlocked;
+    async isUnlocked() {
+        const cl = await keysing.isLocked(this.HS.catcher);
+        console.log('cl', cl, this.getWalletStore());
+        if (cl) {
+            return this.getWalletStore().isUnlocked;
+        }
+        this.setWalletStore({ ...this.getWalletStore(), isUnlocked: false });
+        return false;
     }
     isSetPassword() {
         return !!this.getBootedOss().booted;

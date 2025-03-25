@@ -7,7 +7,8 @@ const walletTest = () => {
     创建密码123123: async () => {
       try {
         const password = '123123';
-        await wallet.createPassword(password)
+        await wallet.createPassword(password);
+        await wallet.setUnLockedExpires(7);
         console.log('密码创建成功', password)
       } catch (error) {
         console.error(error);
@@ -42,6 +43,7 @@ const walletTest = () => {
       try {
         const password = '123123';
         await wallet.unlock(password);
+        await wallet.setUnLockedExpires(7);
         // 检测并同步账号
         await wallet.walletInit();
         console.log('钱包解锁成功');
@@ -51,9 +53,25 @@ const walletTest = () => {
         alert(error);
       }
     },
+    设置密码到期时间: async () => {
+      try {
+        await wallet.setUnLockedExpires(0.0001)
+      } catch (error) {
+        console.error(error);
+        alert(error);
+      }
+    },
+    查看密码到期时间: async () => {
+      try {
+        console.log(await wallet.getUnLockedExpires())
+      } catch (error) {
+        console.error(error);
+        alert(error);
+      }
+    },
     查看账户状态: async () => {
       try {
-        const isUnlocked = wallet.isUnlocked();
+        const isUnlocked = await wallet.isUnlocked();
         const isSetPassword = wallet.isSetPassword();
         const hasWallet = wallet.hasWallet();
         console.log('钱包是否已解锁: ', isUnlocked); // 

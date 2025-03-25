@@ -7,7 +7,7 @@ declare class KeyRuntimeController {
     initKeyRuntime(catcher: ICatcher): Promise<{
         value: string;
     }>;
-    sendMessage(message: any, sendResponse: any, catcher: ICatcher): Promise<void>;
+    sendMessage(message: any, sendResponse: any, catcher: ICatcher, expires: number): Promise<void>;
 }
 declare const _default: KeyRuntimeController;
 export default _default;

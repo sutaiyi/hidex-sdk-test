@@ -20,7 +20,12 @@ export type RpcItem = {
 };
 export type RpcList = RpcItem[];
 export type Env = 'development' | 'production' | 'uat';
-export type Apparatus = 'web' | 'app' | 'h5' | 'telegram';
+export declare enum Apparatus {
+    WEB = "web",
+    APP = "app",
+    H5 = "h5",
+    TELEGRAM = "telegram"
+}
 export type EventCallback = (data?: unknown) => void;
 export type Options = {
     rpcList: RpcList;

@@ -96,68 +96,6 @@ export default {
             ]
         },
         {
-            "name": "saleCreateWsolIdempotentByTg",
-            "accounts": [
-                {
-                    "name": "detradeConfigPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "user",
-                    "isMut": true,
-                    "isSigner": true
-                },
-                {
-                    "name": "wsolMint",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "associateTokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "tokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "systemProgram",
-                    "isMut": false,
-                    "isSigner": false
-                }
-            ],
-            "args": []
-        },
-        {
-            "name": "buyCreateTokenIdempotentByTg",
-            "accounts": [
-                {
-                    "name": "detradeConfigPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "user",
-                    "isMut": true,
-                    "isSigner": true
-                },
-                {
-                    "name": "systemProgram",
-                    "isMut": false,
-                    "isSigner": false
-                }
-            ],
-            "args": [
-                {
-                    "name": "amount",
-                    "type": "u64"
-                }
-            ]
-        },
-        {
             "name": "buySwapPrepare",
             "accounts": [
                 {
@@ -168,6 +106,11 @@ export default {
                 {
                     "name": "userTokenAtaAccount",
                     "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "userWsolAtaAccount",
+                    "isMut": false,
                     "isSigner": false
                 },
                 {
@@ -207,6 +150,11 @@ export default {
                     "isSigner": false
                 },
                 {
+                    "name": "userWsolAtaAccount",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
                     "name": "inviter",
                     "isMut": true,
                     "isSigner": false
@@ -229,80 +177,8 @@ export default {
             ],
             "args": [
                 {
-                    "name": "amount",
-                    "type": "u64"
-                },
-                {
-                    "name": "transactionType",
+                    "name": "isAntiMev",
                     "type": "u8"
-                },
-                {
-                    "name": "commissionDiscountRate",
-                    "type": "u64"
-                },
-                {
-                    "name": "inviteCommissionRate",
-                    "type": "u64"
-                }
-            ]
-        },
-        {
-            "name": "buyCompletedEvent",
-            "accounts": [
-                {
-                    "name": "swapPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "detradeConfigPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "user",
-                    "isMut": true,
-                    "isSigner": true
-                },
-                {
-                    "name": "userAtaAccount",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "tokenMint",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "inviter",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "associateTokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "tokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "systemProgram",
-                    "isMut": false,
-                    "isSigner": false
-                }
-            ],
-            "args": [
-                {
-                    "name": "amount",
-                    "type": "u64"
-                },
-                {
-                    "name": "userAtaAmountBefore",
-                    "type": "u64"
                 },
                 {
                     "name": "transactionType",
@@ -436,158 +312,6 @@ export default {
             ]
         },
         {
-            "name": "saleCompletedEvent",
-            "accounts": [
-                {
-                    "name": "swapPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "detradeConfigPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "user",
-                    "isMut": true,
-                    "isSigner": true
-                },
-                {
-                    "name": "wsolMint",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "tokenMint",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "inviter",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "associateTokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "tokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "systemProgram",
-                    "isMut": false,
-                    "isSigner": false
-                }
-            ],
-            "args": [
-                {
-                    "name": "amount",
-                    "type": "u64"
-                },
-                {
-                    "name": "userLamportsBefore",
-                    "type": "u64"
-                },
-                {
-                    "name": "totalFee",
-                    "type": "u64"
-                },
-                {
-                    "name": "transactionType",
-                    "type": "u64"
-                },
-                {
-                    "name": "commissionDiscountRate",
-                    "type": "u64"
-                },
-                {
-                    "name": "inviteCommissionRate",
-                    "type": "u64"
-                }
-            ]
-        },
-        {
-            "name": "saleToken2022CompletedEvent",
-            "accounts": [
-                {
-                    "name": "swapPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "detradeConfigPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "user",
-                    "isMut": true,
-                    "isSigner": true
-                },
-                {
-                    "name": "wsolMint",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "tokenMint",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "inviter",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "associateTokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "tokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "systemProgram",
-                    "isMut": false,
-                    "isSigner": false
-                }
-            ],
-            "args": [
-                {
-                    "name": "amount",
-                    "type": "u64"
-                },
-                {
-                    "name": "userLamportsBefore",
-                    "type": "u64"
-                },
-                {
-                    "name": "totalFee",
-                    "type": "u64"
-                },
-                {
-                    "name": "transactionType",
-                    "type": "u64"
-                },
-                {
-                    "name": "commissionDiscountRate",
-                    "type": "u64"
-                },
-                {
-                    "name": "inviteCommissionRate",
-                    "type": "u64"
-                }
-            ]
-        },
-        {
             "name": "withdraw",
             "accounts": [
                 {
@@ -697,6 +421,10 @@ export default {
                     {
                         "name": "tokenAtaAmountBefore",
                         "type": "u64"
+                    },
+                    {
+                        "name": "tokenAtaInitBefore",
+                        "type": "bool"
                     }
                 ]
             }

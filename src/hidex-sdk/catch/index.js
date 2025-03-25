@@ -1,5 +1,7 @@
 import webCatcher from './web';
 import appCatcher from './app';
+import CookieStorage from './cookie';
+import { isValidJSON } from '../common/utils';
 class CatcherService {
     catch;
     keyDefault = 'hidex-sdk-store';
@@ -14,24 +16,48 @@ class CatcherService {
         }
         throw new Error('Catch constructor error');
     }
+    async getItem(key) {
+        try {
+            const value = await this.catch.getItem(`${this.keyDefault}-${key}`);
+            const isParse = isValidJSON(value);
+            if (value && isParse && value !== 'undefined' && value !== 'null') {
+                return JSON.parse(value);
+            }
+            return value;
+        }
+        catch (error) {
+            console.error(error);
+            return null;
+        }
+    }
     async setItem(key, value) {
         return await this.catch.setItem(`${this.keyDefault}-${key}`, typeof value === 'string' ? value : JSON.stringify(value));
     }
     async removeItem(key) {
         return await this.catch.removeItem(`${this.keyDefault}-${key}`);
     }
-    async getItem(key) {
+    async getCookie(key) {
         try {
-            const value = await this.catch.getItem(`${this.keyDefault}-${key}`);
-            if (value && value !== 'undefined' && value !== 'null') {
+            const value = await CookieStorage.get(`${this.keyDefault}-${key}`);
+            const isParse = isValidJSON(value);
+            console.log(typeof value);
+            if (value && isParse && value !== 'undefined' && value !== 'null') {
                 return JSON.parse(value);
             }
-            return undefined;
+            return value;
         }
         catch (error) {
             console.error(error);
             return null;
         }
+    }
+    async setCookie(key, value, options) {
+        const { expires, path, secure } = options;
+        return await CookieStorage.set(`${this.keyDefault}-${key}`, typeof value === 'string' ? value : JSON.stringify(value), expires, path, secure);
+    }
+    async removeCookie(key) {
+        console.log('removeCookie', key);
+        return await CookieStorage.remove(`${this.keyDefault}-${key}`);
     }
 }
 export default CatcherService;
