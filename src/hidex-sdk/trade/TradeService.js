@@ -7,6 +7,7 @@ import EventEmitter from '../common/eventEmitter';
 import DefiApi from './sol/defiApi';
 import TradeHashStatusService from './TradeHashStatusService';
 import { wExchange } from './utils/nativeTokenTrade';
+import { simulateConfig } from './sol/config';
 class TradeService extends EventEmitter {
     app;
     chainId;
@@ -146,6 +147,28 @@ class TradeService extends EventEmitter {
     async wrappedExchange(chain, accountAddress, type, priorityFee, amount = '0') {
         const privateKey = await this.HS.wallet.ownerKey(accountAddress);
         return await wExchange(chain, privateKey, type, priorityFee, amount, this.HS);
+    }
+    async sendSimulateTransaction(accountAddress, vertransaction) {
+        const privateKey = await this.HS.wallet.ownerKey(accountAddress);
+        const sender = this.HS.utils.ownerKeypair(privateKey);
+        const connection = await this.HS.network.getProviderByChain(102);
+        if (connection) {
+            const simulateResponse = await connection.simulateTransaction(vertransaction, simulateConfig);
+            console.log('第二次交易 - 预估', simulateResponse);
+            if (simulateResponse && simulateResponse?.value?.err) {
+                throw new Error(JSON.stringify(simulateResponse.value.logs));
+            }
+            vertransaction.sign([sender]);
+            const rawTransaction = vertransaction.serialize();
+            const hash = await connection.sendRawTransaction(rawTransaction);
+            ;
+            if (hash) {
+                const result = { error: null, result: { hash, data: [vertransaction] } };
+                console.log('第二次交易结果：', result);
+                return { error: null, result: { hash, data: [vertransaction] } };
+            }
+        }
+        throw new Error('sendSimulateTransaction error');
     }
 }
 export default TradeService;

@@ -232,7 +232,7 @@ const tradeFun = () => {
 
 
         if (!error) {
-          console.log('交易已提交：' + result.hash)
+          console.log('交易已提交：', result)
           const hashItem = {
             chain: currentNetwork.chain,
             hash: result.hash,
@@ -333,7 +333,7 @@ const tradeFun = () => {
         const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
         console.timeEnd('tradeswapTimer');
         if (!error) {
-          console.log('交易已提交：' + result.hash)
+          console.log('交易已提交：', result)
           const hashItem = {
             chain: currentNetwork.chain,
             hash: result.hash,

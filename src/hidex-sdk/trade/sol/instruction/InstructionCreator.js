@@ -232,7 +232,7 @@ export async function createSimpleBuySwapCompletedInstruction(currentSymbol, own
         .instruction();
 }
 export async function createSimpleSaleSwapCompletedInstruction(currentSymbol, owner, network, gasFee) {
-    const { program, tokenOutMint, dataPda, swapPda, tradePda, bump3, amount, userAtaAccount, swapWsolPdaAta, wSol, userwSolAta, inviterPublic } = await information(currentSymbol, owner, network);
+    const { program, tokenInMint, dataPda, swapPda, tradePda, bump3, amount, userAtaAccount, swapWsolPdaAta, wSol, userwSolAta, inviterPublic } = await information(currentSymbol, owner, network);
     const type = new anchor.BN(currentSymbol.isPump ? 2 : 1);
     const dexCommissionRateBN = new anchor.BN(currentSymbol.feeRate);
     const inviterCommissionRateBN = new anchor.BN((currentSymbol.commissionRate || 0) * 10000);
@@ -240,10 +240,11 @@ export async function createSimpleSaleSwapCompletedInstruction(currentSymbol, ow
     const lamportsBefore = new anchor.BN(currentSymbol.solLamports);
     const wsolAtaAmountBefore = new anchor.BN(currentSymbol.userwsolAtaAmount);
     const userWsolAtaLamports = new anchor.BN(currentSymbol.userWsolAtaLamports);
+    console.log("userWsolAtaLamports = " + userWsolAtaLamports);
     const tokenAtaLamports = new anchor.BN(currentSymbol.tokenAtaLamports);
     const fee = new anchor.BN(gasFee);
     return program.methods
-        .saleSwapCompletedSimple(bump3, amount, tradeType, type, dexCommissionRateBN, inviterCommissionRateBN, lamportsBefore, wsolAtaAmountBefore, userWsolAtaLamports, tokenAtaLamports, tokenOutMint.toBase58, fee)
+        .saleSwapCompletedSimple(bump3, amount, tradeType, type, dexCommissionRateBN, inviterCommissionRateBN, lamportsBefore, wsolAtaAmountBefore, userWsolAtaLamports, tokenAtaLamports, tokenInMint.toBase58(), fee)
         .accounts({
         swapPda: swapPda,
         configPda: dataPda,

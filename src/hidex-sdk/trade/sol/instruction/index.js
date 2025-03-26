@@ -1,5 +1,5 @@
 import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount, PublicKey, } from "@solana/web3.js";
-import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, DEFAULT_SWAP_SOL_LAMPORTS, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, BASE_ACCOUNT_INIT_FEE, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, DEFAULD_SOLANA_SWAP_LIMIT, TIP_MINI_IN_PRIORITY, DEFAULT_SWAP_PUMP_LAMPORTS, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, PUMP_PROGRAM_ID, HIDEX_ADDRESS_LOOK_UP, DEFAULD_SOLANA_GAS_LIMIT } from '../config';
+import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, DEFAULT_SWAP_SOL_LAMPORTS, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, BASE_ACCOUNT_INIT_FEE, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, DEFAULD_SOLANA_SWAP_LIMIT, TIP_MINI_IN_PRIORITY, DEFAULT_SWAP_PUMP_LAMPORTS, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, PUMP_PROGRAM_ID, HIDEX_ADDRESS_LOOK_UP, DEFAULD_SOLANA_GAS_LIMIT, DEFAULD_BASE_GAS_FEE } from '../config';
 import { checkAccountCloseInstruction, createSimpleSwapCompleteInstruction, createSwapCompleteInstruction, createSwapPrepareInstruction, createTipTransferInstruction, deleteTransactionGasInstruction, getInstructionAmounts, getInstructionReplaceDataHex, numberToLittleEndianHex, priorityFeeInstruction, versionedTra } from "./InstructionCreator";
 export function resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount) {
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
@@ -172,10 +172,10 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
             const swapTxSer = swapTx.serialize();
             const swapTxBytesSize = swapTxSer.length;
             console.log("交易串删除指令后的字节长度 = " + swapTxBytesSize);
-            let priorityFee2 = Number(currentSymbol.priorityFee);
             const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(DEFAULD_SOLANA_SWAP_LIMIT, DEFAULD_SOLANA_GAS_LIMIT);
-            const simpleSwapCompletedIx = await createSimpleSwapCompleteInstruction(currentSymbol, owner, HS.network, priorityFee2 + DEFAULD_SOLANA_GAS_LIMIT);
+            const simpleSwapCompletedIx = await createSimpleSwapCompleteInstruction(currentSymbol, owner, HS.network, Number(currentSymbol.priorityFee) + DEFAULD_SOLANA_GAS_LIMIT + 2 * DEFAULD_BASE_GAS_FEE);
             const simpleCompleteSwapTx = await versionedTra([addPriorityPriceIx, addPriorityLimitIx, simpleSwapCompletedIx], owner, recentBlockhash, addressLookupTableAccounts);
+            console.log("交易串删除指令后的字节长度 = " + Buffer.from(simpleCompleteSwapTx.serialize()).toString("base64"));
             return [
                 swapTx,
                 simpleCompleteSwapTx

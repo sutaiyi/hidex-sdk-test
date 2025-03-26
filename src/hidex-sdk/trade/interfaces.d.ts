@@ -22,6 +22,13 @@ export interface ITradeOthersFunction {
             hash: string | null;
         } & any;
     }>;
+    sendSimulateTransaction(accountAddress: string, vertransaction: VersionedTransaction): Promise<{
+        error: any;
+        result: {
+            hash: string | null;
+            data: any;
+        };
+    }>;
 }
 export interface ITradeService extends ITradeFunctions, ITradeOthersFunction {
     approve: IApproveService;

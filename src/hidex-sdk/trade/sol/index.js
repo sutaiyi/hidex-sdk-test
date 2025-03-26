@@ -13,10 +13,8 @@ export const solService = (HS) => {
     const getBalance = async (accountAddress, tokenAddress = '', isAta = false) => {
         const currentNetwork = network.get();
         try {
-            console.log(isAta);
             if ((tokenAddress && (tokenAddress === smTokenAddress)) || !tokenAddress || isAta) {
                 const pk = !isAta ? new PublicKey(accountAddress) : new PublicKey(tokenAddress);
-                console.log(pk.toBase58());
                 const balanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
                     return v.getBalance(pk).then((res) => {
                         return res;
@@ -200,11 +198,13 @@ export const solService = (HS) => {
                 }
             }
             if (txArray.length === 0) {
-                const { success, swapTransaction } = await defiApi.swapRoute(currentSymbol, accountAddress);
+                const { success, swapTransaction, data } = await defiApi.swapRoute(currentSymbol, accountAddress);
                 if (!success) {
                     throw new Error('Failed to swap' + path);
                 }
                 compileUse = await compileTransaction(swapTransaction, HS);
+                currentSymbol.preAmountIn = data.inAmount;
+                currentSymbol.preAmountOut = data.otherAmountThreshold;
                 const isSupport = isInstructionsSupportReset(compileUse['message'], currentSymbol);
                 if (isSupport) {
                     resetResult = resetInstructions(currentSymbol, compileUse['message'], BigInt(amountIn), BigInt(amountOutMin));
@@ -242,7 +242,7 @@ export const solService = (HS) => {
             const priorityFee = Number(currentSymbol.priorityFee) / Math.pow(10, 9);
             return netFee + dexFee + mitToken + accountSave + priorityFee;
         },
-        swap: async (currentSymbol, transaction) => {
+        swap: async (currentSymbol, transaction, accountAddress) => {
             const { vertransactions } = transaction?.data;
             let submitPro = null;
             if (vertransactions?.length >= 4) {
@@ -259,7 +259,7 @@ export const solService = (HS) => {
             if (simulateResponse && simulateResponse?.value?.err) {
                 throw new Error(JSON.stringify(simulateResponse.value.logs));
             }
-            return { error: !submitResult.success, result: { hash: submitResult.hash, vertransactions } };
+            return { error: !submitResult.success, result: { hash: submitResult.hash, data: { vertransactions, accountAddress } } };
         },
         hashStatus: async (hash) => {
             const status = await defiApi.getSwapStatus(hash);

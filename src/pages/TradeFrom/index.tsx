@@ -106,7 +106,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
 
         const wsolAtaAddress = await utils.trade?.getUserTokenAtaAddress(account.address, currentNetwork.tokens[1].address, IS_TOKEN_2022)
         const tokenAtaAddress = await utils.trade?.getUserTokenAtaAddress(account.address, result?.token.address, IS_TOKEN_2022)
-        console.log(wsolAtaAddress, tokenAtaAddress)
+        console.log('wsolAtaAddress==>', wsolAtaAddress, 'tokenAtaAddress==>', tokenAtaAddress)
 
 
         const [balance, tokenBalance, wbalance, userWsolAtaLamports, tokenAtaLamports, priceWeiItem, tokenInfo] = await Promise.all([
@@ -139,7 +139,6 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           symbol: network.get(chainName).tokens[0].symbol,
           wSymbol: network.get(chainName).tokens[1].symbol,
           isPump,
-          
         }
         setSelected(tradeInfo)
         onResultSelect(tradeInfo);

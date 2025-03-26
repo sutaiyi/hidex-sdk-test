@@ -27,6 +27,14 @@ const Rend = () => {
         trade.checkHash.on('HashStatusEvent', (data) => {
           console.log('HashStatusEvent', data)
           console.timeEnd('tradeFullTimer');
+          if (data.status === 'Confirmed') {
+            const { accountAddress, vertransactions } = data.data;
+            if (vertransactions && vertransactions.length === 2) {
+              // 执行第二笔交易
+              console.log('执行第二笔交易')
+              trade.sendSimulateTransaction(accountAddress, vertransactions[1]);
+            }
+          }
           alert('交易状态: ' + data.status)
         })
         setLoading(false);

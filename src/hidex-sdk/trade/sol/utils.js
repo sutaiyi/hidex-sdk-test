@@ -28,13 +28,7 @@ export async function sendSolanaTransaction(connection, sender, instructions, bl
         throw new Error(JSON.stringify(simulateResponse.value.logs));
     }
     const rawTransaction = versionedTx.serialize();
-    try {
-        const result = await connection.sendRawTransaction(rawTransaction);
-        return result;
-    }
-    catch (error) {
-        throw new Error(JSON.stringify(error));
-    }
+    return await connection.sendRawTransaction(rawTransaction);
 }
 export async function getUserTokenAtaAddress(userAddress, tokenAddress, TOKEN_2022) {
     const mintPublic = new PublicKey(tokenAddress);
