@@ -115,6 +115,14 @@ export async function createSwapPrepareInstruction(currentSymbol, owner, network
         return createSaleSwapPrepareInstruction(currentSymbol, owner, network);
     }
 }
+export async function createSimpleSwapCompleteInstruction(currentSymbol, owner, network, gasFee) {
+    if (currentSymbol.isBuy) {
+        return createSimpleBuySwapCompletedInstruction(currentSymbol, owner, network, gasFee);
+    }
+    else {
+        return createSimpleSaleSwapCompletedInstruction(currentSymbol, owner, network, gasFee);
+    }
+}
 export async function createSwapCompleteInstruction(currentSymbol, owner, network) {
     if (currentSymbol.isBuy) {
         return createBuySwapCompletedInstruction(currentSymbol, owner, network);
@@ -125,6 +133,7 @@ export async function createSwapCompleteInstruction(currentSymbol, owner, networ
 }
 export async function createBuySwapPrepareInstruction(currentSymbol, owner, network) {
     const { program, tradePda, userAtaAccount, userwSolAta } = await information(currentSymbol, owner, network);
+    console.log("tradePda = " + tradePda.toBase58());
     return program.methods
         .buySwapPrepare()
         .accounts({
@@ -179,6 +188,62 @@ export async function createSaleSwapCompletedInstruction(currentSymbol, owner, n
     const tradeType = new anchor.BN(currentSymbol.tradeType > 0 ? 0 : 1);
     return program.methods
         .saleSwapCompleted(bump3, amount, tradeType, type, dexCommissionRateBN, inviterCommissionRateBN)
+        .accounts({
+        swapPda: swapPda,
+        configPda: dataPda,
+        tradeConfigPda: tradePda,
+        wsolMint: wSol,
+        userWsolAtaAccount: userwSolAta,
+        swapPdaWsolAtaAccount: swapWsolPdaAta,
+        user: owner.publicKey,
+        userAtaAccount: userAtaAccount,
+        inviter: inviterPublic,
+        associateTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+    })
+        .instruction();
+}
+export async function createSimpleBuySwapCompletedInstruction(currentSymbol, owner, network, gasFee) {
+    const { program, dataPda, swapPda, tradePda, userAtaAccount, userwSolAta, inviterPublic } = await information(currentSymbol, owner, network);
+    const type = new anchor.BN(currentSymbol.isPump ? 2 : 1);
+    const dexCommissionRateBN = new anchor.BN(currentSymbol.feeRate);
+    const inviterCommissionRateBN = new anchor.BN((currentSymbol.commissionRate || 0) * 10000);
+    const tradeType = new anchor.BN(currentSymbol.tradeType > 0 ? 0 : 1);
+    const tokenBalance = new anchor.BN(currentSymbol.tokenBalance);
+    const lamportsBefore = new anchor.BN(currentSymbol.solLamports);
+    const userWsolAtaLamports = new anchor.BN(currentSymbol.userWsolAtaLamports);
+    const tokenAtaLamports = new anchor.BN(currentSymbol.tokenAtaLamports);
+    const fee = new anchor.BN(gasFee);
+    return program.methods
+        .buySwapCompletedSimple(tradeType, type, dexCommissionRateBN, inviterCommissionRateBN, lamportsBefore, userWsolAtaLamports, tokenBalance, tokenAtaLamports, fee)
+        .accounts({
+        swapPda: swapPda,
+        configPda: dataPda,
+        tradeConfigPda: tradePda,
+        user: owner.publicKey,
+        userAtaAccount: userAtaAccount,
+        userWsolAtaAccount: userwSolAta,
+        inviter: inviterPublic,
+        associateTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+    })
+        .instruction();
+}
+export async function createSimpleSaleSwapCompletedInstruction(currentSymbol, owner, network, gasFee) {
+    const { program, tokenOutMint, dataPda, swapPda, tradePda, bump3, amount, userAtaAccount, swapWsolPdaAta, wSol, userwSolAta, inviterPublic } = await information(currentSymbol, owner, network);
+    const type = new anchor.BN(currentSymbol.isPump ? 2 : 1);
+    const dexCommissionRateBN = new anchor.BN(currentSymbol.feeRate);
+    const inviterCommissionRateBN = new anchor.BN((currentSymbol.commissionRate || 0) * 10000);
+    const tradeType = new anchor.BN(currentSymbol.tradeType > 0 ? 0 : 1);
+    const lamportsBefore = new anchor.BN(currentSymbol.solLamports);
+    const wsolAtaAmountBefore = new anchor.BN(currentSymbol.userwsolAtaAmount);
+    const userWsolAtaLamports = new anchor.BN(currentSymbol.userWsolAtaLamports);
+    const tokenAtaLamports = new anchor.BN(currentSymbol.tokenAtaLamports);
+    const fee = new anchor.BN(gasFee);
+    return program.methods
+        .saleSwapCompletedSimple(bump3, amount, tradeType, type, dexCommissionRateBN, inviterCommissionRateBN, lamportsBefore, wsolAtaAmountBefore, userWsolAtaLamports, tokenAtaLamports, tokenOutMint.toBase58, fee)
         .accounts({
         swapPda: swapPda,
         configPda: dataPda,

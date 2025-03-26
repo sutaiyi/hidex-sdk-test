@@ -26,12 +26,15 @@ export declare function versionedTra(instructions: TransactionInstruction[], own
 export declare function getTotalFee(currentSymbol: CurrentSymbol): string;
 export declare function deleteTransactionGasInstruction(instructions: TransactionInstruction[]): void;
 export declare function createSwapPrepareInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
+export declare function createSimpleSwapCompleteInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService, gasFee: Number): Promise<anchor.web3.TransactionInstruction>;
 export declare function createSwapCompleteInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function createBuySwapPrepareInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function signTransaction(): void;
 export declare function createBuySwapCompletedInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function createSaleSwapPrepareInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function createSaleSwapCompletedInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
+export declare function createSimpleBuySwapCompletedInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService, gasFee: Number): Promise<anchor.web3.TransactionInstruction>;
+export declare function createSimpleSaleSwapCompletedInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService, gasFee: Number): Promise<anchor.web3.TransactionInstruction>;
 export declare function createTipTransferInstruction(from: PublicKey, to: PublicKey, lamports: bigint): Promise<TransactionInstruction>;
 export declare function numberToLittleEndianHex(num: number, byteLength: number): string;
 export declare function checkAccountCloseInstruction(currentSymbol: CurrentSymbol, instruction: TransactionInstruction, owner: any, network: INetworkService): Promise<boolean>;

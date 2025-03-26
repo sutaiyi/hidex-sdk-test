@@ -181,7 +181,6 @@ const tradeFun = () => {
         // 当前母币时时价格
         currentSymbol.cryptoPriceUSD = cryptoPriceUSD
 
-        currentSymbol.tokenBalance = tokenBalanceStr;
 
 
         console.time('swapPath&swapSignTimer');
@@ -288,7 +287,6 @@ const tradeFun = () => {
         // 当前母币时时价格
         currentSymbol.cryptoPriceUSD = cryptoPriceUSD
 
-        currentSymbol.tokenBalance = tokenBalanceStr;
 
         console.time('swapPath&swapSignTimer');
         const [swapPath, signRes] = await Promise.all([

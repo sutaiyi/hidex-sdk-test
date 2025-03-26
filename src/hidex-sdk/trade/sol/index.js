@@ -10,11 +10,13 @@ import { compileTransaction, getTransactionsSignature, isInstructionsSupportRese
 const utils = new UtilsService();
 export const solService = (HS) => {
     const { network, wallet } = HS;
-    const getBalance = async (accountAddress, tokenAddress = '') => {
+    const getBalance = async (accountAddress, tokenAddress = '', isAta = false) => {
         const currentNetwork = network.get();
         try {
-            if ((tokenAddress && (tokenAddress === smTokenAddress)) || !tokenAddress) {
-                const pk = new PublicKey(accountAddress);
+            console.log(isAta);
+            if ((tokenAddress && (tokenAddress === smTokenAddress)) || !tokenAddress || isAta) {
+                const pk = !isAta ? new PublicKey(accountAddress) : new PublicKey(tokenAddress);
+                console.log(pk.toBase58());
                 const balanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
                     return v.getBalance(pk).then((res) => {
                         return res;
@@ -212,6 +214,17 @@ export const solService = (HS) => {
                 }
                 txArray = await getTransactionsSignature(resetResult, compileUse['addressesLookup'], defiApi.lastBlockHash.blockhash, currentSymbol, owner, HS);
             }
+            console.time('timer simulateTransaction');
+            const vertransaction = txArray.length === 5 ? txArray[4] : txArray[0];
+            if (vertransaction) {
+                const connection = await network.getProviderByChain(102);
+                const simulateResponse = await connection.simulateTransaction(vertransaction, simulateConfig);
+                console.log('交易 - 预估', simulateResponse);
+                if (simulateResponse && simulateResponse?.value?.err) {
+                    throw new Error(JSON.stringify(simulateResponse.value.logs));
+                }
+            }
+            console.timeEnd('timer simulateTransaction');
             console.log('txArray: ===>', txArray);
             return {
                 gasLimit: 0,

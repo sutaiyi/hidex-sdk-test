@@ -27,7 +27,6 @@ class WalletService {
         this.atpkeys = [];
         this.HS = options;
         this.ADDRESS_PATH_TYPE = this.getChainsPath();
-        console.log(0, 'default wallet');
         this.walletStore = defalutWalletStore;
         this.bootedOss = defaluBoootedOss;
     }
@@ -58,7 +57,6 @@ class WalletService {
         try {
             const res = await ossStore.getWalletStoreItem(catcher, key);
             this.walletMap = ossStore.getWalletMap();
-            console.log(1, this.walletMap.get('WalletStore'));
             this.walletStore = this.walletMap.get('WalletStore');
             return res;
         }
@@ -69,14 +67,12 @@ class WalletService {
     async setWalletCatch(catcher, key, value) {
         await ossStore.setWalletStoreItem(catcher, key, value);
         this.walletMap = ossStore.getWalletMap();
-        console.log(2, this.walletMap.get('WalletStore'));
         this.walletStore = this.walletMap.get('WalletStore');
     }
     getWalletStore() {
         return this.walletStore;
     }
     async setWalletStore(walletStore) {
-        console.log(3, walletStore);
         this.walletStore = walletStore;
         global.clearTimeout(this.setWalletTimer);
         this.setWalletTimer = global.setTimeout(() => {
@@ -98,7 +94,7 @@ class WalletService {
         const bootedOss = deepCopy(this.getBootedOss());
         console.log('walletInit', walletStore, bootedOss, walletStore.walletList);
         if (!walletStore.walletList?.length || walletStore.pathIndex !== bootedOss.pathIndex) {
-            console.log('walletRest');
+            console.log('WalletResting...');
             const maxPathIndex = bootedOss.pathIndex;
             let id = 0;
             const walletBootedArr = Object.keys(bootedOss.walletBooted);
@@ -113,6 +109,7 @@ class WalletService {
                     }
                 }
             }
+            console.log('WalletRested');
         }
     }
     async createPassword(password, oldPassword) {
@@ -175,7 +172,6 @@ class WalletService {
         }
         await passworder.decrypt(shaPassword, encryptedBooted);
         this.password = shaPassword;
-        console.log('verifyPassword', this.getWalletStore().unLockedExpiresDay);
         keysing.booted(this.password, this.HS.catcher, this.getWalletStore().unLockedExpiresDay);
     }
     async unlock(password) {
@@ -767,7 +763,6 @@ class WalletService {
     }
     async isUnlocked() {
         const cl = await keysing.isLocked(this.HS.catcher);
-        console.log('cl', cl, this.getWalletStore());
         if (cl) {
             return this.getWalletStore().isUnlocked;
         }

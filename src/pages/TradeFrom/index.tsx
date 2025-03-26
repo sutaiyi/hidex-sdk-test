@@ -14,7 +14,7 @@ interface SearchComponentProps {
 }
 
 const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => {
-  const { network, wallet, trade } = HidexSDK;
+  const { network, wallet, trade, utils } = HidexSDK;
   const [inputValue, setInputValue] = useState('');
   const [results, setResults] = useState<any>([]);
   const [selected, setSelected] = useState<any>(null);
@@ -101,14 +101,24 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
         const currentNetwork = await network.choose(chainName)
         const { accountItem }: {accountItem: any} = await wallet.getCurrentWallet()
         const account = accountItem[chainName]
-        const [balance, tokenBalance, wbalance, priceWeiItem, tokenInfo] = await Promise.all([
+
+        const IS_TOKEN_2022 = await utils.trade.isToken2022(result?.token.address, network.getProviderByChain(102));
+
+        const wsolAtaAddress = await utils.trade.getUserTokenAtaAddress(account.address, currentNetwork.tokens[1].address, IS_TOKEN_2022)
+        const tokenAtaAddress = await utils.trade.getUserTokenAtaAddress(account.address, result?.token.address, IS_TOKEN_2022)
+        console.log(wsolAtaAddress, tokenAtaAddress)
+
+
+        const [balance, tokenBalance, wbalance, userWsolAtaLamports, tokenAtaLamports, priceWeiItem, tokenInfo] = await Promise.all([
           trade.getBalance(account.address),
           trade.getBalance(account.address,result?.token.address),
           trade.getBalance(account.address, currentNetwork.tokens[1].address),
+          trade.getBalance(account.address, wsolAtaAddress, true),
+          trade.getBalance(account.address, tokenAtaAddress, true),
           getChainsTokenPriceUsd(network.getChainIds()),
           getTokenInfo(queryStringify({address: result?.token.address, networkId: network.getCodexChainIdByChain(currentNetwork.chain)}))
         ])
-        console.log(tokenInfo?.data?.token?.launchpad?.completed)
+
         const isPump = tokenInfo?.data?.token?.launchpad?.completed === false
         const cryptoPriceUSD = 1 / Number(priceWeiItem[currentNetwork.chainID]) * 10 ** currentNetwork.tokens[0].decimals;
         const tradeInfo = {
@@ -121,11 +131,15 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           tokenBalance: strToNumberByDecimals(tokenBalance, result?.token.decimals),
           balanceStr: balance,
           wbalanceStr: wbalance,
+          userWsolAtaLamportsStr: userWsolAtaLamports,
+          tokenAtaLamportsStr: tokenAtaLamports,
           cryptoPriceUSD,
           tokenBalanceStr: tokenBalance,
+          IS_TOKEN_2022,
           symbol: network.get(chainName).tokens[0].symbol,
           wSymbol: network.get(chainName).tokens[1].symbol,
           isPump,
+          
         }
         setSelected(tradeInfo)
         onResultSelect(tradeInfo);

@@ -28,11 +28,11 @@ export declare const GMGN_PRIORITY_FEE_Collect_ID: PublicKey;
 export declare const PUEM_INSTRUCTION_PREFIX = "66063d1201daebea";
 export declare const SOLANA_SYSTEM_PROGRAM_TRANSFER_ID = 2;
 export declare const SOLANA_CREATE_ACCOUNT_WITH_SEED_ID = 3;
-export declare const SOLANA_TX_SERIALIZE_SIGN = 900;
 export declare const SOLANA_MAX_TX_SERIALIZE_SIGN = 1232;
 export declare const DEFAULT_SWAP_SOL_LAMPORTS: bigint;
 export declare const DEFAULT_SWAP_PUMP_LAMPORTS: bigint;
 export declare const BASE_ACCOUNT_INIT_FEE: bigint;
 export declare const TIP_MINI_IN_PRIORITY: bigint;
 export declare const DEFAULD_SOLANA_SWAP_LIMIT: number;
+export declare const DEFAULD_SOLANA_GAS_LIMIT: number;
 //# sourceMappingURL=config.d.ts.map

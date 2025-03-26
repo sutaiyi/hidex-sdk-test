@@ -1,3 +1,5 @@
+export * from '../sol/utils';
+export * from '../eth/utils';
 export declare const getSingleContensBytes: (contents: string, signature: string) => {
     combinedBytes: Buffer<ArrayBuffer>;
     signReult: Buffer<ArrayBuffer>;

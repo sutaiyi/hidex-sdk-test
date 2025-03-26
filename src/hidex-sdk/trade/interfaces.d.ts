@@ -1,5 +1,5 @@
 import { AddressLookupTableAccount, BlockhashWithExpiryBlockHeight, Transaction, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
-import { ChainItem, INetworkService, Provider } from '../network/interfaces';
+import { ChainItem, INetworkService } from '../network/interfaces';
 import { ICatcher } from '../catch/interfaces';
 import EventEmitter from '../common/eventEmitter';
 export type HashStatus = 'Confirmed' | 'Pending' | 'Failed' | 'Expired';
@@ -28,7 +28,7 @@ export interface ITradeService extends ITradeFunctions, ITradeOthersFunction {
     checkHash: ITradeHashStatusService;
 }
 export interface ITradeFunctions {
-    getBalance(accountAddress: string, tokenAddress?: string, provider?: Provider): Promise<string>;
+    getBalance(accountAddress: string, tokenAddress?: string, isAta?: boolean): Promise<string>;
     getBalanceMultiple(chain: string, accountAddress: string, tokens: Array<string>): Promise<Array<string>>;
     getNetWorkFees(gasLimit: number): Promise<NetWorkFee[]>;
     getAllowance(tokenAddress: string, accountAddress: string, authorizedAddress: string): Promise<number>;
@@ -134,10 +134,14 @@ export type CurrentSymbol = {
     commissionRate?: number;
     compile?: any;
     currentPrice?: string;
-    tokenBalance?: string;
     cryptoPriceUSD: number;
     preAmountIn: string;
     preAmountOut: string;
+    tokenBalance: string;
+    solLamports: string;
+    userwsolAtaAmount: string;
+    userWsolAtaLamports: string;
+    tokenAtaLamports: string;
 };
 export type TokenInfo = {
     symbol: string;

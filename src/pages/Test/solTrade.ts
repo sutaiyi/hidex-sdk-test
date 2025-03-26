@@ -8,7 +8,8 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentNetwork }
   currentNetwork: ChainItem,
   address: string
 }> => {
-  const { token, account, tokenBalanceStr, inviter, cryptoPriceUSD } = info;
+  const { utils, network } = HidexSDK;
+  const { token, account, tokenBalanceStr, balanceStr, inviter, cryptoPriceUSD, wbalanceStr, userWsolAtaLamportsStr, tokenAtaLamportsStr, IS_TOKEN_2022 } = info;
   const { address } = account;
   const tokenAddress = token.address;
   const decimals = token.decimals;
@@ -22,6 +23,7 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentNetwork }
   const testNumber = isPump ? 0.5 : 5;
   const buyTestAmount = (testNumber * Math.pow(10, inToken.decimals)).toString();
   const amountIn = isBuy ? buyTestAmount : tokenBalanceStr;
+
   const currentSymbol = {
     in: isBuy ? inToken : outToken,
     out: isBuy ? outToken : inToken,
@@ -41,9 +43,14 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentNetwork }
     isPump,
     chain: currentNetwork.chain,
     cryptoPriceUSD,
-    TOKEN_2022: false,
+    TOKEN_2022: IS_TOKEN_2022,
     preAmountIn: '0',
-    preAmountOut: '0'
+    preAmountOut: '0',
+    tokenBalance: tokenBalanceStr,
+    solLamports: balanceStr,
+    userwsolAtaAmount: wbalanceStr,
+    userWsolAtaLamports: userWsolAtaLamportsStr,
+    tokenAtaLamports: tokenAtaLamportsStr
   };
   return {
     currentSymbol,

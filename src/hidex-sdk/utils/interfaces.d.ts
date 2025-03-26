@@ -5,5 +5,6 @@ export interface IUtilsService {
         message: string;
     };
     ownerKeypair(key: string): Keypair;
+    trade: any;
 }
 //# sourceMappingURL=interfaces.d.ts.map
