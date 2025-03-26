@@ -84,7 +84,7 @@ const getBeforeTradeData = (isBuy: boolean, chainName: string, tokenAddress: str
   if (mapItems && typeof mapItems === 'object') {
     return mapItems[`${isBuy ? 'buy' : 'sell'}_${chainName}_${tokenAddress}`];
   }
-  return null;
+  return {};
 }
 
 
