@@ -19,7 +19,7 @@ declare class TradeService extends EventEmitter implements ITradeService {
     }>;
     isInstructionsSupportReset: (transactionMessage: TransactionMessage, currentSymbol: CurrentSymbol) => boolean;
     changeTradeService: (currentNetwork: ChainItem) => void;
-    getBalance: (accountAddress: string, tokenAddress?: string) => Promise<string>;
+    getBalance: (accountAddress: string, tokenAddress?: string, isAta?: boolean) => Promise<string>;
     getBalanceMultiple: (chain: string, accountAddress: string, tokens: Array<string>) => Promise<Array<string>>;
     getNetWorkFees: (gasLimit?: number) => Promise<NetWorkFee[]>;
     getSendEstimateGas: (sendParams: SendTransactionParams) => Promise<{

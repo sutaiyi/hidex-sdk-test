@@ -49,9 +49,9 @@ class TradeService extends EventEmitter {
                 this.app = solService(this.HS);
         }
     };
-    getBalance = async (accountAddress, tokenAddress) => {
+    getBalance = async (accountAddress, tokenAddress, isAta) => {
         try {
-            const balance = await this.app?.getBalance(accountAddress, tokenAddress);
+            const balance = await this.app?.getBalance(accountAddress, tokenAddress, isAta);
             return balance || '0';
         }
         catch (error) {
