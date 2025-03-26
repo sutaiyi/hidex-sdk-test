@@ -104,8 +104,8 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
 
         const IS_TOKEN_2022 = await utils.trade?.isToken2022(result?.token.address, network.getProviderByChain(102));
 
-        const wsolAtaAddress = await utils.trade.getUserTokenAtaAddress(account.address, currentNetwork.tokens[1].address, IS_TOKEN_2022)
-        const tokenAtaAddress = await utils.trade.getUserTokenAtaAddress(account.address, result?.token.address, IS_TOKEN_2022)
+        const wsolAtaAddress = await utils.trade?.getUserTokenAtaAddress(account.address, currentNetwork.tokens[1].address, IS_TOKEN_2022)
+        const tokenAtaAddress = await utils.trade?.getUserTokenAtaAddress(account.address, result?.token.address, IS_TOKEN_2022)
         console.log(wsolAtaAddress, tokenAtaAddress)
 
 
