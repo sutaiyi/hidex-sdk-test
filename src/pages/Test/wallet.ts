@@ -237,7 +237,6 @@ const walletTest = () => {
           alert(error);
         }
       }
-
     },
   }
 }

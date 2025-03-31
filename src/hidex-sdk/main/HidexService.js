@@ -33,7 +33,7 @@ export class HidexService {
         await keysing.keysingInitialized(this.catcher);
         this.wallet.eventSecretCode();
         await this.wallet.getWalletCatch(this.catcher);
-        await this.wallet.cloudBootedOss().getBootedOssItem(this.processOptions(this.options));
+        await this.wallet.getCloudBootedOss(this.processOptions(this.options));
         await this.wallet.walletInit();
     }
     processOptions(options) {

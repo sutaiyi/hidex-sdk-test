@@ -3,10 +3,7 @@ import { OptionsCommon } from "../main/interfaces";
 export interface IWalletService {
     walletInit(): Promise<void>;
     getWalletCatch(catcher: ICatcher, key?: string): Promise<WalletStore>;
-    cloudBootedOss(): {
-        getBootedOssItem: (HS: OptionsCommon, key?: string) => Promise<BootedOssStore>;
-        setBootedOssItem: (HS: OptionsCommon, key: string, value: BootedOssStore) => Promise<boolean>;
-    };
+    getCloudBootedOss(HS: OptionsCommon, key?: string): Promise<BootedOssStore>;
     createPassword(password: string, oldPassword?: string): Promise<boolean>;
     resetPassword(oldPassword: string, password: string): Promise<boolean>;
     verifyPassword(password: string): Promise<void>;

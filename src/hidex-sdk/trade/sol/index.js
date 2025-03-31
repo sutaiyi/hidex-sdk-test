@@ -11,7 +11,7 @@ const utils = new UtilsService();
 export const solService = (HS) => {
     const { network, wallet } = HS;
     const getBalance = async (accountAddress, tokenAddress = '', isAta = false) => {
-        const currentNetwork = network.get();
+        const currentNetwork = network.get(102);
         try {
             if ((tokenAddress && (tokenAddress === smTokenAddress)) || !tokenAddress || isAta) {
                 const pk = !isAta ? new PublicKey(accountAddress) : new PublicKey(tokenAddress);
@@ -52,6 +52,7 @@ export const solService = (HS) => {
             return tokenBalance.value.amount;
         }
         catch (error) {
+            console.error(error);
             return '0';
         }
     };

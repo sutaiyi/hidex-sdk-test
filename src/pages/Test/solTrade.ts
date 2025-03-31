@@ -20,8 +20,8 @@ const getCurrentSymbolTest = async (info: any, { isBuy, isPump, currentNetwork }
     name: '',
     symbol: '',
   }
-  const testNumber = isPump ? 0.5 : 5;
-  const buyTestAmount = (testNumber * Math.pow(10, inToken.decimals)).toString();
+  // const testNumber = isPump ? 0.5 : 5;
+  const buyTestAmount = Math.floor((Number(balanceStr) * 0.5)).toString();
   const amountIn = isBuy ? buyTestAmount : tokenBalanceStr;
 
   const currentSymbol = {

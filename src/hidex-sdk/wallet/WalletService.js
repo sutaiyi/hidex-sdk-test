@@ -30,28 +30,30 @@ class WalletService {
         this.walletStore = defalutWalletStore;
         this.bootedOss = defaluBoootedOss;
     }
-    cloudBootedOss() {
-        return {
-            getBootedOssItem: async (HS, key) => {
-                try {
-                    const { token, apparatus } = HS;
-                    const res = await ossStore.getBootedOssItem(token, apparatus, key);
-                    this.walletMap = ossStore.getWalletMap();
-                    this.bootedOss = this.walletMap.get('WalletBooted');
-                    return res;
-                }
-                catch (error) {
-                    throw new Error(error);
-                }
-            },
-            setBootedOssItem: async (HS, key, value) => {
-                const { token, apparatus } = HS;
-                const res = await ossStore.setBootedOssItem(token, apparatus, key, value);
-                this.walletMap = ossStore.getWalletMap();
-                this.bootedOss = this.walletMap.get('WalletBooted');
-                return res;
-            },
-        };
+    async getCloudBootedOss(HS, key) {
+        try {
+            const { token, apparatus } = HS;
+            const res = await ossStore.getBootedOssItem(token, apparatus, key);
+            this.walletMap = ossStore.getWalletMap();
+            this.bootedOss = this.walletMap.get('WalletBooted');
+            console.log('getBootedOssItem', this.bootedOss);
+            return res;
+        }
+        catch (error) {
+            throw new Error(error);
+        }
+    }
+    async setCloudBootedOss(HS, key, value) {
+        try {
+            const { token, apparatus } = HS;
+            const res = await ossStore.setBootedOssItem(token, apparatus, key, value);
+            this.walletMap = ossStore.getWalletMap();
+            this.bootedOss = this.walletMap.get('WalletBooted');
+            return res;
+        }
+        catch (error) {
+            throw new Error(error);
+        }
     }
     async getWalletCatch(catcher, key) {
         try {
@@ -86,13 +88,15 @@ class WalletService {
         this.bootedOss = bootedOssStore;
         global.clearTimeout(this.setBootdOsssTimer);
         this.setBootdOsssTimer = global.setTimeout(() => {
-            this.cloudBootedOss().setBootedOssItem(this.HS, 'all', bootedOssStore);
+            this.setCloudBootedOss(this.HS, 'all', bootedOssStore);
         }, 500);
     }
     async walletInit() {
         const walletStore = this.getWalletStore();
         const bootedOss = deepCopy(this.getBootedOss());
-        console.log('walletInit', walletStore, bootedOss, walletStore.walletList);
+        console.log('walletInit...');
+        console.log('walletStore', walletStore);
+        console.log('bootedOss', bootedOss);
         if (!walletStore.walletList?.length || walletStore.pathIndex !== bootedOss.pathIndex) {
             console.log('WalletResting...');
             const maxPathIndex = bootedOss.pathIndex;
@@ -522,6 +526,7 @@ class WalletService {
         await this.setWalletStore(defalutWalletStore);
         await this.setBootedOss(defaluBoootedOss);
         await this.HS.catcher.removeItem('dataStorage');
+        await this.HS.catcher.removeItem('dataCache');
         await this.HS.catcher.removeCookie('dataStorage', { secure: true });
         return true;
     }

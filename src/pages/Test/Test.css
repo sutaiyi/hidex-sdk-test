@@ -102,3 +102,11 @@
 h3 {
   margin: 0 0 5px;
 }
+
+.lh-trade {
+  font-size: 14px;
+  color: #068cf9;
+  text-decoration: underline;
+  text-decoration-color: #fff;
+  text-underline-offset: 5px;
+}

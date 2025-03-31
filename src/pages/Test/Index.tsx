@@ -43,7 +43,7 @@ const Test = React.memo( () => {
         {
           Object.keys(btns).map((value: any, key: number) =>
           <div style={{flex: '1 1 100%', width: '100%', textAlign: 'left'}} key={key}>
-            <h3 style={{'textTransform': 'capitalize'}}>{value}</h3>
+            <h3 style={{'textTransform': 'capitalize'}}>{value} {value === 'trade' && <span className='lh-trade'>灵活交易</span>}</h3>
             {value === 'trade' && <TradeFrom onResultSelect={ (info)=> { setTradeInfo(info) }}></TradeFrom>}
             {value === 'wallet' && <WalletFrom onResultSelect={ ()=> {}}></WalletFrom>}
             {

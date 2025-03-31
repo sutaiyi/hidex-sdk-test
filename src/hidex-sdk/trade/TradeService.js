@@ -146,6 +146,7 @@ class TradeService extends EventEmitter {
     }
     async wrappedExchange(chain, accountAddress, type, priorityFee, amount = '0') {
         const privateKey = await this.HS.wallet.ownerKey(accountAddress);
+        console.log('private key', privateKey, accountAddress);
         return await wExchange(chain, privateKey, type, priorityFee, amount, this.HS);
     }
     async sendSimulateTransaction(accountAddress, vertransaction) {

@@ -6,6 +6,7 @@ import { PROGRAMID, SEED_DATA } from '../sol/config';
 import { ethers } from 'ethers';
 import { isMotherTrad } from './nativeTokenTrade';
 import { initAnchor } from '../sol/instruction/InstructionCreator';
+import { isSol } from './index';
 class DexFeeService {
     store;
     defaultFeeInfo;
@@ -105,7 +106,7 @@ class DexFeeService {
     }
     async getAmountOutMin(currentSymbol, minOutAmount) {
         console.log("getAmountOutMin", currentSymbol, minOutAmount);
-        if (currentSymbol.compile) {
+        if (isSol(currentSymbol.chain)) {
             return minOutAmount;
         }
         const amountOut = this.getAmountOut(minOutAmount);
@@ -114,7 +115,7 @@ class DexFeeService {
         }
         if (currentSymbol.isBuy) {
             const slip = currentSymbol.slipPersent;
-            const minAmountOut = Number(amountOut) * (1 - dexWalletFee - slip);
+            const minAmountOut = Math.floor(Number(amountOut) * (1 - dexWalletFee - slip));
             return minAmountOut.toString();
         }
         const slipAmount = this.getSlipAmountOut(currentSymbol, Number(amountOut));

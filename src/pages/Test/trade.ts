@@ -163,7 +163,7 @@ const tradeFun = () => {
         const currentNetwork = await network.choose(chainName);
         const { currentSymbol } = await getCurrentSymbolTest(info, { isBuy, isPump: false, currentNetwork });
         // 实际买入金额
-        const buyAmount = (0.0001 * Math.pow(10, currentNetwork.tokens[1].decimals)).toString();
+        const buyAmount = (0.01 * Math.pow(10, currentNetwork.tokens[1].decimals)).toString();
         currentSymbol.chain = currentNetwork.chain;
         currentSymbol.slipPersent = 0.05; // 滑点5%
         const { compile, preAmountIn, preAmountOut } = getBeforeTradeData(isBuy, chainName, token.address)
@@ -226,7 +226,7 @@ const tradeFun = () => {
         console.timeEnd('getNetWorkFeesTimer');
 
         console.time('tradeswapTimer');
-        const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
+        const { error, result } = { error: true, result: {} } // await trade.swap(currentSymbol, estimateResult, address);
         console.timeEnd('tradeswapTimer');
 
 
@@ -240,10 +240,10 @@ const tradeFun = () => {
             data: result.data
           }
           trade.checkHash.action(hashItem)
+          // 更新交易预请求数据
+          setBeforeTradeData(info, { isBuy, isPump: currentSymbol.isPump, currentNetwork })
         }
         console.log('交易HASH：', result)
-        // 更新交易预请求数据
-        setBeforeTradeData(info, { isBuy, isPump: currentSymbol.isPump, currentNetwork })
       } catch (error) {
         console.log(utils.getErrorMessage(error).message)
         alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
@@ -341,10 +341,10 @@ const tradeFun = () => {
             data: result.data
           }
           trade.checkHash.action(hashItem)
+          // 更新交易预请求数据
+          setBeforeTradeData(info, { isBuy, isPump: currentSymbol.isPump, currentNetwork })
         }
         console.log('交易HASH：', result)
-        // 更新交易预请求数据
-        setBeforeTradeData(info, { isBuy, isPump: currentSymbol.isPump, currentNetwork })
       } catch (error) {
         console.log(utils.getErrorMessage(error).message)
         alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)

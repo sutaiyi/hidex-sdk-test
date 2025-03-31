@@ -22,6 +22,7 @@ const getBootedOssItem = async (token, apparatus, key) => {
             }
             return data;
         }
+        walletMap.set('WalletBooted', defaluBoootedOss);
         return defaluBoootedOss;
     }
     throw new Error('Failed get s3 store');
