@@ -13,7 +13,7 @@ const tradeFun = () => {
         const chain = 'BSC'
         if (!info || info.chainName !== chain) {
           alert(`请选择${chain}代币`);
-          return;
+          throw new Error(`请选择${chain}代币`);
         }
         const { token, account } = info;
         // 选择链网络
@@ -32,6 +32,7 @@ const tradeFun = () => {
       } catch (error) {
         alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
       }
+      throw new Error('');
     },
     ETH系转账: async (info: any) => {
       try {
@@ -190,7 +191,7 @@ const tradeFun = () => {
         ]);
         console.timeEnd('swapPath&swapSignTimer');
         console.time('dexFeeTimer')
-        currentSymbol.amountOutMin = await dexFee.getAmountOutMin(currentSymbol, swapPath.minOutAmount);
+        currentSymbol.amountOutMin = await dexFee.getAmountOutMin(currentSymbol, swapPath.fullAmoutOut);
         console.timeEnd('dexFeeTimer')
 
 
@@ -226,8 +227,8 @@ const tradeFun = () => {
         console.timeEnd('getNetWorkFeesTimer');
 
         console.time('tradeswapTimer');
-        // const { error, result } = { error: null, result: { hash: currentNetwork.chainID === 102 ? '2Sfhpcgc97q2EnQoHe7XpQTJycqmX2N63pNNdAGRau75k3jNgdkWepFVGGni3HLawyKWRGE58wAth78kbAsTywjC' : '0x8bd9b12f7df74c2b0c40077110cd1c40800b1e548cac236bd3f84604b7ea47be', data: '' } }
-        const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
+        const { error, result } = { error: null, result: { hash: currentNetwork.chainID === 102 ? '2Sfhpcgc97q2EnQoHe7XpQTJycqmX2N63pNNdAGRau75k3jNgdkWepFVGGni3HLawyKWRGE58wAth78kbAsTywjC' : '0x8bd9b12f7df74c2b0c40077110cd1c40800b1e548cac236bd3f84604b7ea47be', data: '' } }
+        // const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
         console.timeEnd('tradeswapTimer');
 
 
@@ -296,7 +297,7 @@ const tradeFun = () => {
         ]);
         console.timeEnd('swapPath&swapSignTimer');
         console.time('dexFeeTimer')
-        currentSymbol.amountOutMin = await dexFee.getAmountOutMin(currentSymbol, swapPath.minOutAmount);
+        currentSymbol.amountOutMin = await dexFee.getAmountOutMin(currentSymbol, swapPath.fullAmoutOut);
         console.timeEnd('dexFeeTimer')
 
 

@@ -1,10 +1,9 @@
 import * as anchor from '@project-serum/anchor';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import abis from '../../common/abis';
-import { dexWalletFee, ETH_SERIES, zero } from '../../common/config';
+import { ETH_SERIES, zero } from '../../common/config';
 import { PROGRAMID, SEED_DATA } from '../sol/config';
 import { ethers } from 'ethers';
-import { isMotherTrad } from './nativeTokenTrade';
 import { initAnchor } from '../sol/instruction/InstructionCreator';
 import { isSol } from './index';
 class DexFeeService {
@@ -75,49 +74,37 @@ class DexFeeService {
         }
         return result;
     }
-    async getDexFee() {
-        const currentNetwork = this.network.get();
+    async getDexFee(chain) {
+        const currentNetwork = this.network.get(chain);
         const dexFee = await this.get(currentNetwork.chainName);
         return dexFee;
     }
     getAmountOut(bigOut) {
         return bigOut;
     }
-    getSlipAmountOut(currentSymbol, amountOut) {
-        const slip = currentSymbol.slipPersent || 0;
-        const slipAmount = Number(amountOut) * (1 - slip);
-        return Math.floor(slipAmount);
-    }
-    getDexFeeAmountOut(amountOut) {
-        const dexFeeAmount = Number(amountOut) * (1 - dexWalletFee);
-        return Math.floor(dexFeeAmount);
-    }
     async getDexFeeAmount(currentSymbol, buyAmount) {
-        const { isBuy, inviter } = currentSymbol;
-        const { dexFee, inviterDiscount } = await this.getDexFee();
+        const { isBuy, inviter, chain } = currentSymbol;
+        const { dexFee, inviterDiscount } = await this.getDexFee(chain);
         const useDexFee = inviter && inviter !== zero ? inviterDiscount : dexFee;
         if (isBuy) {
             const dexFeeAmount = Math.floor(Number(buyAmount) * useDexFee);
-            return dexFeeAmount.toString();
+            return BigInt(dexFeeAmount).toString();
         }
         return '0';
     }
-    async getAmountOutMin(currentSymbol, minOutAmount) {
+    async getAmountOutMin(currentSymbol, fullAmoutOut) {
         if (isSol(currentSymbol.chain)) {
-            return minOutAmount;
+            return fullAmoutOut;
         }
-        const amountOut = this.getAmountOut(minOutAmount);
-        if (isMotherTrad(currentSymbol, this.network)) {
-            return amountOut;
-        }
+        const slip = currentSymbol.slipPersent;
         if (currentSymbol.isBuy) {
-            const slip = currentSymbol.slipPersent;
-            const minAmountOut = Math.floor(Number(amountOut) * (1 - dexWalletFee - slip));
-            return minAmountOut.toString();
+            const currentDexfee = await this.getDexFee(currentSymbol.chain);
+            const df = currentSymbol.inviter === zero ? currentDexfee.dexFee : currentDexfee.inviterDiscount;
+            const minAmountOut = Math.floor(Number(fullAmoutOut) * (1 - df - slip));
+            return BigInt(minAmountOut).toString();
         }
-        const slipAmount = this.getSlipAmountOut(currentSymbol, Number(amountOut));
-        const minAmountOut = await this.getDexFeeAmountOut(slipAmount);
-        return minAmountOut.toString();
+        const minAmountOut = Math.floor(Number(fullAmoutOut) * (1 - slip));
+        return BigInt(minAmountOut).toString();
     }
 }
 export default DexFeeService;

@@ -317,7 +317,7 @@ export const ethService = (HS) => {
                 throw new Error(path.error);
             }
             return {
-                minOutAmount: path[1],
+                fullAmoutOut: path[1],
                 data: path[0],
             };
         },

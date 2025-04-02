@@ -168,16 +168,16 @@ export const solService = (HS) => {
             if (parseFloat(currentSymbol.amountIn) <= 0) {
                 throw new Error('amountIn must be greater than 0');
             }
-            let minOutAmount = '0';
+            let outAmount = 0;
             if (currentSymbol.isBuy && currentSymbol.currentPrice) {
                 const amountInUSD = Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.in.decimals) * currentSymbol.cryptoPriceUSD;
-                minOutAmount = (Math.floor(amountInUSD / Number(currentSymbol.currentPrice) * Math.pow(10, currentSymbol.out.decimals))).toString();
+                outAmount = (Math.floor(amountInUSD / Number(currentSymbol.currentPrice) * Math.pow(10, currentSymbol.out.decimals)));
             }
             if (!currentSymbol.isBuy && currentSymbol.currentPrice) {
-                minOutAmount = (Math.floor(Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.in.decimals) * Number(currentSymbol.currentPrice) / currentSymbol.cryptoPriceUSD * Math.pow(10, currentSymbol.out.decimals))).toString();
+                outAmount = (Math.floor(Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.in.decimals) * Number(currentSymbol.currentPrice) / currentSymbol.cryptoPriceUSD * Math.pow(10, currentSymbol.out.decimals)));
             }
             return {
-                minOutAmount,
+                fullAmoutOut: BigInt(outAmount).toString(),
                 data: null
             };
         },

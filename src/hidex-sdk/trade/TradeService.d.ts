@@ -35,7 +35,7 @@ declare class TradeService extends EventEmitter implements ITradeService {
     getAllowance: (tokenAddress: string, accountAddress: string, authorizedAddress: string) => Promise<number>;
     toApprove: (tokenAddress: string, accountAddress: string, authorizedAddress: string, amountToApprove?: number) => Promise<boolean>;
     getSwapPath: (currentSymbol: CurrentSymbol) => Promise<{
-        minOutAmount: string;
+        fullAmoutOut: string;
         data: any;
     }>;
     getSwapEstimateGas: (currentSymbol: CurrentSymbol, path: any, accountAddress: string) => Promise<{

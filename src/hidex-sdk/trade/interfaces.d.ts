@@ -51,7 +51,7 @@ export interface ITradeFunctions {
         result: any;
     }>;
     getSwapPath(currentSymbol: CurrentSymbol): Promise<{
-        minOutAmount: string;
+        fullAmoutOut: string;
         data: any;
     }>;
     getSwapEstimateGas(currentSymbol: CurrentSymbol, path: any, accountAddress: string): Promise<{

@@ -14,12 +14,10 @@ declare class DexFeeService {
     getDexFeeByChain(chain: string): Promise<FeeInfo>;
     set(key: string, value: FeeInfo): Promise<boolean>;
     get(key: string): Promise<FeeInfo>;
-    getDexFee(): Promise<FeeInfo>;
+    getDexFee(chain: string | number): Promise<FeeInfo>;
     getAmountOut(bigOut: string): string;
-    getSlipAmountOut(currentSymbol: CurrentSymbol, amountOut: number): number;
-    getDexFeeAmountOut(amountOut: number): number;
     getDexFeeAmount(currentSymbol: CurrentSymbol, buyAmount: string): Promise<string>;
-    getAmountOutMin(currentSymbol: CurrentSymbol, minOutAmount: string): Promise<string>;
+    getAmountOutMin(currentSymbol: CurrentSymbol, fullAmoutOut: string): Promise<string>;
 }
 export default DexFeeService;
 //# sourceMappingURL=dexfee.d.ts.map
