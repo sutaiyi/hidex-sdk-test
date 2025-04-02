@@ -101,27 +101,23 @@ class DefiApi {
         throw new Error('Error submitSwapByJito api data error');
     }
     async getSwapStatus(hash) {
-        try {
-            const latestBlockhash = this.lastBlockHash;
-            const url = `/gmgn/defi/router/v1/sol/tx/get_transaction_status?hash=${hash}&last_valid_height=${latestBlockhash?.lastValidBlockHeight}`;
-            const response = await axios.get(url);
-            if (response.status === 200 && response.data?.code === 0) {
-                const { data } = response.data;
-                if (data.expired) {
-                    return 'Expired';
-                }
-                if (data.success && !data.err) {
-                    return 'Confirmed';
-                }
-                if (data.failed) {
-                    return 'Failed';
-                }
+        const latestBlockhash = this.lastBlockHash;
+        const url = `/gmgn/defi/router/v1/sol/tx/get_transaction_status?hash=${hash}&last_valid_height=${latestBlockhash?.lastValidBlockHeight}`;
+        const response = await axios.get(url);
+        if (response.status === 200 && response.data?.code === 0) {
+            const { data } = response.data;
+            if (data.expired) {
+                return 'Expired';
             }
-            throw new Error('Get Transaction Status Error');
-        }
-        catch (error) {
+            if (data.success && !data.err) {
+                return 'Confirmed';
+            }
+            if (data.failed) {
+                return 'Failed';
+            }
             return 'Pending';
         }
+        throw new Error('Get Transaction Status Error');
     }
 }
 export default new DefiApi;

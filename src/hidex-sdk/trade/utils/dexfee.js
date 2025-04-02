@@ -24,7 +24,6 @@ class DexFeeService {
         try {
             const result = await this.getDexFeeByChain(chain);
             console.log(`${chain} 链上合约交易手续费率===>`, result);
-            console.log(result);
             if (result.dexFee) {
                 this.set(chain, result);
             }
@@ -57,7 +56,6 @@ class DexFeeService {
             const program = new anchor.Program(abis.solanaIDL, programId);
             const [data_pda] = await PublicKey.findProgramAddress([Buffer.from(SEED_DATA)], programId);
             const accountData = await program.account.configData.fetch(data_pda);
-            console.log(accountData);
             return {
                 inviterDiscount: accountData.commisionDiscountRatio.toNumber() / 10000,
                 dexFee: accountData.dexCommisionRate.toNumber() / 10000,
@@ -105,7 +103,6 @@ class DexFeeService {
         return '0';
     }
     async getAmountOutMin(currentSymbol, minOutAmount) {
-        console.log("getAmountOutMin", currentSymbol, minOutAmount);
         if (isSol(currentSymbol.chain)) {
             return minOutAmount;
         }

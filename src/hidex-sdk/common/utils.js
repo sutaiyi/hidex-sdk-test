@@ -111,7 +111,6 @@ export function tokenDecode(encodedData) {
     };
 }
 export async function bundlesStatuses(data) {
-    console.log('bundlesStatuses --data', data);
     const res = await (await fetch('https://mainnet.block-engine.jito.wtf/api/v1/bundles', {
         method: 'POST',
         headers: {
@@ -124,13 +123,7 @@ export async function bundlesStatuses(data) {
             params: [[data]],
         }),
     })).json();
-    console.log('bundlesStatuses ===res', res);
-    console.log('bundlesStatuses ===res', res);
     if (res && res.result && res.result.value) {
-        console.log('bundlesStatuses ===res', {
-            context: res.result.context,
-            value: res.result.value.length > 0 ? { ...res.result.value[0], confirmationStatus: res.result.value[0].confirmation_status } : null,
-        });
         return {
             context: res.result.context,
             value: res.result.value.length > 0 ? { ...res.result.value[0], confirmationStatus: res.result.value[0].confirmation_status } : null,
@@ -198,3 +191,47 @@ export const isValidJSON = (str) => {
         return false;
     }
 };
+export function strToNumberByDecimals(str, decimals) {
+    if (!str)
+        return 0;
+    return Number(str) / Math.pow(10, decimals);
+}
+export function formatNumberWithPrecision(numValue, precision) {
+    let num = Number(numValue);
+    if (isNaN(num)) {
+        return num.toString();
+    }
+    if (precision <= 0) {
+        return precision.toString();
+    }
+    if (num === 0) {
+        return '0.' + '0'.repeat(precision - 1);
+    }
+    const sciStr = num.toExponential(precision - 1);
+    const [coeff, exp] = sciStr.split('e');
+    const exponent = parseInt(exp, 10);
+    const [intPart, decPart] = coeff.split('.');
+    const significantDigits = intPart + (decPart || '');
+    const truncated = significantDigits.slice(0, precision);
+    if (exponent < 0) {
+        const numZeros = -exponent - 1;
+        const zeros = '0'.repeat(numZeros);
+        return '0.' + zeros + truncated;
+    }
+    else {
+        const remainingExponent = exponent - (truncated.length - 1);
+        if (remainingExponent >= 0) {
+            return truncated + '0'.repeat(remainingExponent);
+        }
+        else {
+            const decimalPosition = truncated.length + remainingExponent;
+            if (decimalPosition <= 0) {
+                return '0.' + '0'.repeat(-decimalPosition) + truncated;
+            }
+            else {
+                return (truncated.slice(0, decimalPosition) +
+                    (decimalPosition < truncated.length ? '.' + truncated.slice(decimalPosition) : ''));
+            }
+        }
+    }
+}

@@ -140,7 +140,7 @@ export type CurrentSymbol = {
     feeRate?: number;
     commissionRate?: number;
     compile?: any;
-    currentPrice?: string;
+    currentPrice: number;
     cryptoPriceUSD: number;
     preAmountIn: string;
     preAmountOut: string;

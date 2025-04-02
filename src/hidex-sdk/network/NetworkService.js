@@ -247,5 +247,8 @@ class NetworkController extends EventEmitter {
     getCodexChainIds = () => {
         return this.HS.chains().map((item) => item.codexChainId);
     };
+    getChainList = () => {
+        return this.HS.chains();
+    };
 }
 export default NetworkController;

@@ -141,6 +141,21 @@ const walletTest = () => {
         alert(error);
       }
     },
+    当前助记词下创建多个钱包: async (tradeInfo: null, mnemonic: string, pathIndex: number = 0) => {
+      try {
+        const { walletItem } = await wallet.getCurrentWallet();
+        console.log('下标：', pathIndex, walletItem.mnemonic);
+        const walletAccount = await wallet.createWallet(walletItem.mnemonic, pathIndex);
+        console.log('创建成功（返回当前创建的钱包对象）: ', walletAccount);
+        if (pathIndex >= 2) {
+          return;
+        }
+        setTimeout(await walletTest()['当前助记词下创建多个钱包'](tradeInfo, walletItem.mnemonic, pathIndex + 1), 2500);
+      } catch (error) {
+        console.error(error);
+        alert(error);
+      }
+    },
     私钥创建钱包: async () => {
       try {
         const privateKeyETH = '114d6696f21013bfb3a5891e6720ddb5a46dbd9d9da134042f6ceae77963f30a'

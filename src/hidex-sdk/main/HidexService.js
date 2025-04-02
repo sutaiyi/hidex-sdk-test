@@ -87,7 +87,7 @@ export class HidexService {
                 codexChainId: 1399811149,
                 token: 'SOL',
                 tokens: solTokens,
-                rpc: restRpcItem(102, rpcList, ['https://swr.xnftdata.com/rpc-proxy']),
+                rpc: restRpcItem(102, rpcList, []),
                 blockExplorerUrls: ['https://solscan.io'],
                 blockExplorerName: 'Solscan',
                 defaultPath: `m/44'/501'/0'/0`,

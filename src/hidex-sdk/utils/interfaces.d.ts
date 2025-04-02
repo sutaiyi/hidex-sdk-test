@@ -6,5 +6,6 @@ export interface IUtilsService {
     };
     ownerKeypair(key: string): Keypair;
     trade: any;
+    common: any;
 }
 //# sourceMappingURL=interfaces.d.ts.map

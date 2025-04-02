@@ -10,6 +10,7 @@ export interface INetworkService {
     getChainIdByChainName(chainName: string): number;
     getCodexChainIdByChain(chain: string | number): number;
     getChainIds(): Array<number>;
+    getChainList(): Array<ChainItem>;
     getCodexChainIds(): Array<number>;
     getFastestRpc(chain: string | number): Promise<string>;
     get sysProviderRpcs(): SysProviderRpcsFace;

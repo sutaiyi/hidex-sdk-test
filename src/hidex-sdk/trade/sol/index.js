@@ -24,7 +24,7 @@ export const solService = (HS) => {
                 });
                 const balance = await Promise.any(balanceProm);
                 if (balance.error) {
-                    return '0';
+                    return isAta ? '-1' : '0';
                 }
                 return balance.toString();
             }
@@ -47,13 +47,13 @@ export const solService = (HS) => {
             });
             const tokenBalance = await Promise.any(tokenBalanceProm);
             if (tokenBalance.error) {
-                return '0';
+                return isAta ? '-1' : '0';
             }
             return tokenBalance.value.amount;
         }
         catch (error) {
             console.error(error);
-            return '0';
+            return isAta ? '-1' : '0';
         }
     };
     return {
@@ -141,14 +141,11 @@ export const solService = (HS) => {
                 else {
                     const tokenMintAddress = new PublicKey(tokenAddress);
                     const tokenOwnerAddress = await getTokenOwner(tokenAddress, connection);
-                    console.log('tokenOwnerAddress', tokenOwnerAddress);
                     const is2022 = tokenOwnerAddress === TOKEN_2022_OWNER;
                     const fromTokenAta = await getAssociatedTokenAddress(tokenMintAddress, senderPublicKey, false, is2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
                     const toTokenAta = await getAssociatedTokenAddress(tokenMintAddress, receiverPublicKey, false, is2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
                     const toTokenAtaInfo = await connection.getAccountInfo(toTokenAta);
-                    console.log('=====> ToTokenAtaInfo', toTokenAtaInfo);
                     if (toTokenAtaInfo == null || toTokenAtaInfo.data.length == 0) {
-                        console.log('=====> 创建接收地址');
                         instructions.push(createAssociatedTokenAccountInstruction(senderPublicKey, toTokenAta, receiverPublicKey, tokenMintAddress, is2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID));
                     }
                     instructions.push(createTransferInstruction(fromTokenAta, toTokenAta, senderPublicKey, BigInt(amount), [], is2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID));
@@ -190,7 +187,6 @@ export const solService = (HS) => {
             let resetResult = null;
             let txArray = [];
             const owner = HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress));
-            console.log('compileUse', compileUse);
             if (compileUse) {
                 const isSupport = isInstructionsSupportReset(compileUse['message'], currentSymbol);
                 if (isSupport) {
@@ -206,7 +202,10 @@ export const solService = (HS) => {
                 compileUse = await compileTransaction(swapTransaction, HS);
                 currentSymbol.preAmountIn = data.inAmount;
                 currentSymbol.preAmountOut = data.otherAmountThreshold;
-                const isSupport = isInstructionsSupportReset(compileUse['message'], currentSymbol);
+                let isSupport = false;
+                if (!currentSymbol.compile) {
+                    isSupport = isInstructionsSupportReset(compileUse['message'], currentSymbol);
+                }
                 if (isSupport) {
                     resetResult = resetInstructions(currentSymbol, compileUse['message'], BigInt(amountIn), BigInt(amountOutMin));
                 }
@@ -215,15 +214,12 @@ export const solService = (HS) => {
                 }
                 txArray = await getTransactionsSignature(resetResult, compileUse['addressesLookup'], defiApi.lastBlockHash.blockhash, currentSymbol, owner, HS);
             }
+            if (txArray.length === 0) {
+                throw new Error('Failed to swap txArray is empty');
+            }
             console.time('timer simulateTransaction');
             const vertransaction = txArray.length === 5 ? txArray[4] : txArray[0];
             if (vertransaction) {
-                const connection = await network.getProviderByChain(102);
-                const simulateResponse = await connection.simulateTransaction(vertransaction, simulateConfig);
-                console.log('交易 - 预估', simulateResponse);
-                if (simulateResponse && simulateResponse?.value?.err) {
-                    throw new Error(JSON.stringify(simulateResponse.value.logs));
-                }
             }
             console.timeEnd('timer simulateTransaction');
             console.log('txArray: ===>', txArray);
@@ -256,7 +252,7 @@ export const solService = (HS) => {
             const vertransaction = vertransactions.length === 5 ? vertransactions[4] : vertransactions[0];
             const simulateResponsePro = connection.simulateTransaction(vertransaction, simulateConfig);
             const [submitResult, simulateResponse] = await Promise.all([submitPro, simulateResponsePro]);
-            console.log('交易 - 预估', simulateResponse);
+            console.log('交易 - 预估结果==>', simulateResponse);
             if (simulateResponse && simulateResponse?.value?.err) {
                 throw new Error(JSON.stringify(simulateResponse.value.logs));
             }
@@ -264,6 +260,20 @@ export const solService = (HS) => {
         },
         hashStatus: async (hash) => {
             const status = await defiApi.getSwapStatus(hash);
+            if (status === 'Failed') {
+                const connection = await network.getProviderByChain(102);
+                const hashStatus = await connection.getParsedTransaction(hash, {
+                    commitment: "confirmed",
+                    maxSupportedTransactionVersion: 0,
+                });
+                console.log('SOL 状态查询 confirmation===', hashStatus);
+                if (hashStatus) {
+                    const { meta } = hashStatus;
+                    if (meta && meta.err) {
+                        throw new Error(meta.logMessages?.toString() || 'Unknown error');
+                    }
+                }
+            }
             return { status };
         }
     };

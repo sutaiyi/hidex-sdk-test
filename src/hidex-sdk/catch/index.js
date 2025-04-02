@@ -40,7 +40,6 @@ class CatcherService {
         try {
             const value = await CookieStorage.get(`${this.keyDefault}-${key}`);
             const isParse = isValidJSON(value);
-            console.log(typeof value);
             if (value && isParse && value !== 'undefined' && value !== 'null') {
                 return JSON.parse(value);
             }
@@ -56,7 +55,6 @@ class CatcherService {
         return await CookieStorage.set(`${this.keyDefault}-${key}`, typeof value === 'string' ? value : JSON.stringify(value), expires, path, secure);
     }
     async removeCookie(key) {
-        console.log('removeCookie', key);
         return await CookieStorage.remove(`${this.keyDefault}-${key}`);
     }
 }

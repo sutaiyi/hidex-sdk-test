@@ -23,7 +23,7 @@ export async function sendSolanaTransaction(connection, sender, instructions, bl
     const versionedTx = new VersionedTransaction(message);
     versionedTx.sign([sender]);
     const simulateResponse = await connection.simulateTransaction(versionedTx, simulateConfig);
-    console.log('sendSolanaTransaction 预估', simulateResponse);
+    console.log('sendSolanaTransaction 预估结果==>', simulateResponse);
     if (simulateResponse?.value?.err) {
         throw new Error(JSON.stringify(simulateResponse.value.logs));
     }

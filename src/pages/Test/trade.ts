@@ -226,7 +226,8 @@ const tradeFun = () => {
         console.timeEnd('getNetWorkFeesTimer');
 
         console.time('tradeswapTimer');
-        const { error, result } = { error: true, result: {} } // await trade.swap(currentSymbol, estimateResult, address);
+        // const { error, result } = { error: null, result: { hash: currentNetwork.chainID === 102 ? '2Sfhpcgc97q2EnQoHe7XpQTJycqmX2N63pNNdAGRau75k3jNgdkWepFVGGni3HLawyKWRGE58wAth78kbAsTywjC' : '0x8bd9b12f7df74c2b0c40077110cd1c40800b1e548cac236bd3f84604b7ea47be', data: '' } }
+        const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
         console.timeEnd('tradeswapTimer');
 
 
@@ -264,7 +265,7 @@ const tradeFun = () => {
         currentSymbol.chain = currentNetwork.chain;
         currentSymbol.slipPersent = 0.05; // 滑点5%
         // 实际卖出金额
-        const buyAmount = (Math.floor(Number(tokenBalanceStr) * 0.2)).toString();
+        const buyAmount = (Math.floor(Number(tokenBalanceStr) * 1)).toString();
         const { compile, preAmountIn, preAmountOut } = getBeforeTradeData(isBuy, chainName, token.address)
         currentSymbol.compile = compile;
         currentSymbol.preAmountIn = preAmountIn;
@@ -368,19 +369,19 @@ const tradeFun = () => {
           trade.checkHash.action(hashItem2)
         }, 1000)
       } catch (error) {
-        console.log(utils.getErrorMessage(error).message)
-        alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
+        const { code, message } = utils.getErrorMessage(error)
+        alert(code + '-' + message)
       }
     },
     '单次Hash状态查询': async () => {
       try {
-        const hashArr = ['SOLANA', '42vm63Hz9vc2ekr9vNQ6EmS1RdEJzxPhu642Q1KaBumPFbgRrVHX7GQpkpREmfpJB5AyZNrmPqABP9ABZGEDvsmV'] // SOLANA
+        const hashArr = ['SOLANA', '5MomLq6AtJJ14s1pN4P5QhWV4AjgEYbDeZXaPsy4JfR6RtM4Awt6FCe6DHUdGpaKYkAaxriAzn6GCHadjuJZrueC'] // SOLANA
         // const hashArr = ['BASE', '0x78c2a5f7e7f8e40fc96492575e6794dc3976b81e21c7ed4e060b82ef9c7f3903'] // BASE
         const result = await trade.getHashStatus(hashArr[1], hashArr[0])
         console.log('Hash状态查询结果==>', result)
       } catch (error) {
-        console.log(utils.getErrorMessage(error).message)
-        alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
+        const { code, message } = utils.getErrorMessage(error)
+        alert(code + '-' + message)
       }
     }
   }

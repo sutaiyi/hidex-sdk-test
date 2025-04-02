@@ -55,7 +55,6 @@ export const ethService = (HS) => {
                     return balanceAll.map((bl) => bl.toString());
                 }
                 else {
-                    console.log('getTokensBalance', accountAddress, tokens, network.sysProviderRpcs, chain);
                     const profun = network.sysProviderRpcs[chain].map((v) => {
                         const chillSwapContract = new ethers.Contract(currentNetWork.deTrade, abis.chillSwapABI, v);
                         return chillSwapContract.callStatic
@@ -89,7 +88,6 @@ export const ethService = (HS) => {
             const currentNetwork = network.get();
             const unit = currentNetwork.tokens[0].symbol;
             const baseFee = await getBaseFeePerGas(network);
-            console.log('baseFee----', baseFee);
             let gasFeeETH = '';
             let gasPriceWei = '0';
             if (baseFee === '0') {
@@ -263,10 +261,8 @@ export const ethService = (HS) => {
                     gasPrice,
                 };
             }
-            console.log('sendTransaction===>params', params);
             if (tokenAddress && tokenAddress !== currentChain.tokens[0].address) {
                 const contract = new ethers.Contract(tokenAddress, abis.tokenABI, walletProvider);
-                console.log('sendAmount ===>', amount);
                 const txData = contract.interface.encodeFunctionData('transfer', [to, amount]);
                 const transaction = {
                     to: tokenAddress,
@@ -305,33 +301,25 @@ export const ethService = (HS) => {
             if (currentSymbol.out.address.toLowerCase() === mTokenAddress.toLowerCase()) {
                 outAddress = currentNetWork.tokens[1].address;
             }
-            if (Object.entries(network.sysProviderRpcs).length === 0 && !network.sysProviderRpcs[currentNetWork.chain]) {
-                const provider = await network.getFastestProviderByChain(currentNetWork.chain);
-                const chillSwapContract = new ethers.Contract(currentNetWork.deTrade, abis.chillSwapABI, provider);
-                const path = await chillSwapContract.callStatic.getOptimalPath(inAddress, currentSymbol.amountIn, outAddress);
-                return path;
-            }
-            else {
-                const profun = network.sysProviderRpcs[currentNetWork.chain].map((v) => {
-                    const chillSwapContract = new ethers.Contract(currentNetWork.deTrade, abis.chillSwapABI, v);
-                    return chillSwapContract.callStatic
-                        .getOptimalPath(inAddress, currentSymbol.amountIn, outAddress)
-                        .then((res) => {
-                        return res;
-                    })
-                        .catch((error) => {
-                        return Promise.reject(error);
-                    });
+            const profun = network.sysProviderRpcs[currentNetWork.chain].map((v) => {
+                const chillSwapContract = new ethers.Contract(currentNetWork.deTrade, abis.chillSwapABI, v);
+                return chillSwapContract.callStatic
+                    .getOptimalPath(inAddress, currentSymbol.amountIn, outAddress)
+                    .then((res) => {
+                    return res;
+                })
+                    .catch((error) => {
+                    return Promise.reject(error);
                 });
-                const path = await Promise.any(profun);
-                if (path.error) {
-                    throw new Error(path.error);
-                }
-                return {
-                    minOutAmount: path[1],
-                    data: path[0],
-                };
+            });
+            const path = await Promise.any(profun);
+            if (path.error) {
+                throw new Error(path.error);
             }
+            return {
+                minOutAmount: path[1],
+                data: path[0],
+            };
         },
         getSwapEstimateGas: async (currentSymbol, path, accountAddress) => {
             const ownerKey = await wallet.ownerKey(accountAddress);
@@ -369,7 +357,6 @@ export const ethService = (HS) => {
                     path,
                     gasLimit: Math.floor(getLimit.toNumber() * 1),
                 };
-                console.log('ETH系, 预估结果', result);
                 return result;
             }
             throw new Error('GetLimit Error');
@@ -413,7 +400,6 @@ export const ethService = (HS) => {
                 ...params,
                 gasLimit: Math.floor(gasLimit * 1.05),
             };
-            console.log('ETH系, 发送交易参数', sendParams);
             const receipt = await walletProvider.sendTransaction(sendParams);
             console.timeEnd('tradeTimer');
             return { error: null, result: receipt };
@@ -421,7 +407,6 @@ export const ethService = (HS) => {
         hashStatus: async (hash, chain = 1) => {
             const profun = network.sysProviderRpcs[chain].map((v) => {
                 return v.getTransaction(hash).then((res) => {
-                    console.log(res);
                     if (res && res.blockHash) {
                         return res;
                     }
@@ -432,7 +417,6 @@ export const ethService = (HS) => {
                 ;
             });
             const statusResult = await Promise.any(profun);
-            console.log('ETH 状态查询 tradeStatus===', statusResult);
             if (statusResult?.confirmations >= 2) {
                 return { status: 'Confirmed' };
             }

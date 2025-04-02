@@ -31,7 +31,6 @@ class KeysingController extends EventEmitter {
     }
     async isLocked(catcher) {
         const result = await keyRuntime.initKeyRuntime(catcher);
-        console.log('initKeyRuntime', result.value);
         return !!result?.value;
     }
     booted(password, catcher, expires) {

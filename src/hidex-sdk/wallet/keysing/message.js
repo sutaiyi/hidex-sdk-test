@@ -11,7 +11,6 @@ class KeyRuntimeController {
     async sendMessage(message, sendResponse, catcher, expires) {
         if (keysing.messageConfirm(message.type)) {
             keysing.messageProcess(message, async (key, value) => {
-                console.log('sendMessage', expires, key);
                 if (key === 'SET' && typeof value === 'object') {
                     Object.assign(this.dataStorage, value);
                     await catcher.setCookie('dataStorage', this.dataStorage, { expires, path: '/', secure: true });

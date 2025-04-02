@@ -19,6 +19,7 @@ export default defineConfig({
 	},
 	server: {
 		historyApiFallback: true,
+		port: 5177,
 		proxy: {
 			'/api': {
 				target: 'https://hidex.open.name',

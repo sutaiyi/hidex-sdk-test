@@ -32,4 +32,6 @@ export declare function lzStringTo(input: string): string;
 export declare function environmental(production: any, uat: any, development: any): any;
 export declare function globalSet(key: string, value: any): void;
 export declare const isValidJSON: (str: string) => boolean;
+export declare function strToNumberByDecimals(str: string, decimals: number): number;
+export declare function formatNumberWithPrecision(numValue: number, precision: number): string;
 //# sourceMappingURL=utils.d.ts.map

@@ -27,6 +27,7 @@ declare class NetworkController extends EventEmitter implements INetworkService 
     private solanaConnect;
     getChainIds: () => Array<number>;
     getCodexChainIds: () => Array<number>;
+    getChainList: () => Array<ChainItem>;
 }
 export default NetworkController;
 //# sourceMappingURL=NetworkService.d.ts.map

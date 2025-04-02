@@ -1,5 +1,5 @@
 import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount, PublicKey, } from "@solana/web3.js";
-import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, DEFAULT_SWAP_SOL_LAMPORTS, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, BASE_ACCOUNT_INIT_FEE, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, DEFAULD_SOLANA_SWAP_LIMIT, TIP_MINI_IN_PRIORITY, DEFAULT_SWAP_PUMP_LAMPORTS, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, PUMP_PROGRAM_ID, HIDEX_ADDRESS_LOOK_UP, DEFAULD_SOLANA_GAS_LIMIT, DEFAULD_BASE_GAS_FEE } from '../config';
+import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, BASE_ACCOUNT_INIT_FEE, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, DEFAULD_SOLANA_SWAP_LIMIT, TIP_MINI_IN_PRIORITY, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, HIDEX_ADDRESS_LOOK_UP, DEFAULD_SOLANA_GAS_LIMIT, DEFAULD_BASE_GAS_FEE } from '../config';
 import { checkAccountCloseInstruction, createSimpleSwapCompleteInstruction, createSwapCompleteInstruction, createSwapPrepareInstruction, createTipTransferInstruction, deleteTransactionGasInstruction, getInstructionAmounts, getInstructionReplaceDataHex, numberToLittleEndianHex, priorityFeeInstruction, versionedTra } from "./InstructionCreator";
 export function resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount) {
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
@@ -9,17 +9,19 @@ export function resetInstructions(currentSymbol, transactionMessage, newInputAmo
         const buffer = Buffer.alloc(8);
         buffer.writeBigUInt64LE(newInputAmount, 0);
         const newInputAmountHex = buffer.toString("hex");
-        if (tempInstruction.programId.toBase58() == SOLANA_SYSTEM_PROGRAM_ID.toBase58()) {
+        if (tempInstruction.programId.toBase58() == SOLANA_SYSTEM_PROGRAM_ID.toBase58() && currentSymbol.isBuy) {
             const instructionId = tempInstruction.data.readUInt32LE(0);
             if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
                 const readBigUInt64LE = tempInstruction.data.readBigUInt64LE(4);
-                if (DEFAULT_SWAP_SOL_LAMPORTS == readBigUInt64LE || DEFAULT_SWAP_PUMP_LAMPORTS == readBigUInt64LE) {
+                console.log("转账指令：", readBigUInt64LE);
+                console.log("转账Program：", tempInstruction.programId.toBase58());
+                if (newInputAmount == readBigUInt64LE) {
                     const transferData = dataHex.slice(0, dataHex.length - 16) + newInputAmountHex;
                     tempInstruction.data = Buffer.from(transferData, "hex");
                 }
             }
             else if (instructionId === SOLANA_CREATE_ACCOUNT_WITH_SEED_ID) {
-                const totalInitFeeBefore = BASE_ACCOUNT_INIT_FEE + DEFAULT_SWAP_SOL_LAMPORTS;
+                const totalInitFeeBefore = BASE_ACCOUNT_INIT_FEE + newInputAmount;
                 const totalInitFeeBuffer = Buffer.alloc(8);
                 totalInitFeeBuffer.writeBigUInt64LE(totalInitFeeBefore);
                 const initFeeHex = totalInitFeeBuffer.toString("hex");
@@ -47,7 +49,12 @@ export function resetInstructions(currentSymbol, transactionMessage, newInputAmo
             const precision = BigInt(10000);
             let numerator = BigInt(Math.round(currentSymbol.slipPersent * Number(precision)));
             if (NEED_CHANGE_SLIPPAGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58()) == -1) {
-                newOutputAmount = newOutputAmount - (newOutputAmount * numerator / precision);
+                if (tempInstruction.programId.toBase58() == PUMP_AMM_PROGRAM_ID.toBase58() && currentSymbol.isBuy) {
+                    newInputAmount = newInputAmount + (newInputAmount * numerator / precision);
+                }
+                else {
+                    newOutputAmount = newOutputAmount - (newOutputAmount * numerator / precision);
+                }
             }
             else {
                 const slippageChangeResult = numberToLittleEndianHex(Number(numerator), 3);
@@ -81,9 +88,10 @@ export async function compileTransaction(swapBase64Str, HS) {
     const mutiAccountInfo = await connection.getMultipleAccountsInfo(addressTables);
     const addressLookupTableAccounts = new Array(addressTables.length);
     for (let i = 0; i < mutiAccountInfo.length; i++) {
+        const state = AddressLookupTableAccount.deserialize(mutiAccountInfo[i].data);
         const lookUp = new AddressLookupTableAccount({
             key: addressTables[i],
-            state: AddressLookupTableAccount.deserialize(mutiAccountInfo[i].data),
+            state: state,
         });
         if (mutiAccountInfo[i].data.length != 0) {
             addressLookupTableAccounts[i] = lookUp;
@@ -92,6 +100,9 @@ export async function compileTransaction(swapBase64Str, HS) {
     const transactionMessage = TransactionMessage.decompile(transaction.message, {
         addressLookupTableAccounts: addressLookupTableAccounts
     });
+    console.log("programId", transactionMessage.instructions[0].programId.toBase58());
+    console.log("programId", transactionMessage.instructions[0].keys.map(v => v.pubkey.toBase58()));
+    console.log("addressLookupTableAccounts", addressLookupTableAccounts.length);
     return { message: transactionMessage, addressesLookup: addressLookupTableAccounts };
 }
 export function isInstructionsSupportReset(transactionMessage, currentSymbol) {
@@ -106,27 +117,20 @@ export function isInstructionsSupportReset(transactionMessage, currentSymbol) {
             const amounts = getInstructionAmounts(currentSymbol, tempInstruction);
             console.log("检测指令中输入的代币数量 = " + amounts.input);
             console.log("检测指令中输出的代币数量 = " + amounts.output);
-            console.log("检测指令中传入的输入的代币数量 = " + BigInt(currentSymbol.preAmountIn));
-            console.log("检测指令中传入的输出的代币数量 = " + BigInt(currentSymbol.preAmountOut));
+            console.log("外部传入的预请求输入的代币数量 = " + BigInt(currentSymbol.preAmountIn));
+            console.log("外部传入的预请求输出的代币数量 = " + BigInt(currentSymbol.preAmountOut));
             let preAmountInBigInt = BigInt(currentSymbol.preAmountIn);
             let preAmountOutBigInt = BigInt(currentSymbol.preAmountOut);
-            if (programId != PUMP_AMM_PROGRAM_ID.toBase58() && programId != PUMP_PROGRAM_ID.toBase58()) {
-                if (amounts.input == preAmountInBigInt && amounts.output == preAmountOutBigInt) {
-                    console.log("买入指令检测成功 = " + amounts.input);
-                    return true;
-                }
-            }
-            else {
-                if (amounts.input == preAmountInBigInt || amounts.output == preAmountOutBigInt) {
-                    console.log("买入指令检测成功 = " + amounts.input);
-                    return true;
-                }
+            if (amounts.input == preAmountInBigInt || amounts.output == preAmountOutBigInt) {
+                console.log("买入指令检测成功 = " + amounts.input);
+                return true;
             }
         }
     }
     return false;
 }
 export async function getTransactionsSignature(transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner, HS) {
+    addressLookupTableAccounts.splice(1, 1);
     console.log("getTransactionsSignature.instruction1 = " + transactionMessage.instructions.length);
     let deleteCloseAccountIndex = -1;
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
@@ -139,7 +143,13 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
         transactionMessage.instructions.splice(deleteCloseAccountIndex, 1);
     }
     console.log("getTransactionsSignature.instruction12= " + transactionMessage.instructions.length);
-    transactionMessage.instructions.splice(transactionMessage.instructions.length - 1);
+    const lastInstruction = transactionMessage.instructions[transactionMessage.instructions.length - 1];
+    if (lastInstruction.programId.toBase58() == SOLANA_SYSTEM_PROGRAM_ID.toBase58()) {
+        const instructionId = lastInstruction.data.readUInt32LE(0);
+        if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
+            transactionMessage.instructions.splice(transactionMessage.instructions.length - 1);
+        }
+    }
     console.log("getTransactionsSignature.instruction13= " + transactionMessage.instructions.length);
     const swapPrepareIx = await createSwapPrepareInstruction(currentSymbol, owner, HS.network);
     console.log("getTransactionsSignature.instruction14= " + transactionMessage.instructions.length);
@@ -189,7 +199,7 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
         const randomIndex = Math.floor(Math.random() * JITO_FEE_ACCOUNT.length);
         const tipIx = await createTipTransferInstruction(owner.publicKey, new PublicKey(JITO_FEE_ACCOUNT[randomIndex]), BigInt(priorityFee));
         const tipTx = await versionedTra([tipIx], owner, recentBlockhash, addressLookupTableAccounts);
-        const simulateTx = await versionedTra([...transactionMessage.instructions, swapCompletedIx, tipIx], owner, recentBlockhash, addressLookupTableAccounts);
+        const simulateTx = await versionedTra([tipIx, swapPrepareIx, ...transactionMessage.instructions, swapCompletedIx], owner, recentBlockhash, addressLookupTableAccounts);
         const txArray = [
             tipTx,
             swapPrepareTx,

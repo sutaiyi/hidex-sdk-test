@@ -8,7 +8,6 @@ export const isMotherTrad = (currentSymbol, network) => {
     const currentNetWork = network.get();
     const inAddress = currentSymbol.in.address.toLowerCase();
     const outAddress = currentSymbol.out.address.toLowerCase();
-    console.log(currentNetWork, inAddress, outAddress);
     if (inAddress === currentNetWork.tokens[0].address.toLowerCase() && outAddress === currentNetWork.tokens[1].address.toLowerCase()) {
         return 'MBTOWMB';
     }

@@ -36,7 +36,6 @@ class WalletService {
             const res = await ossStore.getBootedOssItem(token, apparatus, key);
             this.walletMap = ossStore.getWalletMap();
             this.bootedOss = this.walletMap.get('WalletBooted');
-            console.log('getBootedOssItem', this.bootedOss);
             return res;
         }
         catch (error) {

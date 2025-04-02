@@ -101,23 +101,36 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
         const currentNetwork = await network.choose(chainName)
         const { accountItem }: {accountItem: any} = await wallet.getCurrentWallet()
         const account = accountItem[chainName]
+        let IS_TOKEN_2022 = false;
+        let userWsolAtaLamports = '0';
+        let tokenAtaLamports = '0';
+        if (utils.trade.isSol(chainName)) {
+          IS_TOKEN_2022 = await utils.trade?.isToken2022(result?.token.address, network.getProviderByChain(102));
+          const wsolAtaAddress = await utils.trade?.getUserTokenAtaAddress(account.address, currentNetwork.tokens[1].address, IS_TOKEN_2022)
+          const tokenAtaAddress = await utils.trade?.getUserTokenAtaAddress(account.address, result?.token.address, IS_TOKEN_2022)
+          console.log('wsolAtaAddress==>', wsolAtaAddress, 'tokenAtaAddress==>', tokenAtaAddress)
+          const [userWsolAtaLamportsP, tokenAtaLamportsP] = await Promise.all([
+            trade.getBalance(account.address, wsolAtaAddress, true),
+            trade.getBalance(account.address, tokenAtaAddress, true),
+            getChainsTokenPriceUsd(network.getChainIds()),
+          ])
+          userWsolAtaLamports = userWsolAtaLamportsP
+          tokenAtaLamports = tokenAtaLamportsP
+        }
 
-        const IS_TOKEN_2022 = await utils.trade?.isToken2022(result?.token.address, network.getProviderByChain(102));
-
-        const wsolAtaAddress = await utils.trade?.getUserTokenAtaAddress(account.address, currentNetwork.tokens[1].address, IS_TOKEN_2022)
-        const tokenAtaAddress = await utils.trade?.getUserTokenAtaAddress(account.address, result?.token.address, IS_TOKEN_2022)
-        console.log('wsolAtaAddress==>', wsolAtaAddress, 'tokenAtaAddress==>', tokenAtaAddress)
+        
 
 
-        const [balance, tokenBalance, wbalance, userWsolAtaLamports, tokenAtaLamports, priceWeiItem, tokenInfo] = await Promise.all([
+        const [balance, tokenBalance, wbalance, priceWeiItem, tokenInfo] = await Promise.all([
           trade.getBalance(account.address),
           trade.getBalance(account.address,result?.token.address),
           trade.getBalance(account.address, currentNetwork.tokens[1].address),
-          trade.getBalance(account.address, wsolAtaAddress, true),
-          trade.getBalance(account.address, tokenAtaAddress, true),
           getChainsTokenPriceUsd(network.getChainIds()),
           getTokenInfo(queryStringify({address: result?.token.address, networkId: network.getCodexChainIdByChain(currentNetwork.chain)}))
         ])
+
+
+
 
         const isPump = tokenInfo?.data?.token?.launchpad?.completed === false
         const cryptoPriceUSD = 1 / Number(priceWeiItem[currentNetwork.chainID]) * 10 ** currentNetwork.tokens[0].decimals;
@@ -140,6 +153,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           wSymbol: network.get(chainName).tokens[1].symbol,
           isPump,
         }
+        console.log(tradeInfo.tokenBalance)
         setSelected(tradeInfo)
         onResultSelect(tradeInfo);
       } catch (error:any) {
@@ -253,7 +267,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           当前钱包地址：{selected?.account?.address}<br/>
           钱包余额：{selected?.balance} {selected.symbol}<br/>
           {selected?.wSymbol}余额：{selected?.wbalance} {selected.wSymbol}<br/>
-          代币余额：{selected?.tokenBalance} {selected?.token?.symbol}
+          代币余额：{utils.common.formatNumberWithPrecision(selected?.tokenBalance, 4)} {selected?.token?.symbol}
         </pre>
       </div>
     }

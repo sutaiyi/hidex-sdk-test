@@ -19,7 +19,6 @@ export function simpleAddress(address: string, len: number = 4) {
 export function strToNumberByDecimals(str: string, decimals: number) {
   if (!str) return 0;
   return Number(str) / Math.pow(10, decimals);
-
 }
 
 export const queryStringify = (obj: any) => {

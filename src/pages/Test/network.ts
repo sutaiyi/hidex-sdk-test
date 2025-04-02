@@ -11,6 +11,14 @@ const networkFuns = () => {
         console.log('获取当前网络失败：', error)
       }
     },
+    '获取网络列表': () => {
+      try {
+        const chainList = network.getChainList();
+        console.log(chainList)
+      } catch (error) {
+        console.log('获取当前网络列表失败：', error)
+      }
+    },
     '选择网络(ETH)': async () => {
       try {
         await network.choose('ETH')

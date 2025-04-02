@@ -2,6 +2,7 @@ import ErrorService from './error';
 import bs58 from 'bs58';
 import { Keypair } from "@solana/web3.js";
 import * as tradeUtils from "../trade/utils";
+import * as commonUtils from "../common/utils";
 export default class UtilsService {
     constructor() {
     }
@@ -14,4 +15,5 @@ export default class UtilsService {
     }
     ;
     trade = tradeUtils;
+    common = commonUtils;
 }

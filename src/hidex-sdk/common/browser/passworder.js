@@ -9,8 +9,7 @@ class PassworderController {
             ;
         }
         catch (error) {
-            console.log(error);
-            throw new Error('Error encrypting password' + error);
+            throw new Error('Error Encrypting Password' + error);
         }
     };
     decrypt = async (password, encrypted) => {
@@ -18,7 +17,7 @@ class PassworderController {
             return await this.encryptor.decrypt(password, encrypted);
         }
         catch (error) {
-            throw new Error('Error decryption password' + error);
+            throw new Error('Error Decryption Password' + error);
         }
     };
 }

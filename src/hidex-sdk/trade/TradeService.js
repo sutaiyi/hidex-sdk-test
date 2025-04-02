@@ -1,6 +1,6 @@
 import { ethService } from './eth/index';
 import { solService } from './sol/index';
-import { defaultChainID, ETH_SERIES } from '../common/config';
+import { defaultChainID } from '../common/config';
 import ApproveService from './utils/approve';
 import { compileTransaction, resetInstructions, getTransactionsSignature, isInstructionsSupportReset } from './sol/instruction/index';
 import EventEmitter from '../common/eventEmitter';
@@ -8,6 +8,7 @@ import DefiApi from './sol/defiApi';
 import TradeHashStatusService from './TradeHashStatusService';
 import { wExchange } from './utils/nativeTokenTrade';
 import { simulateConfig } from './sol/config';
+import { isSol } from './utils';
 class TradeService extends EventEmitter {
     app;
     chainId;
@@ -130,8 +131,7 @@ class TradeService extends EventEmitter {
         throw new Error('app undefined');
     };
     swap = async (currentSymbol, transaction, accountAddress) => {
-        console.log('Swap执行参数');
-        console.log(currentSymbol, transaction, accountAddress);
+        console.log('Swap执行参数===>', currentSymbol, transaction, accountAddress);
         const result = await this.app?.swap(currentSymbol, transaction, accountAddress);
         if (result) {
             return result;
@@ -139,14 +139,13 @@ class TradeService extends EventEmitter {
         throw new Error('app undefined');
     };
     getHashStatus(hash, chain) {
-        if (ETH_SERIES.includes(this.HS.network.get(chain).chain)) {
-            return ethService(this.HS).hashStatus(hash, chain);
+        if (isSol(chain)) {
+            return solService(this.HS).hashStatus(hash);
         }
-        return solService(this.HS).hashStatus(hash);
+        return ethService(this.HS).hashStatus(hash, chain);
     }
     async wrappedExchange(chain, accountAddress, type, priorityFee, amount = '0') {
         const privateKey = await this.HS.wallet.ownerKey(accountAddress);
-        console.log('private key', privateKey, accountAddress);
         return await wExchange(chain, privateKey, type, priorityFee, amount, this.HS);
     }
     async sendSimulateTransaction(accountAddress, vertransaction) {
