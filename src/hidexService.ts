@@ -17,7 +17,7 @@ const serviceInit = () => {
     {
       chainId: 56,
       chainName: 'BSC',
-      rpc: 'https://bsc-dataseed.bnbchain.org,https://bsc-dataseed1.defibit.io,https://bsc-dataseed1.ninicoin.io,https://bsc-rpc.publicnode.com',
+      rpc: ''// https://go.getblock.io/a2d124524e2d4ffaa8b0c3dd2d1836cf,https://bsc-dataseed.bnbchain.org,https://bsc-dataseed1.defibit.io,https://bsc-dataseed1.ninicoin.io,https://bsc-rpc.publicnode.com',
     },
     {
       chainId: 8453,

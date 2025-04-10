@@ -26,13 +26,26 @@ const tradeFun = () => {
           tokenAddress: token.address,  // 发送母币种地址或者其他代币地址  注意：为空代表母币种
         })
         console.log('预估交易费用===>', gasLimit);
-        const feeArray = await trade.getNetWorkFees(gasLimit);
+        const feeArray = await trade.getNetWorkFees(gasLimit, 0);
         console.log(`网络费用列表===>`, feeArray);
         return feeArray;
       } catch (error) {
         alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
       }
       throw new Error('');
+    },
+    获取交易网络费用列表: async (info: any) => {
+      try {
+        await network.choose('ETH');
+        const feeArrayEth = await trade.getNetWorkFees(21000, 0);
+        console.log(`ETH网络费用列表===>`, feeArrayEth);
+
+        await network.choose('SOLANA');
+        const feeArraySol = await trade.getNetWorkFees(0, 0);
+        console.log(`SOL网络费用列表===>`, feeArraySol);
+      } catch (error) {
+        alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
+      }
     },
     ETH系转账: async (info: any) => {
       try {
@@ -164,7 +177,7 @@ const tradeFun = () => {
         const currentNetwork = await network.choose(chainName);
         const { currentSymbol } = await getCurrentSymbolTest(info, { isBuy, isPump: false, currentNetwork });
         // 实际买入金额
-        const buyAmount = (0.01 * Math.pow(10, currentNetwork.tokens[1].decimals)).toString();
+        const buyAmount = (0.0001 * Math.pow(10, currentNetwork.tokens[1].decimals)).toString();
         currentSymbol.chain = currentNetwork.chain;
         currentSymbol.slipPersent = 0.05; // 滑点5%
         const { compile, preAmountIn, preAmountOut } = getBeforeTradeData(isBuy, chainName, token.address)
@@ -198,7 +211,7 @@ const tradeFun = () => {
         console.time('approveTimer')
         // 交易授权
         if (!currentSymbol.isBuy) {
-          await trade.approve.execute(currentSymbol.in.address, address, currentNetwork.deTrade);
+          await trade.approve.execute(currentSymbol.in.address, address, swapPath.authorizationTarget || currentNetwork.deTrade, currentSymbol.chain);
           console.log('Swapp Approved');
         }
         console.timeEnd('approveTimer')
@@ -220,19 +233,14 @@ const tradeFun = () => {
 
 
         console.time('getNetWorkFeesTimer');
-        const networkFeeArr = await trade.getNetWorkFees(estimateResult.gasLimit)
+        const networkFeeArr = await trade.getNetWorkFees(estimateResult.gasLimit, currentSymbol.tradeType)
         currentSymbol.networkFee = networkFeeArr[1];
         const needFee = await trade.getSwapFees(currentSymbol);
         console.log('最少得有多少母币余额（未加上用户支付的母币数量）==>', needFee);
         console.timeEnd('getNetWorkFeesTimer');
-
         console.time('tradeswapTimer');
-        const { error, result } = { error: null, result: { hash: currentNetwork.chainID === 102 ? '2Sfhpcgc97q2EnQoHe7XpQTJycqmX2N63pNNdAGRau75k3jNgdkWepFVGGni3HLawyKWRGE58wAth78kbAsTywjC' : '0x8bd9b12f7df74c2b0c40077110cd1c40800b1e548cac236bd3f84604b7ea47be', data: '' } }
-        // const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
+        const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
         console.timeEnd('tradeswapTimer');
-
-
-
         if (!error) {
           console.log('交易已提交：', result)
           const hashItem = {
@@ -246,6 +254,8 @@ const tradeFun = () => {
           setBeforeTradeData(info, { isBuy, isPump: currentSymbol.isPump, currentNetwork })
         }
         console.log('交易HASH：', result)
+
+
       } catch (error) {
         console.log(utils.getErrorMessage(error).message)
         alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message)
@@ -266,7 +276,8 @@ const tradeFun = () => {
         currentSymbol.chain = currentNetwork.chain;
         currentSymbol.slipPersent = 0.05; // 滑点5%
         // 实际卖出金额
-        const buyAmount = (Math.floor(Number(tokenBalanceStr) * 1)).toString();
+        const buyAmount = utils.common.formatNumberWithPrecision(Number(tokenBalanceStr) * 0.2, 0)
+        console.log('实际卖出金额：', buyAmount, tokenBalanceStr)
         const { compile, preAmountIn, preAmountOut } = getBeforeTradeData(isBuy, chainName, token.address)
         currentSymbol.compile = compile;
         currentSymbol.preAmountIn = preAmountIn;
@@ -274,7 +285,7 @@ const tradeFun = () => {
         // 交易手续费用
         currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount(currentSymbol, buyAmount);
         // 实际卖出金额
-        currentSymbol.amountIn = (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
+        currentSymbol.amountIn = buyAmount // tokenBalanceStr// (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
 
         // 当前代币时时价格
         currentSymbol.currentPrice = priceUSD
@@ -304,7 +315,7 @@ const tradeFun = () => {
         console.time('approveTimer')
         // ETH系交易授权
         if (!currentSymbol.isBuy) {
-          await trade.approve.execute(currentSymbol.in.address, address, currentNetwork.deTrade);
+          await trade.approve.execute(currentSymbol.in.address, address, swapPath.authorizationTarget || currentNetwork.deTrade, currentSymbol.chain);
           console.log('Swapp Approved');
         }
         console.timeEnd('approveTimer')
@@ -326,7 +337,7 @@ const tradeFun = () => {
 
 
         console.time('getNetWorkFeesTimer');
-        const networkFeeArr = await trade.getNetWorkFees(estimateResult.gasLimit)
+        const networkFeeArr = await trade.getNetWorkFees(estimateResult.gasLimit, currentSymbol.tradeType)
         currentSymbol.networkFee = networkFeeArr[1];
         const needFee = await trade.getSwapFees(currentSymbol);
         console.log('最少得有多少母币余额（未加上用户支付的母币数量）==>', needFee);
@@ -355,14 +366,16 @@ const tradeFun = () => {
     '后台多条Hash状态查询': async () => {
       try {
         const hashItem1 = {
-          chain: 102,
-          hash: '42vm63Hz9vc2ekr9vNQ6EmS1RdEJzxPhu642Q1KaBumPFbgRrVHX7GQpkpREmfpJB5AyZNrmPqABP9ABZGEDvsmM',
+          chain: 56,
+          hash: '0x1190a8c49883fb1c4e02bea72b7df2596d3db42aab6390a9e23ae7c03086747a',
           createTime: new Date().getTime(),
+          data: {}
         }
         const hashItem2 = {
           chain: 102,
           hash: '27Nhtf5dp6D8F4nmuAX5akXbwtMAiDViHyH9afVB2sdsdvNHgGHsahyGpj43AdUpZcdnmhRMtZJA6vPiY63yLPGL',
           createTime: new Date().getTime(),
+          data: {}
         }
         trade.checkHash.action(hashItem1)
 
@@ -380,6 +393,19 @@ const tradeFun = () => {
         // const hashArr = ['BASE', '0x78c2a5f7e7f8e40fc96492575e6794dc3976b81e21c7ed4e060b82ef9c7f3903'] // BASE
         const result = await trade.getHashStatus(hashArr[1], hashArr[0])
         console.log('Hash状态查询结果==>', result)
+      } catch (error) {
+        const { code, message } = utils.getErrorMessage(error)
+        alert(code + '-' + message)
+      }
+    },
+    '大整型的数据转换问题': async () => {
+      try {
+        const test = [1.35e-16, 1.5e-9, 0.0000123456, -0.000000000000000135, 1.2658951809134445e+22, 1.486661759245081e+22, 1000000000000000.9999, 10000000000000000.9999, 0.00000000000000000000000019999]
+        test.forEach((v) => {
+          console.log(utils.common.formatNumberWithPrecision(v, 0))
+          // console.log(utils.common.toFixed(v, 3))
+
+        })
       } catch (error) {
         const { code, message } = utils.getErrorMessage(error)
         alert(code + '-' + message)

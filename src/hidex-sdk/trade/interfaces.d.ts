@@ -37,7 +37,7 @@ export interface ITradeService extends ITradeFunctions, ITradeOthersFunction {
 export interface ITradeFunctions {
     getBalance(accountAddress: string, tokenAddress?: string, isAta?: boolean): Promise<string>;
     getBalanceMultiple(chain: string, accountAddress: string, tokens: Array<string>): Promise<Array<string>>;
-    getNetWorkFees(gasLimit: number): Promise<NetWorkFee[]>;
+    getNetWorkFees(gasLimit: number, tradeType: number): Promise<NetWorkFee[]>;
     getAllowance(tokenAddress: string, accountAddress: string, authorizedAddress: string): Promise<number>;
     toApprove(tokenAddress: string, accountAddress: string, authorizedAddress: string, amountToApprove?: number): Promise<boolean>;
     getSendEstimateGas(sendParams: SendTransactionParams): Promise<{
@@ -53,6 +53,7 @@ export interface ITradeFunctions {
     getSwapPath(currentSymbol: CurrentSymbol): Promise<{
         fullAmoutOut: string;
         data: any;
+        authorizationTarget?: string;
     }>;
     getSwapEstimateGas(currentSymbol: CurrentSymbol, path: any, accountAddress: string): Promise<{
         gasLimit: number;
@@ -65,7 +66,7 @@ export interface ITradeFunctions {
     }>;
 }
 export interface ITradeAbout extends ITradeFunctions {
-    hashStatus(hash: string, chain?: string | number): Promise<{
+    hashStatus(hash: string, chain?: string): Promise<{
         status: HashStatus;
     }>;
 }
@@ -106,7 +107,7 @@ export interface IDefiApi {
     getSwapStatus(hash: string): Promise<any>;
 }
 export interface IApproveService {
-    execute(tokenAddress: string, accountAddress: string, authorizedAddress: string): Promise<boolean>;
+    execute(tokenAddress: string, accountAddress: string, authorizedAddress: string, chain: string | number): Promise<boolean>;
 }
 export type SendTransactionParams = {
     from: string;
@@ -149,6 +150,7 @@ export type CurrentSymbol = {
     userwsolAtaAmount: string;
     userWsolAtaLamports: string;
     tokenAtaLamports: string;
+    fireworks?: boolean | undefined;
 };
 export type TokenInfo = {
     symbol: string;

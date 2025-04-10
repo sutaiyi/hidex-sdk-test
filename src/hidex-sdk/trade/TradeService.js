@@ -64,8 +64,8 @@ class TradeService extends EventEmitter {
         const balanceMultiple = await this.app?.getBalanceMultiple(chain, accountAddress, tokens);
         return balanceMultiple || [];
     };
-    getNetWorkFees = async (gasLimit = 21000) => {
-        const fees = await this.app?.getNetWorkFees(gasLimit);
+    getNetWorkFees = async (gasLimit = 21000, tradeType) => {
+        const fees = await this.app?.getNetWorkFees(gasLimit, tradeType);
         return fees;
     };
     getSendEstimateGas = async (sendParams) => {
@@ -139,10 +139,14 @@ class TradeService extends EventEmitter {
         throw new Error('app undefined');
     };
     getHashStatus(hash, chain) {
+        let chainName = chain;
+        if (typeof chain === 'number') {
+            chainName = this.HS.network.getChainNameByChainId(chain);
+        }
         if (isSol(chain)) {
             return solService(this.HS).hashStatus(hash);
         }
-        return ethService(this.HS).hashStatus(hash, chain);
+        return ethService(this.HS).hashStatus(hash, chainName);
     }
     async wrappedExchange(chain, accountAddress, type, priorityFee, amount = '0') {
         const privateKey = await this.HS.wallet.ownerKey(accountAddress);

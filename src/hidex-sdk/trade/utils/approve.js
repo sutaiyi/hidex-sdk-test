@@ -1,6 +1,6 @@
-import { ETH_SERIES, mTokenAddress } from '../../common/config';
+import { mTokenAddress } from '../../common/config';
 import CatcherService from '../../catch';
-import { checkAddressChain } from '../../common/utils';
+import { isSol } from '.';
 class ApproveService extends CatcherService {
     trade;
     network;
@@ -30,23 +30,21 @@ class ApproveService extends CatcherService {
             }
         }, 800);
     }
-    async execute(tokenAddress, accountAddress, authorizedAddress) {
+    async execute(tokenAddress, accountAddress, authorizedAddress, chain) {
         try {
-            const currentNetWork = this.network.get();
-            this.getApprovedVerify(tokenAddress, accountAddress, authorizedAddress, currentNetWork.chain.toUpperCase());
-            if (checkAddressChain(tokenAddress) !== 'ETH') {
+            if (isSol(chain)) {
                 return true;
             }
-            if (ETH_SERIES.indexOf(currentNetWork.chain.toUpperCase()) !== -1) {
-                const hasApprove = await this.hasApprovedInLoca(tokenAddress, accountAddress, authorizedAddress);
-                if (hasApprove) {
-                    this.set(currentNetWork.chain, accountAddress, tokenAddress, authorizedAddress);
-                    return true;
-                }
-                const approvedResult = await this.trade.toApprove(tokenAddress, accountAddress, authorizedAddress);
-                if (approvedResult) {
-                    await this.set(currentNetWork.chain, accountAddress, tokenAddress, authorizedAddress);
-                }
+            const currentNetWork = this.network.get(chain);
+            this.getApprovedVerify(tokenAddress, accountAddress, authorizedAddress, currentNetWork.chain.toUpperCase());
+            const hasApprove = await this.hasApprovedInLoca(tokenAddress, accountAddress, authorizedAddress);
+            if (hasApprove) {
+                this.set(currentNetWork.chain, accountAddress, tokenAddress, authorizedAddress);
+                return true;
+            }
+            const approvedResult = await this.trade.toApprove(tokenAddress, accountAddress, authorizedAddress);
+            if (approvedResult) {
+                await this.set(currentNetWork.chain, accountAddress, tokenAddress, authorizedAddress);
             }
             return true;
         }

@@ -107,6 +107,15 @@ export function deleteTransactionGasInstruction(instructions) {
     }
     instructions.splice(0, countToDelete);
 }
+export function isParameterValid(currentSymbol) {
+    const lamportsBefore = new anchor.BN(currentSymbol.solLamports);
+    const wsolAtaAmountBefore = new anchor.BN(currentSymbol.userwsolAtaAmount);
+    const userWsolAtaLamports = new anchor.BN(currentSymbol.userWsolAtaLamports);
+    const tokenAtaLamports = new anchor.BN(currentSymbol.tokenAtaLamports);
+    if (lamportsBefore < 0 || wsolAtaAmountBefore < 0 || userWsolAtaLamports < 0 || tokenAtaLamports < 0) {
+        return false;
+    }
+}
 export async function createSwapPrepareInstruction(currentSymbol, owner, network) {
     if (currentSymbol.isBuy) {
         return createBuySwapPrepareInstruction(currentSymbol, owner, network);
@@ -143,8 +152,6 @@ export async function createBuySwapPrepareInstruction(currentSymbol, owner, netw
         user: owner.publicKey
     })
         .instruction();
-}
-export function signTransaction() {
 }
 export async function createBuySwapCompletedInstruction(currentSymbol, owner, network) {
     const { program, dataPda, swapPda, tradePda, userAtaAccount, userwSolAta, inviterPublic } = await information(currentSymbol, owner, network);

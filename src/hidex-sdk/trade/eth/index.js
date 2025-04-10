@@ -190,9 +190,11 @@ export const ethService = (HS) => {
                     });
                 });
                 const tx = await Promise.any(profun);
+                console.log('Approve tx:', tx);
                 if (tx.error) {
                     throw new Error(tx.error);
                 }
+                await tx.wait();
                 return true;
             }
             catch (error) {
@@ -316,10 +318,19 @@ export const ethService = (HS) => {
             if (path.error) {
                 throw new Error(path.error);
             }
-            return {
-                fullAmoutOut: path[1],
-                data: path[0],
-            };
+            if (path?.length === 2) {
+                const data = path[0];
+                let authorizationTarget = '';
+                if (data?.length === 84) {
+                    authorizationTarget = data.substring(0, 42);
+                }
+                return {
+                    fullAmoutOut: path[1],
+                    data: path[0],
+                    authorizationTarget
+                };
+            }
+            throw new Error('getSwapPath Error');
         },
         getSwapEstimateGas: async (currentSymbol, path, accountAddress) => {
             const ownerKey = await wallet.ownerKey(accountAddress);
@@ -400,14 +411,14 @@ export const ethService = (HS) => {
                 ...params,
                 gasLimit: Math.floor(gasLimit * 1.05),
             };
-            const receipt = await walletProvider.sendTransaction(sendParams);
+            const submitResult = await walletProvider.sendTransaction(sendParams);
             console.timeEnd('tradeTimer');
-            return { error: null, result: receipt };
+            return { error: !submitResult.hash, result: { hash: submitResult.hash, data: { accountAddress, currentSymbol } } };
         },
-        hashStatus: async (hash, chain = 1) => {
+        hashStatus: async (hash, chain) => {
             const profun = network.sysProviderRpcs[chain].map((v) => {
                 return v.getTransaction(hash).then((res) => {
-                    if (res && res.blockHash) {
+                    if (res && res.hash) {
                         return res;
                     }
                     return Promise.reject('error hash');
@@ -417,6 +428,7 @@ export const ethService = (HS) => {
                 ;
             });
             const statusResult = await Promise.any(profun);
+            console.log('statusResult===>', statusResult);
             if (statusResult?.confirmations >= 2) {
                 return { status: 'Confirmed' };
             }

@@ -59,7 +59,8 @@ declare class WalletService implements IWalletService {
     }>;
     deleteWallet(password: string, walletId: number): Promise<boolean>;
     deleteWalletAccount(password: string, walletId: number, accountId: number): Promise<boolean>;
-    clearWallet(password: string): Promise<boolean>;
+    clearWallet(): Promise<boolean>;
+    clearLocalWallet(): Promise<boolean>;
     eventSecretCode(): void;
     exportMnemonics(password: string, walletId: number): Promise<string>;
     exportPrivateKey(password: string, walletId: number, accountId: number, chainName: string): Promise<string>;
@@ -74,8 +75,13 @@ declare class WalletService implements IWalletService {
     private generatePrivateKeyByChain;
     private getPublicKey;
     isUnlocked(): Promise<boolean>;
-    isSetPassword(): boolean;
-    hasWallet(): boolean;
+    isSetPassword(): Promise<boolean>;
+    hasWallet(): Promise<boolean>;
+    getWalletStatus(): Promise<{
+        isUnlocked: boolean;
+        isSetPassword: boolean;
+        hasWallet: boolean;
+    }>;
     signMessage(message: string, address: string): Promise<string>;
 }
 export default WalletService;

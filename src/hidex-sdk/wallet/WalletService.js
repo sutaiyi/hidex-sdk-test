@@ -520,12 +520,17 @@ class WalletService {
             throw new Error(error.message);
         }
     }
-    async clearWallet(password) {
-        await this.verifyPassword(password);
+    async clearWallet() {
+        await this.verifyPassword(this.password);
         await this.setWalletStore(defalutWalletStore);
         await this.setBootedOss(defaluBoootedOss);
         await this.HS.catcher.removeItem('dataStorage');
         await this.HS.catcher.removeItem('dataCache');
+        await this.HS.catcher.removeCookie('dataStorage', { secure: true });
+        return true;
+    }
+    async clearLocalWallet() {
+        await this.HS.catcher.removeItem('dataStorage');
         await this.HS.catcher.removeCookie('dataStorage', { secure: true });
         return true;
     }
@@ -773,11 +778,22 @@ class WalletService {
         this.setWalletStore({ ...this.getWalletStore(), isUnlocked: false });
         return false;
     }
-    isSetPassword() {
-        return !!this.getBootedOss().booted;
+    async isSetPassword() {
+        const data = await this.getCloudBootedOss(this.HS, 'booted');
+        return !!data;
     }
-    hasWallet() {
-        return Object.keys(this.getBootedOss()?.walletBooted)?.length > 0;
+    async hasWallet() {
+        const walletBooted = await this.getCloudBootedOss(this.HS, 'walletBooted');
+        return Object.keys(walletBooted)?.length > 0;
+    }
+    async getWalletStatus() {
+        const bootpro = await this.getCloudBootedOss(this.HS);
+        const [isUnlocked, { walletBooted, booted }] = await Promise.all([this.isUnlocked(), bootpro]);
+        return {
+            isUnlocked,
+            isSetPassword: !!booted,
+            hasWallet: Object.keys(walletBooted)?.length > 0,
+        };
     }
     async signMessage(message, address) {
         const privateKey = await this.ownerKey(address);

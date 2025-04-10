@@ -2,6 +2,7 @@ import { PublicKey } from '@solana/web3.js';
 import * as CryptoJS from 'crypto-js';
 import bs58 from 'bs58';
 import { ethers } from 'ethers';
+import BigNumber from 'bignumber.js';
 export function isHexString(str) {
     return /^[a-fA-F0-9]+$/.test(str);
 }
@@ -201,37 +202,26 @@ export function formatNumberWithPrecision(numValue, precision) {
     if (isNaN(num)) {
         return num.toString();
     }
-    if (precision <= 0) {
-        return precision.toString();
+    if (precision < 0) {
+        return numValue.toString();
     }
     if (num === 0) {
-        return '0.' + '0'.repeat(precision - 1);
+        return precision === 0 ? '0' : '0.' + '0'.repeat(precision);
     }
-    const sciStr = num.toExponential(precision - 1);
-    const [coeff, exp] = sciStr.split('e');
-    const exponent = parseInt(exp, 10);
-    const [intPart, decPart] = coeff.split('.');
-    const significantDigits = intPart + (decPart || '');
-    const truncated = significantDigits.slice(0, precision);
-    if (exponent < 0) {
-        const numZeros = -exponent - 1;
-        const zeros = '0'.repeat(numZeros);
-        return '0.' + zeros + truncated;
+    if (precision < 0)
+        throw new Error('Precision must be non-negative');
+    const bigNum = new BigNumber(num);
+    if (precision === 0) {
+        return bigNum.integerValue(BigNumber.ROUND_CEIL).toFixed();
     }
-    else {
-        const remainingExponent = exponent - (truncated.length - 1);
-        if (remainingExponent >= 0) {
-            return truncated + '0'.repeat(remainingExponent);
-        }
-        else {
-            const decimalPosition = truncated.length + remainingExponent;
-            if (decimalPosition <= 0) {
-                return '0.' + '0'.repeat(-decimalPosition) + truncated;
-            }
-            else {
-                return (truncated.slice(0, decimalPosition) +
-                    (decimalPosition < truncated.length ? '.' + truncated.slice(decimalPosition) : ''));
-            }
-        }
+    const fullStr = bigNum.toFixed(100, BigNumber.ROUND_DOWN);
+    const [intPart, decimalRaw = ''] = fullStr.split('.');
+    let firstValidIndex = decimalRaw.search(/[1-9]/);
+    if (firstValidIndex === -1) {
+        return `${intPart}.${'0'.repeat(precision)}`;
     }
+    const effectivePart = decimalRaw.slice(firstValidIndex, firstValidIndex + precision);
+    const prefixZeros = decimalRaw.slice(0, firstValidIndex);
+    const finalDecimal = (prefixZeros + effectivePart).padEnd(firstValidIndex + precision, '0');
+    return `${intPart}.${finalDecimal}`;
 }

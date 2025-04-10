@@ -21,7 +21,7 @@ declare class TradeService extends EventEmitter implements ITradeService {
     changeTradeService: (currentNetwork: ChainItem) => void;
     getBalance: (accountAddress: string, tokenAddress?: string, isAta?: boolean) => Promise<string>;
     getBalanceMultiple: (chain: string, accountAddress: string, tokens: Array<string>) => Promise<Array<string>>;
-    getNetWorkFees: (gasLimit?: number) => Promise<NetWorkFee[]>;
+    getNetWorkFees: (gasLimit: number | undefined, tradeType: number) => Promise<NetWorkFee[]>;
     getSendEstimateGas: (sendParams: SendTransactionParams) => Promise<{
         gasLimit: number;
     }>;
@@ -37,6 +37,7 @@ declare class TradeService extends EventEmitter implements ITradeService {
     getSwapPath: (currentSymbol: CurrentSymbol) => Promise<{
         fullAmoutOut: string;
         data: any;
+        authorizationTarget?: string;
     }>;
     getSwapEstimateGas: (currentSymbol: CurrentSymbol, path: any, accountAddress: string) => Promise<{
         gasLimit: number;

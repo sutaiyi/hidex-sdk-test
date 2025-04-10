@@ -1,6 +1,6 @@
 import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount, PublicKey, } from "@solana/web3.js";
 import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, BASE_ACCOUNT_INIT_FEE, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, DEFAULD_SOLANA_SWAP_LIMIT, TIP_MINI_IN_PRIORITY, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, HIDEX_ADDRESS_LOOK_UP, DEFAULD_SOLANA_GAS_LIMIT, DEFAULD_BASE_GAS_FEE } from '../config';
-import { checkAccountCloseInstruction, createSimpleSwapCompleteInstruction, createSwapCompleteInstruction, createSwapPrepareInstruction, createTipTransferInstruction, deleteTransactionGasInstruction, getInstructionAmounts, getInstructionReplaceDataHex, numberToLittleEndianHex, priorityFeeInstruction, versionedTra } from "./InstructionCreator";
+import { checkAccountCloseInstruction, createSimpleSwapCompleteInstruction, createSwapCompleteInstruction, createSwapPrepareInstruction, createTipTransferInstruction, deleteTransactionGasInstruction, getInstructionAmounts, getInstructionReplaceDataHex, isParameterValid, numberToLittleEndianHex, priorityFeeInstruction, versionedTra } from "./InstructionCreator";
 export function resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount) {
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
         const tempInstruction = transactionMessage.instructions[i];
@@ -101,9 +101,16 @@ export async function compileTransaction(swapBase64Str, HS) {
         addressLookupTableAccounts: addressLookupTableAccounts
     });
     console.log("programId", transactionMessage.instructions[0].programId.toBase58());
-    console.log("programId", transactionMessage.instructions[0].keys.map(v => v.pubkey.toBase58()));
     console.log("addressLookupTableAccounts", addressLookupTableAccounts.length);
-    return { message: transactionMessage, addressesLookup: addressLookupTableAccounts };
+    const validAddressLookupTableAccounts = [];
+    const currentSlot = await connection.getSlot();
+    for (let i = 0; i < addressLookupTableAccounts.length; i++) {
+        if (currentSlot < addressLookupTableAccounts[i].state.deactivationSlot) {
+            validAddressLookupTableAccounts.push(addressLookupTableAccounts[i]);
+        }
+    }
+    console.log("validAddressLookupTableAccounts", validAddressLookupTableAccounts.length);
+    return { message: transactionMessage, addressesLookup: validAddressLookupTableAccounts };
 }
 export function isInstructionsSupportReset(transactionMessage, currentSymbol) {
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
@@ -130,7 +137,6 @@ export function isInstructionsSupportReset(transactionMessage, currentSymbol) {
     return false;
 }
 export async function getTransactionsSignature(transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner, HS) {
-    addressLookupTableAccounts.splice(1, 1);
     console.log("getTransactionsSignature.instruction1 = " + transactionMessage.instructions.length);
     let deleteCloseAccountIndex = -1;
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
@@ -186,10 +192,15 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
             const simpleSwapCompletedIx = await createSimpleSwapCompleteInstruction(currentSymbol, owner, HS.network, Number(currentSymbol.priorityFee) + DEFAULD_SOLANA_GAS_LIMIT + 2 * DEFAULD_BASE_GAS_FEE);
             const simpleCompleteSwapTx = await versionedTra([addPriorityPriceIx, addPriorityLimitIx, simpleSwapCompletedIx], owner, recentBlockhash, addressLookupTableAccounts);
             console.log("交易串删除指令后的字节长度 = " + Buffer.from(simpleCompleteSwapTx.serialize()).toString("base64"));
-            return [
-                swapTx,
-                simpleCompleteSwapTx
-            ];
+            if (isParameterValid(currentSymbol)) {
+                return [
+                    swapTx,
+                    simpleCompleteSwapTx
+                ];
+            }
+            else {
+                return [];
+            }
         }
     }
     else {

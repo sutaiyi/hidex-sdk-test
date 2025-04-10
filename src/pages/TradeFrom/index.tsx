@@ -153,7 +153,6 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           wSymbol: network.get(chainName).tokens[1].symbol,
           isPump,
         }
-        console.log(tradeInfo.tokenBalance)
         setSelected(tradeInfo)
         onResultSelect(tradeInfo);
       } catch (error:any) {

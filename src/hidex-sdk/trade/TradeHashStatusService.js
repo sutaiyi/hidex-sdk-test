@@ -1,13 +1,18 @@
 import EventEmitter from "../common/eventEmitter";
+import { isSol } from "./utils";
 const HashStatusMap = new Map();
 export class TradeHashStatusService extends EventEmitter {
     DEFAULTKEY = 'TradeHashes';
     HS;
     trade;
+    timeCount;
+    maxTime;
     constructor(options) {
         super();
         this.trade = options.trade;
         this.HS = options;
+        this.timeCount = 50;
+        this.maxTime = 15000;
     }
     ;
     getHashes = async () => {
@@ -25,6 +30,10 @@ export class TradeHashStatusService extends EventEmitter {
     action = async (hashItem) => {
         const checkCreate = async () => {
             const { hash, chain } = hashItem;
+            this.timeCount = 50;
+            if (!isSol(chain)) {
+                this.timeCount = 1000;
+            }
             console.log('hash status checkTimer: ' + hash);
             const { status } = await this.trade.getHashStatus(hash, chain);
             if (status !== 'Pending') {
@@ -34,14 +43,14 @@ export class TradeHashStatusService extends EventEmitter {
                 hashItem.timer && global.clearTimeout(hashItem.timer);
                 return;
             }
-            if (new Date().getTime() - hashItem.createTime >= 15000) {
+            if (new Date().getTime() - hashItem.createTime >= this.maxTime) {
                 hashItem.status = 'Failed';
                 this.emit('HashStatusEvent', hashItem);
                 hashItem.timer && global.clearTimeout(hashItem.timer);
                 return;
             }
             hashItem.timer && global.clearTimeout(hashItem.timer);
-            hashItem.timer = global.setTimeout(checkCreate, 50);
+            hashItem.timer = global.setTimeout(checkCreate, this.timeCount);
         };
         HashStatusMap.set(hashItem.hash, checkCreate());
     };

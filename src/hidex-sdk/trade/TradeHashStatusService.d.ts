@@ -7,6 +7,8 @@ export declare class TradeHashStatusService extends EventEmitter implements ITra
     private DEFAULTKEY;
     private HS;
     private trade;
+    private timeCount;
+    private maxTime;
     constructor(options: OptionsCommon & {
         trade: ITradeService;
     });

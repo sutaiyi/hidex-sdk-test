@@ -16,7 +16,10 @@ export class HidexService {
     dexFee;
     utils;
     constructor(options) {
-        console.log('HidexService constructor called and options are: ', options);
+        console.log(`HidexService constructor called and options are: `, options);
+        fetch('package.json').then(res => res.json()).then((data) => {
+            console.log(`Hidex SDK Version: v${data?.dependencies['hidex-sdk']?.substring(1)}`);
+        });
         this.options = options;
         this.utils = new UtilsService();
         this.catcher = new CatcherService(options.apparatus);

@@ -7,6 +7,7 @@ import { priorityFeeInstruction } from "./instruction/InstructionCreator";
 import defiApi from "./defiApi";
 import UtilsService from "../../utils/UtilsService";
 import { compileTransaction, getTransactionsSignature, isInstructionsSupportReset, resetInstructions } from "./instruction";
+import { NETWORK_FEE_RATES } from "../eth/config";
 const utils = new UtilsService();
 export const solService = (HS) => {
     const { network, wallet } = HS;
@@ -89,17 +90,21 @@ export const solService = (HS) => {
             });
             return balances;
         },
-        getNetWorkFees: async (gasLimit) => {
+        getNetWorkFees: async (gasLimit, tradeType) => {
             const gasPrice = 0.000005;
-            return [
-                {
-                    value: gasPrice,
+            const netVal = tradeType !== 3 ? 0.002 : 0.001;
+            const networkRate = NETWORK_FEE_RATES['SOLANA'];
+            const networkFees = [];
+            for (let i = 0; i < networkRate.length; i++) {
+                networkFees.push({
+                    value: Number((netVal * networkRate[i]).toFixed(3)),
                     unit: 'SOL',
                     gasLimit,
                     gasPrice: gasPrice.toString(),
-                    rate: 1,
-                },
-            ];
+                    rate: networkRate[i],
+                });
+            }
+            return networkFees;
         },
         getAllowance: async () => {
             return 10000;
@@ -174,7 +179,7 @@ export const solService = (HS) => {
                 outAmount = (Math.floor(amountInUSD / Number(currentSymbol.currentPrice) * Math.pow(10, currentSymbol.out.decimals)));
             }
             if (!currentSymbol.isBuy && currentSymbol.currentPrice) {
-                outAmount = (Math.floor(Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.in.decimals) * Number(currentSymbol.currentPrice) / currentSymbol.cryptoPriceUSD * Math.pow(10, currentSymbol.out.decimals)));
+                outAmount = (Math.floor(Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.in.decimals) * currentSymbol.currentPrice / currentSymbol.cryptoPriceUSD * Math.pow(10, currentSymbol.out.decimals)));
             }
             return {
                 fullAmoutOut: BigInt(outAmount).toString(),
@@ -217,11 +222,6 @@ export const solService = (HS) => {
             if (txArray.length === 0) {
                 throw new Error('Failed to swap txArray is empty');
             }
-            console.time('timer simulateTransaction');
-            const vertransaction = txArray.length === 5 ? txArray[4] : txArray[0];
-            if (vertransaction) {
-            }
-            console.timeEnd('timer simulateTransaction');
             console.log('txArray: ===>', txArray);
             return {
                 gasLimit: 0,
@@ -252,11 +252,11 @@ export const solService = (HS) => {
             const vertransaction = vertransactions.length === 5 ? vertransactions[4] : vertransactions[0];
             const simulateResponsePro = connection.simulateTransaction(vertransaction, simulateConfig);
             const [submitResult, simulateResponse] = await Promise.all([submitPro, simulateResponsePro]);
-            console.log('交易 - 预估结果==>', simulateResponse);
+            console.log('交易-预估结果==>', simulateResponse);
             if (simulateResponse && simulateResponse?.value?.err) {
                 throw new Error(JSON.stringify(simulateResponse.value.logs));
             }
-            return { error: !submitResult.success, result: { hash: submitResult.hash, data: { vertransactions, accountAddress } } };
+            return { error: !submitResult.success, result: { hash: submitResult.hash, data: { vertransactions, accountAddress, currentSymbol } } };
         },
         hashStatus: async (hash) => {
             const status = await defiApi.getSwapStatus(hash);
@@ -266,7 +266,7 @@ export const solService = (HS) => {
                     commitment: "confirmed",
                     maxSupportedTransactionVersion: 0,
                 });
-                console.log('SOL 状态查询 confirmation===', hashStatus);
+                console.log('SOL 链上状态查询 confirmation===', hashStatus);
                 if (hashStatus) {
                     const { meta } = hashStatus;
                     if (meta && meta.err) {

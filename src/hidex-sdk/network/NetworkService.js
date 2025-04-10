@@ -111,7 +111,10 @@ class NetworkController extends EventEmitter {
             const currentChain = this.HS.chains(chain);
             let rpc = currentChain.rpc[0];
             const chainID = currentChain.chainID;
-            ;
+            const chainName = this.getChainNameByChainId(chainID);
+            if (this._sysProviderRpcs[chainName]?.length > 0) {
+                return this.sysProviderRpcs[chainName][0];
+            }
             if (chainID === 102) {
                 if (rpc === '/solana_new') {
                     rpc = `${getSolRpcOrigin(this.HS.env, this.HS.apparatus)}/solana_new`;
