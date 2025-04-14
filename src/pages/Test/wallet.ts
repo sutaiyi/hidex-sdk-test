@@ -72,16 +72,23 @@ const walletTest = () => {
     },
     查看账户状态: async () => {
       try {
-        const isUnlocked = await wallet.isUnlocked();
-        const isSetPassword = await wallet.isSetPassword();
-        const hasWallet = await wallet.hasWallet();
+        // const isUnlocked = await wallet.isUnlocked();
+        // const isSetPassword = await wallet.isSetPassword();
+        // const hasWallet = await wallet.hasWallet();
+        // console.log('钱包是否已解锁: ', isUnlocked); // 
+        // console.log('是否设置密码: ', isSetPassword);
+        // console.log('是否创建了钱包: ', hasWallet);
         const walletStatus = await wallet.getWalletStatus();
-
-        console.log('全部状态: ', walletStatus); //
-
-        console.log('钱包是否已解锁: ', isUnlocked); // 
-        console.log('是否设置密码: ', isSetPassword);
-        console.log('是否创建了钱包: ', hasWallet);
+        console.log('全部状态: ', walletStatus);
+      } catch (error) {
+        console.error(error);
+        alert(error);
+      }
+    },
+    查看钱包最高路径: async () => {
+      try {
+        const pathIndex = await wallet.getWalletCurrentPathIndex();
+        console.log('pathIndex: ', pathIndex);
       } catch (error) {
         console.error(error);
         alert(error);
@@ -121,11 +128,41 @@ const walletTest = () => {
         alert(error);
       }
     },
+    '创建密码&钱包': async () => {
+      try {
+        const password = '123123';
+        await wallet.createPassword(password);
+        await wallet.setUnLockedExpires(7);
+        console.log('密码创建成功', password)
+        const mnemonic = await wallet.generateMnemonic();
+        console.log('助记词： ', mnemonic);
+        const walletAccount = await wallet.createWallet(mnemonic, 0, '发财钱包');
+        console.log('助记词钱包创建成功（返回当前创建的钱包对象）: ', walletAccount);
+
+        // 选中该钱包(根据具体业务而定)
+        // await wallet.setCurrentWallet(walletAccount.id, 0);
+
+      } catch (error) {
+        console.error(error);
+        alert(error);
+      }
+    },
     当前钱包下创新的账号PATH1: async () => {
       try {
         const { walletItem } = await wallet.getCurrentWallet();
         console.log('助记词： ', walletItem.mnemonic);
         const walletAccount = await wallet.createWallet(walletItem.mnemonic, 1, '发财钱包');
+        console.log('助记词钱包创建成功（返回当前创建的钱包对象）: ', walletAccount);
+      } catch (error) {
+        console.error(error);
+        alert(error);
+      }
+    },
+    当前钱包下创新的账号PATH2: async () => {
+      try {
+        const { walletItem } = await wallet.getCurrentWallet();
+        console.log('助记词： ', walletItem.mnemonic);
+        const walletAccount = await wallet.createWallet(walletItem.mnemonic, 2, '发财钱包');
         console.log('助记词钱包创建成功（返回当前创建的钱包对象）: ', walletAccount);
       } catch (error) {
         console.error(error);
@@ -227,6 +264,17 @@ const walletTest = () => {
       if (window.confirm('确定要清空钱包吗？')) {
         try {
           await wallet.clearWallet('123123')
+          alert('清空成功')
+        } catch (error) {
+          console.error(error);
+          alert(error);
+        }
+      }
+    },
+    清空本地钱包: async () => {
+      if (window.confirm('确定要清空钱包吗？')) {
+        try {
+          await wallet.clearLocalWallet()
           alert('清空成功')
         } catch (error) {
           console.error(error);

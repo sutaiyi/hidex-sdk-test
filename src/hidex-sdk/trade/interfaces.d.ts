@@ -89,6 +89,8 @@ export interface IDexFeeService {
 export interface IDefiApi {
     lastBlockHash: BlockhashWithExpiryBlockHeight;
     getLatestBlockhash(network: INetworkService): Promise<void>;
+    stopLatestBlockhash(): void;
+    startLatestBlockhash(network: INetworkService): void;
     swapRoute(currentSymbol: CurrentSymbol, fromAddress: string): Promise<{
         success: boolean;
         swapTransaction: string;

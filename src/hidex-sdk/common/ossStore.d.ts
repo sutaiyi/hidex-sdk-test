@@ -6,6 +6,7 @@ export declare const ossStore: {
     setWalletStoreItem: (catcher: ICatcher, key: string, value: WalletStoreKeyOf) => Promise<boolean>;
     getBootedOssItem: (token: string, apparatus: Apparatus, key?: string) => Promise<BootedOssStore>;
     setBootedOssItem: (token: string, apparatus: Apparatus, key: string, value: BootedOssStore) => Promise<boolean>;
+    clearWalletMap: () => void;
     getWalletMap: () => Map<any, any>;
 };
 //# sourceMappingURL=ossStore.d.ts.map

@@ -6,8 +6,6 @@ declare class WalletService implements IWalletService {
     private atpkeys;
     private ADDRESS_PATH_TYPE;
     private HS;
-    private setWalletTimer;
-    private setBootdOsssTimer;
     private walletMap;
     private walletStore;
     private bootedOss;
@@ -53,13 +51,14 @@ declare class WalletService implements IWalletService {
     getDefaultWallet(): Promise<WalletList>;
     getWalletAndAccount(walletId: number, accountId: number): Promise<WalletList>;
     getAccountById(walletId: number, accountId: number): Promise<WalletAccount>;
+    getWalletCurrentPathIndex(): Promise<number>;
     setCurrentWallet(walletId?: number, accountId?: number): Promise<{
         walletItem: WalletList;
         accountItem: WalletAccount;
     }>;
     deleteWallet(password: string, walletId: number): Promise<boolean>;
     deleteWalletAccount(password: string, walletId: number, accountId: number): Promise<boolean>;
-    clearWallet(): Promise<boolean>;
+    clearWallet(password: string): Promise<boolean>;
     clearLocalWallet(): Promise<boolean>;
     eventSecretCode(): void;
     exportMnemonics(password: string, walletId: number): Promise<string>;
@@ -81,6 +80,7 @@ declare class WalletService implements IWalletService {
         isUnlocked: boolean;
         isSetPassword: boolean;
         hasWallet: boolean;
+        pathIndex: number;
     }>;
     signMessage(message: string, address: string): Promise<string>;
 }

@@ -29,7 +29,7 @@ const getBootedOssItem = async (token, apparatus, key) => {
 };
 const setBootedOssItem = async (token, apparatus, key, value) => {
     let walletPutData = walletMap.get('WalletBooted');
-    if (!walletPutData) {
+    if (!walletPutData && key !== 'all') {
         walletPutData = await getBootedOssItem(token, apparatus);
     }
     if (walletPutData && key !== 'all' && value) {
@@ -76,6 +76,9 @@ const setWalletStoreItem = async (catcher, key, value) => {
     const result = await catcher.setItem('dataCache', putBooted);
     return result;
 };
+const clearWalletMap = () => {
+    walletMap.clear();
+};
 const getWalletMap = () => {
     return walletMap;
 };
@@ -84,5 +87,6 @@ export const ossStore = {
     setWalletStoreItem,
     getBootedOssItem,
     setBootedOssItem,
+    clearWalletMap,
     getWalletMap
 };

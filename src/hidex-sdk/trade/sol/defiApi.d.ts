@@ -6,6 +6,8 @@ declare class DefiApi implements IDefiApi {
     lastBlockHash: BlockhashWithExpiryBlockHeight;
     constructor();
     getLatestBlockhash(network: INetworkService): Promise<void>;
+    stopLatestBlockhash(): void;
+    startLatestBlockhash(network: INetworkService): void;
     swapRoute(currentSymbol: CurrentSymbol, fromAddress: string): Promise<{
         success: boolean;
         swapTransaction: string;

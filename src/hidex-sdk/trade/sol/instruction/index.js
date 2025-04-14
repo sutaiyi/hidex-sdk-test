@@ -1,46 +1,30 @@
 import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount, PublicKey, } from "@solana/web3.js";
-import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, BASE_ACCOUNT_INIT_FEE, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, DEFAULD_SOLANA_SWAP_LIMIT, TIP_MINI_IN_PRIORITY, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, HIDEX_ADDRESS_LOOK_UP, DEFAULD_SOLANA_GAS_LIMIT, DEFAULD_BASE_GAS_FEE } from '../config';
-import { checkAccountCloseInstruction, createSimpleSwapCompleteInstruction, createSwapCompleteInstruction, createSwapPrepareInstruction, createTipTransferInstruction, deleteTransactionGasInstruction, getInstructionAmounts, getInstructionReplaceDataHex, isParameterValid, numberToLittleEndianHex, priorityFeeInstruction, versionedTra } from "./InstructionCreator";
+import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, DEFAULD_SOLANA_SWAP_LIMIT, TIP_MINI_IN_PRIORITY, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, HIDEX_ADDRESS_LOOK_UP, DEFAULD_SOLANA_GAS_LIMIT, DEFAULD_BASE_GAS_FEE } from '../config';
+import { checkAccountCloseInstruction, createSimpleSwapCompleteInstruction, createSwapCompleteInstruction, createSwapPrepareInstruction, createTipTransferInstruction, deleteTransactionGasInstruction, getInstructionAmounts, getInstructionReplaceDataHex, isParameterValid, numberToLittleEndianHex, priorityFeeInstruction, setCreateAccountBySeedInstructionLamports, setTransferInstructionLamports, versionedTra } from "./InstructionCreator";
 export function resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount) {
+    let transferInstructionIndex = -1;
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
         const tempInstruction = transactionMessage.instructions[i];
         const dataHex = tempInstruction.data.toString("hex");
         console.log("programID = " + tempInstruction.programId.toBase58());
-        const buffer = Buffer.alloc(8);
-        buffer.writeBigUInt64LE(newInputAmount, 0);
-        const newInputAmountHex = buffer.toString("hex");
+        let hasChange = false;
+        const instructionId = tempInstruction.data.readUint8();
         if (tempInstruction.programId.toBase58() == SOLANA_SYSTEM_PROGRAM_ID.toBase58() && currentSymbol.isBuy) {
-            const instructionId = tempInstruction.data.readUInt32LE(0);
-            if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
-                const readBigUInt64LE = tempInstruction.data.readBigUInt64LE(4);
-                console.log("转账指令：", readBigUInt64LE);
-                console.log("转账Program：", tempInstruction.programId.toBase58());
-                if (newInputAmount == readBigUInt64LE) {
-                    const transferData = dataHex.slice(0, dataHex.length - 16) + newInputAmountHex;
-                    tempInstruction.data = Buffer.from(transferData, "hex");
-                }
+            hasChange = setTransferInstructionLamports(currentSymbol.preAmountIn, tempInstruction, dataHex, newInputAmount);
+            if (hasChange) {
+                transferInstructionIndex = i;
+                console.log("转账指令已修改 = " + transferInstructionIndex);
             }
-            else if (instructionId === SOLANA_CREATE_ACCOUNT_WITH_SEED_ID) {
-                const totalInitFeeBefore = BASE_ACCOUNT_INIT_FEE + newInputAmount;
-                const totalInitFeeBuffer = Buffer.alloc(8);
-                totalInitFeeBuffer.writeBigUInt64LE(totalInitFeeBefore);
-                const initFeeHex = totalInitFeeBuffer.toString("hex");
-                const feeInitIndex = dataHex.indexOf(initFeeHex);
-                console.log("feeInitIndex = " + feeInitIndex);
-                if (feeInitIndex >= 0) {
-                    const totalInitFeeAfter = BASE_ACCOUNT_INIT_FEE + newInputAmount;
-                    totalInitFeeBuffer.writeBigUInt64LE(totalInitFeeAfter);
-                    const initFeeHexAfter = totalInitFeeBuffer.toString("hex");
-                    const createAccountData = dataHex.slice(0, feeInitIndex) +
-                        initFeeHexAfter +
-                        dataHex.slice(feeInitIndex + 16);
-                    tempInstruction.data = Buffer.from(createAccountData, "hex");
-                }
+        }
+        else if (instructionId === SOLANA_CREATE_ACCOUNT_WITH_SEED_ID) {
+            hasChange = setCreateAccountBySeedInstructionLamports(currentSymbol.preAmountIn, tempInstruction, dataHex, newInputAmount);
+            if (hasChange) {
+                transferInstructionIndex = i;
+                console.log("CreateAccountBySeed指令已修改 = " + transferInstructionIndex);
             }
         }
         const dexProgramIndex = SUPPORT_CHANGE_PROGRAM_IDS.get(tempInstruction.programId.toBase58()) ?? 0;
         if (dexProgramIndex > 0) {
-            console.log("data = " + tempInstruction.data.toString("hex"));
             const amountsResult = getInstructionAmounts(currentSymbol, tempInstruction);
             console.log("修改前输入的代币数量 = " + amountsResult.input);
             console.log("修改前输出的代币数量 = " + amountsResult.output);
@@ -50,7 +34,26 @@ export function resetInstructions(currentSymbol, transactionMessage, newInputAmo
             let numerator = BigInt(Math.round(currentSymbol.slipPersent * Number(precision)));
             if (NEED_CHANGE_SLIPPAGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58()) == -1) {
                 if (tempInstruction.programId.toBase58() == PUMP_AMM_PROGRAM_ID.toBase58() && currentSymbol.isBuy) {
+                    const newInputChangeBefore = newInputAmount;
                     newInputAmount = newInputAmount + (newInputAmount * numerator / precision);
+                    console.log("transferInstructionIndex = " + transferInstructionIndex);
+                    if (transferInstructionIndex > 0) {
+                        const transferInstruction = transactionMessage.instructions[transferInstructionIndex];
+                        const dataHex2 = transferInstruction.data.toString("hex");
+                        const instructionId = transferInstruction.data.readUInt32LE(0);
+                        if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
+                            console.log("转账指令重新修改为：", newInputAmount);
+                            setTransferInstructionLamports(newInputChangeBefore.toString(), transferInstruction, dataHex2, newInputAmount);
+                            transferInstructionIndex = i;
+                        }
+                        else if (instructionId === SOLANA_CREATE_ACCOUNT_WITH_SEED_ID) {
+                            setCreateAccountBySeedInstructionLamports(newInputChangeBefore.toString(), transferInstruction, dataHex2, newInputAmount);
+                        }
+                    }
+                    if (newInputAmount > BigInt(currentSymbol.solLamports)) {
+                        throw new Error("Error: pump-amm insufficient account balance " + currentSymbol.solLamports + " for required input "
+                            + newInputAmount);
+                    }
                 }
                 else {
                     newOutputAmount = newOutputAmount - (newOutputAmount * numerator / precision);

@@ -1,5 +1,5 @@
 import keysing from './keysing';
-import { checkAddressChain, isValidSHA256, numberToCharCode, sha256 } from '../common/utils';
+import { checkAddressChain, getUseToken, isValidSHA256, numberToCharCode, sha256 } from '../common/utils';
 import { deepCopy, findAndIncrementMax, isValidEthPrivateKey, isValidSolanaPrivateKey, whosePrivater } from '../common/utils';
 import { defaluBoootedOss, defalutWalletStore, ENCRYPTION_NAME, ETH_SERIES, NAMES } from '../common/config';
 import { ossStore } from '../common/ossStore';
@@ -15,14 +15,10 @@ class WalletService {
     atpkeys;
     ADDRESS_PATH_TYPE;
     HS;
-    setWalletTimer;
-    setBootdOsssTimer;
     walletMap = new Map();
     walletStore;
     bootedOss;
     constructor(options) {
-        this.setWalletTimer = null;
-        this.setBootdOsssTimer = null;
         this.password = '';
         this.atpkeys = [];
         this.HS = options;
@@ -32,7 +28,8 @@ class WalletService {
     }
     async getCloudBootedOss(HS, key) {
         try {
-            const { token, apparatus } = HS;
+            const { apparatus } = HS;
+            const token = getUseToken();
             const res = await ossStore.getBootedOssItem(token, apparatus, key);
             this.walletMap = ossStore.getWalletMap();
             this.bootedOss = this.walletMap.get('WalletBooted');
@@ -44,7 +41,8 @@ class WalletService {
     }
     async setCloudBootedOss(HS, key, value) {
         try {
-            const { token, apparatus } = HS;
+            const { apparatus } = HS;
+            const token = getUseToken();
             const res = await ossStore.setBootedOssItem(token, apparatus, key, value);
             this.walletMap = ossStore.getWalletMap();
             this.bootedOss = this.walletMap.get('WalletBooted');
@@ -75,20 +73,14 @@ class WalletService {
     }
     async setWalletStore(walletStore) {
         this.walletStore = walletStore;
-        global.clearTimeout(this.setWalletTimer);
-        this.setWalletTimer = global.setTimeout(() => {
-            this.setWalletCatch(this.HS.catcher, 'all', walletStore);
-        }, 200);
+        this.setWalletCatch(this.HS.catcher, 'all', walletStore);
     }
     getBootedOss() {
         return this.bootedOss;
     }
     async setBootedOss(bootedOssStore) {
         this.bootedOss = bootedOssStore;
-        global.clearTimeout(this.setBootdOsssTimer);
-        this.setBootdOsssTimer = global.setTimeout(() => {
-            this.setCloudBootedOss(this.HS, 'all', bootedOssStore);
-        }, 500);
+        await this.setCloudBootedOss(this.HS, 'all', bootedOssStore);
     }
     async walletInit() {
         const walletStore = this.getWalletStore();
@@ -108,7 +100,7 @@ class WalletService {
                     const mmcoi = await this.getEncryptionWallet(this.password, 1, hash);
                     for (const pathIndex of Array.from({ length: maxPathIndex + 1 }, (_, i) => i)) {
                         console.log('pathIndex', pathIndex);
-                        await this.createMnemonicWallet(mmcoi, pathIndex, '', id);
+                        await this.createMnemonicWallet(mmcoi, pathIndex, '', id, true);
                     }
                 }
             }
@@ -169,7 +161,7 @@ class WalletService {
         if (!isValidSHA256(password)) {
             shaPassword = await sha256(password);
         }
-        const encryptedBooted = await this.getBootedOss().booted;
+        const encryptedBooted = this.getBootedOss().booted;
         if (!encryptedBooted) {
             throw new Error(JSON.stringify({ code: 10001, message: 'Cannot find password set' }));
         }
@@ -243,7 +235,7 @@ class WalletService {
         }
         return await this.createMnemonicWallet(useMnemonic, pathIndex, walletName, id);
     }
-    async createMnemonicWallet(mnemonic, pathIndex = 0, walletName = '', id = 0) {
+    async createMnemonicWallet(mnemonic, pathIndex = 0, walletName = '', id = 0, generate = false) {
         await this.verifyPassword(this.password);
         const account = {};
         const items = [];
@@ -283,7 +275,7 @@ class WalletService {
             accountList: [account],
             id,
         };
-        return await this.setWalletList(walletList, pathIndex, walletName);
+        return await this.setWalletList(walletList, pathIndex, walletName, generate);
     }
     async createPrivateWallet(privateKey) {
         await this.verifyPassword(this.password);
@@ -314,7 +306,7 @@ class WalletService {
         };
         return await this.setWalletList(walletList);
     }
-    async setWalletList(walletList, mnemonicPathIndex = 0, walletName = '') {
+    async setWalletList(walletList, mnemonicPathIndex = 0, walletName = '', generate = false) {
         const pow = this.getWalletList() || [];
         const powList = deepCopy(pow);
         let backWallet = walletList;
@@ -370,9 +362,16 @@ class WalletService {
             }
         }
         if (!backWallet.isRepeat) {
-            await Promise.all(this.atpkeys);
+            let atpbooted = [];
+            if (!generate) {
+                atpbooted = await Promise.all(this.atpkeys);
+                const params = { ...this.getBootedOss(), pathIndex: mnemonicPathIndex };
+                if (atpbooted[atpbooted.length - 1]) {
+                    params.walletBooted = atpbooted[atpbooted.length - 1];
+                }
+                await this.setBootedOss(params);
+            }
             await this.setWalletStore({ ...this.getWalletStore(), walletList: powList, pathIndex: mnemonicPathIndex });
-            await this.setBootedOss({ ...this.getBootedOss(), pathIndex: mnemonicPathIndex });
         }
         this.atpkeys = [];
         return backWallet;
@@ -471,6 +470,10 @@ class WalletService {
         }
         return accountItem;
     }
+    async getWalletCurrentPathIndex() {
+        const bootpro = await this.getCloudBootedOss(this.HS);
+        return bootpro?.pathIndex || 0;
+    }
     async setCurrentWallet(walletId = 0, accountId = 0) {
         await this.setBootedOss({
             ...this.getBootedOss(),
@@ -520,18 +523,26 @@ class WalletService {
             throw new Error(error.message);
         }
     }
-    async clearWallet() {
-        await this.verifyPassword(this.password);
-        await this.setWalletStore(defalutWalletStore);
-        await this.setBootedOss(defaluBoootedOss);
-        await this.HS.catcher.removeItem('dataStorage');
-        await this.HS.catcher.removeItem('dataCache');
-        await this.HS.catcher.removeCookie('dataStorage', { secure: true });
+    async clearWallet(password) {
+        await this.verifyPassword(password);
+        const res = await this.clearLocalWallet();
+        if (res) {
+            await this.setBootedOss(defaluBoootedOss);
+        }
+        this.password = '';
         return true;
     }
     async clearLocalWallet() {
+        console.log('clearLocalWallet....');
+        await this.setWalletStore(defalutWalletStore);
         await this.HS.catcher.removeItem('dataStorage');
+        await this.HS.catcher.removeItem('dataCache');
         await this.HS.catcher.removeCookie('dataStorage', { secure: true });
+        ossStore.clearWalletMap();
+        this.walletStore = defalutWalletStore;
+        this.bootedOss = defaluBoootedOss;
+        this.password = '';
+        console.log('clearLocalWallet success');
         return true;
     }
     eventSecretCode() {
@@ -787,11 +798,12 @@ class WalletService {
         return Object.keys(walletBooted)?.length > 0;
     }
     async getWalletStatus() {
-        const bootpro = await this.getCloudBootedOss(this.HS);
-        const [isUnlocked, { walletBooted, booted }] = await Promise.all([this.isUnlocked(), bootpro]);
+        const bootpro = this.getCloudBootedOss(this.HS);
+        const [isUnlocked, { walletBooted, booted, pathIndex }] = await Promise.all([this.isUnlocked(), bootpro]);
         return {
             isUnlocked,
             isSetPassword: !!booted,
+            pathIndex: pathIndex || 0,
             hasWallet: Object.keys(walletBooted)?.length > 0,
         };
     }

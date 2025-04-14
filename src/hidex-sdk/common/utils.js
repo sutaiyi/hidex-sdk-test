@@ -225,3 +225,6 @@ export function formatNumberWithPrecision(numValue, precision) {
     const finalDecimal = (prefixZeros + effectivePart).padEnd(firstValidIndex + precision, '0');
     return `${intPart}.${finalDecimal}`;
 }
+export function getUseToken() {
+    return localStorage.getItem('access_token') || '';
+}

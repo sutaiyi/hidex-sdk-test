@@ -19,6 +19,12 @@ class DefiApi {
         this.clearTimer && global.clearInterval(this.clearTimer);
         this.clearTimer = global.setInterval(() => { this.getLatestBlockhash(network); }, 25000);
     }
+    stopLatestBlockhash() {
+        this.clearTimer && global?.clearInterval(this.clearTimer);
+    }
+    startLatestBlockhash(network) {
+        this.getLatestBlockhash(network);
+    }
     async swapRoute(currentSymbol, fromAddress) {
         const amountIn = BigInt(currentSymbol.amountIn) - BigInt(currentSymbol.dexFeeAmount);
         const inputToken = currentSymbol.in.address;

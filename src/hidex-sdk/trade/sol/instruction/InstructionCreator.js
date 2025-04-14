@@ -4,7 +4,7 @@ import { ComputeBudgetProgram, PublicKey, SystemProgram, TransactionMessage, Ver
 import abis from '../../../common/abis';
 import CustomWallet from '../../../wallet/custom';
 import { sTokenAddress, zero } from '../../../common/config';
-import { AssociateTokenProgram, JUPITER_PROGRAM_ID, PROGRAMID, PUEM_INSTRUCTION_PREFIX, PUMP_AMM_PROGRAM_ID, PUMP_PROGRAM_ID, SEED_DATA, SEED_SWAP, SEED_TRADE, SUPPORT_CHANGE_PROGRAM_IDS, TOKEN_PROGRAM_OWNS } from '../config';
+import { AssociateTokenProgram, BASE_ACCOUNT_INIT_FEE, JUPITER_PROGRAM_ID, PROGRAMID, PUEM_INSTRUCTION_PREFIX, PUMP_AMM_PROGRAM_ID, PUMP_PROGRAM_ID, SEED_DATA, SEED_SWAP, SEED_TRADE, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SUPPORT_CHANGE_PROGRAM_IDS, TOKEN_PROGRAM_OWNS } from '../config';
 export const isBuy = (currentSymbol) => {
     return !!currentSymbol.isBuy;
 };
@@ -347,4 +347,43 @@ export function getInstructionReplaceDataHex(currentSymbol, programId, dataHex, 
             dataHex.slice(indexInSupportingArr + 16 * 2);
     }
     return finalData;
+}
+export function setTransferInstructionLamports(preAmountIn, instruction, dataHex, newLamports) {
+    const instructionId = instruction.data.readUInt32LE(0);
+    if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
+        const buffer = Buffer.alloc(8);
+        buffer.writeBigUInt64LE(newLamports, 0);
+        const newInputAmountHex = buffer.toString("hex");
+        const readBigUInt64LE = instruction.data.readBigUInt64LE(4);
+        console.log("转账指令：", readBigUInt64LE);
+        if (BigInt(preAmountIn) == readBigUInt64LE) {
+            console.log("转账指令修改为：", newLamports);
+            const transferData = dataHex.slice(0, dataHex.length - 16) + newInputAmountHex;
+            instruction.data = Buffer.from(transferData, "hex");
+            return true;
+        }
+    }
+    return false;
+}
+export function setCreateAccountBySeedInstructionLamports(preAmountIn, instruction, dataHex, newLamports) {
+    const totalInitFeeBefore = BASE_ACCOUNT_INIT_FEE + BigInt(preAmountIn);
+    console.log("转账指令SOLANA_CREATE_ACCOUNT_WITH_SEED_ID：", totalInitFeeBefore);
+    const totalInitFeeBuffer = Buffer.alloc(8);
+    totalInitFeeBuffer.writeBigUInt64LE(totalInitFeeBefore);
+    const initFeeHex = totalInitFeeBuffer.toString("hex");
+    const feeInitIndex = dataHex.indexOf(initFeeHex);
+    console.log("feeInitIndex = " + feeInitIndex);
+    if (feeInitIndex >= 0) {
+        const totalInitFeeAfter = BASE_ACCOUNT_INIT_FEE + newLamports;
+        console.log("转账指令SOLANA_CREATE_ACCOUNT_WITH_SEED_ID 修改为：", totalInitFeeAfter);
+        const totalInitFeeBuffer = Buffer.alloc(8);
+        totalInitFeeBuffer.writeBigUInt64LE(totalInitFeeAfter);
+        const initFeeHexAfter = totalInitFeeBuffer.toString("hex");
+        const createAccountData = dataHex.slice(0, feeInitIndex) +
+            initFeeHexAfter +
+            dataHex.slice(feeInitIndex + 16);
+        instruction.data = Buffer.from(createAccountData, "hex");
+        return true;
+    }
+    return false;
 }

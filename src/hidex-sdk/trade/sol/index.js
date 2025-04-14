@@ -254,7 +254,7 @@ export const solService = (HS) => {
             const [submitResult, simulateResponse] = await Promise.all([submitPro, simulateResponsePro]);
             console.log('交易-预估结果==>', simulateResponse);
             if (simulateResponse && simulateResponse?.value?.err) {
-                throw new Error(JSON.stringify(simulateResponse.value.logs));
+                throw new Error('sol estimate error: ' + JSON.stringify(simulateResponse?.value?.logs) + JSON.stringify(simulateResponse?.value?.err));
             }
             return { error: !submitResult.success, result: { hash: submitResult.hash, data: { vertransactions, accountAddress, currentSymbol } } };
         },

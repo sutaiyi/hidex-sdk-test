@@ -42,5 +42,13 @@ export default (error) => {
         const code = 14008;
         return { code, message: errorInfo[code] };
     }
+    if (strMessage?.toLowerCase()?.includes('pump-amm insufficient account balance')) {
+        const code = 14009;
+        return { code, message: errorInfo[code] };
+    }
+    if (strMessage?.toLowerCase()?.includes('sol estimate error')) {
+        const code = 14010;
+        return { code, message: errorInfo[code] };
+    }
     return { code: 13000, message: errorInfo['13000'] + strMessage };
 };

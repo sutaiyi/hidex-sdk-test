@@ -7,6 +7,7 @@ import TradeService from '../trade/TradeService';
 import DexFeeService from '../trade/utils/dexfee';
 import { globalSet } from '../common/utils';
 import UtilsService from '../utils/UtilsService';
+import packageData from '../package.json';
 export class HidexService {
     options;
     network;
@@ -17,9 +18,9 @@ export class HidexService {
     utils;
     constructor(options) {
         console.log(`HidexService constructor called and options are: `, options);
-        fetch('package.json').then(res => res.json()).then((data) => {
-            console.log(`Hidex SDK Version: v${data?.dependencies['hidex-sdk']?.substring(1)}`);
-        });
+        if (packageData) {
+            console.log(`Hidex SDK Version: v${packageData.version}`);
+        }
         this.options = options;
         this.utils = new UtilsService();
         this.catcher = new CatcherService(options.apparatus);

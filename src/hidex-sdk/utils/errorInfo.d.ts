@@ -11,6 +11,8 @@ declare const _default: {
     14006: string;
     14007: string;
     14008: string;
+    14009: string;
+    14010: string;
 };
 export default _default;
 //# sourceMappingURL=errorInfo.d.ts.map

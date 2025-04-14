@@ -29,6 +29,7 @@ export interface IWalletService {
     getDefaultWallet(): Promise<WalletList>;
     getWalletAndAccount(walletId: number, accountId: number): Promise<WalletList>;
     getAccountById(walletId: number, accountId: number): Promise<WalletAccount>;
+    getWalletCurrentPathIndex(): Promise<number>;
     setCurrentWallet(walletId?: number, accountId?: number): Promise<{
         walletItem: WalletList;
         accountItem: WalletAccount;
@@ -36,7 +37,7 @@ export interface IWalletService {
     setWalletName(walletId: number, name: string): Promise<boolean>;
     deleteWallet(password: string, walletId: number): Promise<boolean>;
     deleteWalletAccount(password: string, walletId: number, accountId: number): Promise<boolean>;
-    clearWallet(): Promise<boolean>;
+    clearWallet(password: string): Promise<boolean>;
     clearLocalWallet(): Promise<boolean>;
     eventSecretCode(): void;
     ownerKey(accountAddress: string): Promise<string>;
@@ -50,6 +51,7 @@ export interface IWalletService {
         isUnlocked: boolean;
         isSetPassword: boolean;
         hasWallet: boolean;
+        pathIndex: number;
     }>;
 }
 export type WalletStore = {
