@@ -108,32 +108,32 @@ export function tokenDecode(encodedData) {
         address: decodedData[0],
         name: decodedData[1],
         symbol: decodedData[2],
-        decimals: decodedData[3],
+        decimals: decodedData[3]
     };
 }
 export async function bundlesStatuses(data) {
     const res = await (await fetch('https://mainnet.block-engine.jito.wtf/api/v1/bundles', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             jsonrpc: '2.0',
             id: 1,
             method: 'getBundleStatuses',
-            params: [[data]],
-        }),
+            params: [[data]]
+        })
     })).json();
     if (res && res.result && res.result.value) {
         return {
             context: res.result.context,
-            value: res.result.value.length > 0 ? { ...res.result.value[0], confirmationStatus: res.result.value[0].confirmation_status } : null,
+            value: res.result.value.length > 0 ? { ...res.result.value[0], confirmationStatus: res.result.value[0].confirmation_status } : null
         };
     }
     else {
         return {
             context: '',
-            value: null,
+            value: null
         };
     }
 }

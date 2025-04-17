@@ -1,9 +1,9 @@
-import { Connection } from "@solana/web3.js";
-import { defaultChain, defaultChainID } from "../common/config";
-import { getSolanaRpcHeard, getSolRpcOrigin } from "./utils";
-import LoggingProvider from "./provider";
-import axios from "axios";
-import EventEmitter from "../common/eventEmitter";
+import { Connection } from '@solana/web3.js';
+import { defaultChain, defaultChainID, quiknodeRpcs } from '../common/config';
+import { getSolanaRpcHeard, getSolRpcOrigin } from './utils';
+import LoggingProvider from './provider';
+import axios from 'axios';
+import EventEmitter from '../common/eventEmitter';
 class NetworkController extends EventEmitter {
     network;
     provider;
@@ -92,8 +92,8 @@ class NetworkController extends EventEmitter {
                     commitment: 'confirmed',
                     httpHeaders: {
                         'Content-Type': 'application/json',
-                        ...getSolanaRpcHeard(),
-                    },
+                        ...getSolanaRpcHeard()
+                    }
                 });
                 this.myProviders[this.network.chain.toLowerCase()] = this.provider;
                 return this.provider;
@@ -122,6 +122,19 @@ class NetworkController extends EventEmitter {
                 const currentProvider = this.solanaConnect(rpc, commitment);
                 return currentProvider;
             }
+            const currentProvider = new LoggingProvider(rpc, chainID);
+            return currentProvider;
+        }
+        catch (error) {
+            return null;
+        }
+    }
+    getClipProviderByChain(chain) {
+        try {
+            const currentChain = this.HS.chains(chain);
+            const chainName = currentChain.chain;
+            let rpc = quiknodeRpcs[chainName];
+            const chainID = currentChain.chainID;
             const currentProvider = new LoggingProvider(rpc, chainID);
             return currentProvider;
         }
@@ -183,8 +196,8 @@ class NetworkController extends EventEmitter {
                 return await axios.post(url, { jsonrpc: '2.0', method, params: [], id: 1 }, {
                     headers: {
                         'Content-Type': 'application/json',
-                        ...getSolanaRpcHeard(),
-                    },
+                        ...getSolanaRpcHeard()
+                    }
                 });
             }
             catch (error) {
@@ -239,8 +252,8 @@ class NetworkController extends EventEmitter {
             commitment,
             httpHeaders: {
                 'Content-Type': 'application/json',
-                ...getSolanaRpcHeard(),
-            },
+                ...getSolanaRpcHeard()
+            }
         });
         return currentProvider;
     }

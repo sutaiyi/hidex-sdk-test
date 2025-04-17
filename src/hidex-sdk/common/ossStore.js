@@ -5,7 +5,7 @@ const requireConfig = (apparatus, token) => {
     return {
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': apparatus ? token : token
+            Authorization: apparatus ? token : token
         }
     };
 };
@@ -23,6 +23,9 @@ const getBootedOssItem = async (token, apparatus, key) => {
             return data;
         }
         walletMap.set('WalletBooted', defaluBoootedOss);
+        if (key) {
+            return defaluBoootedOss[key];
+        }
         return defaluBoootedOss;
     }
     throw new Error('Failed get s3 store');

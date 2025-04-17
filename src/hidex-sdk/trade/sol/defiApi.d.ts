@@ -5,7 +5,8 @@ declare class DefiApi implements IDefiApi {
     clearTimer: NodeJS.Timeout | null;
     lastBlockHash: BlockhashWithExpiryBlockHeight;
     constructor();
-    getLatestBlockhash(network: INetworkService): Promise<void>;
+    getLatestBlockhash(network: INetworkService): Promise<BlockhashWithExpiryBlockHeight>;
+    updateLatestBlockhash(network: INetworkService): Promise<BlockhashWithExpiryBlockHeight>;
     stopLatestBlockhash(): void;
     startLatestBlockhash(network: INetworkService): void;
     swapRoute(currentSymbol: CurrentSymbol, fromAddress: string): Promise<{

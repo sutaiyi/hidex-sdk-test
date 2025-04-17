@@ -5,6 +5,7 @@ export interface INetworkService {
     choose(chain: string | number): Promise<ChainItem>;
     get(chain?: string | number): ChainItem;
     getProviderByChain(chain: string | number, commitment?: string): Provider | null;
+    getClipProviderByChain(chain: string | number, commitment?: string): Provider | null;
     getFastestProviderByChain(chain: string | number, commitment?: string): Promise<Provider | null>;
     getChainNameByChainId(chainId: number): string;
     getChainIdByChainName(chainName: string): number;

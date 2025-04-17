@@ -1,5 +1,5 @@
-import { BootedOssStore, WalletStore } from "../wallet/interfaces";
-import { SwapItem } from "./interfaces";
+import { BootedOssStore, WalletStore } from '../wallet/interfaces';
+import { SwapItem } from './interfaces';
 export declare const dexWalletFee = 0.01;
 export declare const mTokenAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 export declare const smTokenAddress = "SoEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
@@ -46,6 +46,7 @@ export declare const arbitrumTokens: {
     address: string;
     decimals: number;
 }[];
+export declare const quiknodeRpcs: Record<string, string>;
 export declare const website: Array<string>;
 export declare const twitterUrl = "https://twitter.com";
 export declare const newTwitterUrl = "https://x.com";

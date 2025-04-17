@@ -11,13 +11,21 @@ class DefiApi {
         };
     }
     async getLatestBlockhash(network) {
+        await this.updateLatestBlockhash(network);
+        this.clearTimer && global.clearInterval(this.clearTimer);
+        this.clearTimer = global.setInterval(() => {
+            this.getLatestBlockhash(network);
+        }, 25000);
+        return this.lastBlockHash;
+    }
+    async updateLatestBlockhash(network) {
         const connection = await network.getProviderByChain(102);
         if (connection) {
             const blockhash = await connection.getLatestBlockhash();
             this.lastBlockHash = blockhash;
+            return blockhash;
         }
-        this.clearTimer && global.clearInterval(this.clearTimer);
-        this.clearTimer = global.setInterval(() => { this.getLatestBlockhash(network); }, 25000);
+        return this.lastBlockHash;
     }
     stopLatestBlockhash() {
         this.clearTimer && global?.clearInterval(this.clearTimer);
@@ -52,13 +60,13 @@ class DefiApi {
             const signedTx = Buffer.from(transaction.serialize()).toString('base64');
             const signatureBase58 = transaction.signatures.map((sig) => bs58.encode(sig));
             const response = await axios.post('/gmgn/defi/router/v1/sol/tx/submit_signed_transaction', {
-                signed_tx: signedTx,
+                signed_tx: signedTx
             });
             if (response.status === 200 && response.data?.code === 0) {
                 return {
                     success: true,
                     hash: signatureBase58[0],
-                    currentSymbol,
+                    currentSymbol
                 };
             }
             if (response.status === 200 && response.data?.code !== 0) {
@@ -71,40 +79,51 @@ class DefiApi {
         }
     }
     async submitSwapByJito(transactions) {
-        const endpoints = [
-            'https://mainnet.block-engine.jito.wtf/api/v1/bundles',
-            'https://amsterdam.mainnet.block-engine.jito.wtf/api/v1/bundles',
-            'https://frankfurt.mainnet.block-engine.jito.wtf/api/v1/bundles',
-            'https://ny.mainnet.block-engine.jito.wtf/api/v1/bundles',
-            'https://tokyo.mainnet.block-engine.jito.wtf/api/v1/bundles',
-        ];
-        const serializedTransactions = [];
-        for (const transaction of transactions) {
-            serializedTransactions.push(bs58.encode(transaction.serialize()));
-        }
-        const signatureBase58 = transactions[3].signatures.map((sig) => bs58.encode(sig));
-        const requests = endpoints.map((url) => axios
-            .post(url, {
-            jsonrpc: '2.0',
-            id: 1,
-            method: 'sendBundle',
-            params: [serializedTransactions],
-        })
-            .then((res) => {
-            Promise.resolve(res);
-            return res;
-        })
-            .catch((error) => {
-            return Promise.reject(error);
-        }));
-        const results = await Promise.any(requests);
-        if (results.status === 200 && results.data && results.data.result) {
+        try {
+            const endpoints = [
+                'https://mainnet.block-engine.jito.wtf/api/v1/bundles',
+                'https://amsterdam.mainnet.block-engine.jito.wtf/api/v1/bundles',
+                'https://frankfurt.mainnet.block-engine.jito.wtf/api/v1/bundles',
+                'https://ny.mainnet.block-engine.jito.wtf/api/v1/bundles',
+                'https://tokyo.mainnet.block-engine.jito.wtf/api/v1/bundles'
+            ];
+            const serializedTransactions = [];
+            for (const transaction of transactions) {
+                serializedTransactions.push(bs58.encode(transaction.serialize()));
+            }
+            const signatureBase58 = transactions[3].signatures.map((sig) => bs58.encode(sig));
+            const requests = endpoints.map((url) => axios
+                .post(url, {
+                jsonrpc: '2.0',
+                id: 1,
+                method: 'sendBundle',
+                params: [serializedTransactions]
+            })
+                .then((res) => {
+                Promise.resolve(res);
+                return res;
+            })
+                .catch((error) => {
+                return Promise.reject(error);
+            }));
+            const results = await Promise.any(requests);
+            if (results.status === 200 && results.data && results.data.result) {
+                return {
+                    success: true,
+                    hash: signatureBase58[0]
+                };
+            }
             return {
-                success: true,
-                hash: signatureBase58[0],
+                success: false,
+                hash: ''
             };
         }
-        throw new Error('Error submitSwapByJito api data error');
+        catch (error) {
+            return {
+                success: false,
+                hash: ''
+            };
+        }
     }
     async getSwapStatus(hash) {
         const latestBlockhash = this.lastBlockHash;
@@ -126,4 +145,4 @@ class DefiApi {
         throw new Error('Get Transaction Status Error');
     }
 }
-export default new DefiApi;
+export default new DefiApi();

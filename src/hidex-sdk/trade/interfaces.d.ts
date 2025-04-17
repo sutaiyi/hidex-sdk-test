@@ -88,7 +88,8 @@ export interface IDexFeeService {
 }
 export interface IDefiApi {
     lastBlockHash: BlockhashWithExpiryBlockHeight;
-    getLatestBlockhash(network: INetworkService): Promise<void>;
+    getLatestBlockhash(network: INetworkService): Promise<BlockhashWithExpiryBlockHeight>;
+    updateLatestBlockhash(network: INetworkService): Promise<BlockhashWithExpiryBlockHeight>;
     stopLatestBlockhash(): void;
     startLatestBlockhash(network: INetworkService): void;
     swapRoute(currentSymbol: CurrentSymbol, fromAddress: string): Promise<{
@@ -153,6 +154,7 @@ export type CurrentSymbol = {
     userWsolAtaLamports: string;
     tokenAtaLamports: string;
     fireworks?: boolean | undefined;
+    otherTokenInfo?: any;
 };
 export type TokenInfo = {
     symbol: string;

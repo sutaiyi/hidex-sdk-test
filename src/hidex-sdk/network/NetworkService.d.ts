@@ -1,7 +1,7 @@
-import { Commitment } from "@solana/web3.js";
-import { OptionsCommon } from "../main/interfaces";
-import { ChainItem, Provider, INetworkService, SysProviderRpcsFace } from "./interfaces";
-import EventEmitter from "../common/eventEmitter";
+import { Commitment } from '@solana/web3.js';
+import { OptionsCommon } from '../main/interfaces';
+import { ChainItem, Provider, INetworkService, SysProviderRpcsFace } from './interfaces';
+import EventEmitter from '../common/eventEmitter';
 declare class NetworkController extends EventEmitter implements INetworkService {
     private network;
     private provider;
@@ -19,6 +19,7 @@ declare class NetworkController extends EventEmitter implements INetworkService 
     get(chain?: string | number): ChainItem;
     private getProvider;
     getProviderByChain(chain: string | number, commitment?: Commitment): Provider | null;
+    getClipProviderByChain(chain: string | number): Provider | null;
     getProviderByChainByRpc(chain: string | number, rpc: string): Provider | null;
     getFastestProviderByChain(chain: string | number, commitment?: Commitment): Promise<Provider | null>;
     getFastestRpc(chain: string | number): Promise<string>;

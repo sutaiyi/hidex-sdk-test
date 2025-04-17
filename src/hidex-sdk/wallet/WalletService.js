@@ -167,7 +167,8 @@ class WalletService {
         }
         await passworder.decrypt(shaPassword, encryptedBooted);
         this.password = shaPassword;
-        keysing.booted(this.password, this.HS.catcher, this.getWalletStore().unLockedExpiresDay);
+        const expires = await this.getUnLockedExpires();
+        keysing.booted(this.password, this.HS.catcher, expires);
     }
     async unlock(password) {
         await this.verifyPassword(password);
@@ -179,13 +180,17 @@ class WalletService {
     async setUnLockedExpires(expires) {
         if (this.password) {
             await keysing.booted(this.password, this.HS.catcher, expires);
-            await this.setWalletStore({ ...this.getWalletStore(), unLockedExpiresDay: expires });
+            await this.HS.catcher.setItem('unLockedExpiresDay', expires || 7);
             return true;
         }
         throw new Error(JSON.stringify({ code: 10002, message: 'Password is empty' }));
     }
     async getUnLockedExpires() {
-        return this.getWalletStore().unLockedExpiresDay;
+        let expires = await this.HS.catcher.getItem('unLockedExpiresDay');
+        if (!expires) {
+            expires = Number(expires);
+        }
+        return expires || 7;
     }
     async setLocked() {
         this.password = '';
@@ -225,7 +230,7 @@ class WalletService {
         let useMnemonic = mnemonic;
         const walletBootedArr = Object.keys(bootedOss.walletBooted);
         if (walletBootedArr.length > 0) {
-            const item = walletBootedArr.find(v => v.includes('MNEMONIC_HASH_'));
+            const item = walletBootedArr.find((v) => v.includes('MNEMONIC_HASH_'));
             if (item && item.split('_')[2] !== useMnemonic) {
                 throw new Error(JSON.stringify({ code: 10018, message: '助记词账户已创建' }));
             }
@@ -273,7 +278,7 @@ class WalletService {
             mnemonic: mha,
             usePrivateKey: false,
             accountList: [account],
-            id,
+            id
         };
         return await this.setWalletList(walletList, pathIndex, walletName, generate);
     }
@@ -302,7 +307,7 @@ class WalletService {
             mnemonic: '',
             usePrivateKey: true,
             accountList: [account],
-            id: 0,
+            id: 0
         };
         return await this.setWalletList(walletList);
     }
@@ -523,8 +528,7 @@ class WalletService {
             throw new Error(error.message);
         }
     }
-    async clearWallet(password) {
-        await this.verifyPassword(password);
+    async clearWallet() {
         const res = await this.clearLocalWallet();
         if (res) {
             await this.setBootedOss(defaluBoootedOss);
@@ -612,7 +616,7 @@ class WalletService {
             path = path.replace(/\/0$/, `/${pathIndex}`);
         }
         return {
-            path,
+            path
         };
     }
     createByMnemonicAndSave(chain, mnemonic, path, pathIndex, chainName) {
@@ -633,7 +637,7 @@ class WalletService {
             publicKey,
             privateKey,
             chain: chainName,
-            block,
+            block
         };
     }
     createByMnemonicFunBySol(mnemonic, pathIndex, chainName) {
@@ -650,7 +654,7 @@ class WalletService {
             publicKey,
             privateKey: secretKey,
             chain: 'SOLANA',
-            block: 0,
+            block: 0
         };
     }
     async createByPrivate() {
@@ -688,7 +692,7 @@ class WalletService {
                         address,
                         publicKey: address,
                         chain,
-                        block: 0,
+                        block: 0
                     };
                 }
                 else {
@@ -701,10 +705,10 @@ class WalletService {
                         publicKey,
                         privateKey: outPrivateKey,
                         chain: chainName,
-                        block,
+                        block
                     };
                 }
-            },
+            }
         };
     }
     async createEthSeriesPrivateKey(privateKey, key, chain, chainName) {
@@ -722,7 +726,7 @@ class WalletService {
                 publicKey,
                 privateKey,
                 chain: chainName,
-                block,
+                block
             };
         }
         else {
@@ -734,7 +738,7 @@ class WalletService {
                 publicKey,
                 privateKey: outPrivateKey,
                 chain: chainName,
-                block,
+                block
             };
         }
     }
@@ -743,7 +747,7 @@ class WalletService {
             address: '',
             outPrivateKey: '',
             publicKey: '',
-            block: 0,
+            block: 0
         };
         if (chainName === 'SOLANA') {
             const restoredEthWallet = new ethers.Wallet(privateKey);
@@ -756,7 +760,7 @@ class WalletService {
                 address: restoredSolanaAddress,
                 publicKey: restoredSolanaAddress,
                 outPrivateKey: restoredSolanaPrivateKeyBase58,
-                block: 0,
+                block: 0
             };
         }
         if (ETH_SERIES.indexOf(chainName.toUpperCase()) !== -1) {
@@ -772,7 +776,7 @@ class WalletService {
                 address: ethAddress,
                 outPrivateKey: ethPrivateKey,
                 publicKey: this.getPublicKey(ethPrivateKey),
-                block,
+                block
             };
         }
         return account;
@@ -804,7 +808,7 @@ class WalletService {
             isUnlocked,
             isSetPassword: !!booted,
             pathIndex: pathIndex || 0,
-            hasWallet: Object.keys(walletBooted)?.length > 0,
+            hasWallet: Object.keys(walletBooted)?.length > 0
         };
     }
     async signMessage(message, address) {

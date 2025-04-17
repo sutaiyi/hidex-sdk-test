@@ -1,5 +1,5 @@
-import { ICatcher } from "../catch/interfaces";
-import { OptionsCommon } from "../main/interfaces";
+import { ICatcher } from '../catch/interfaces';
+import { OptionsCommon } from '../main/interfaces';
 export interface IWalletService {
     walletInit(): Promise<void>;
     getWalletCatch(catcher: ICatcher, key?: string): Promise<WalletStore>;
@@ -37,7 +37,7 @@ export interface IWalletService {
     setWalletName(walletId: number, name: string): Promise<boolean>;
     deleteWallet(password: string, walletId: number): Promise<boolean>;
     deleteWalletAccount(password: string, walletId: number, accountId: number): Promise<boolean>;
-    clearWallet(password: string): Promise<boolean>;
+    clearWallet(): Promise<boolean>;
     clearLocalWallet(): Promise<boolean>;
     eventSecretCode(): void;
     ownerKey(accountAddress: string): Promise<string>;
@@ -59,7 +59,6 @@ export type WalletStore = {
     isUnlocked: boolean;
     upgrade: boolean;
     pathIndex: number;
-    unLockedExpiresDay: number;
 };
 export type BootedOssStore = {
     walletBooted: any;

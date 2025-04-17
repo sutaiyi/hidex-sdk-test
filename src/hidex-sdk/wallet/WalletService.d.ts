@@ -58,7 +58,7 @@ declare class WalletService implements IWalletService {
     }>;
     deleteWallet(password: string, walletId: number): Promise<boolean>;
     deleteWalletAccount(password: string, walletId: number, accountId: number): Promise<boolean>;
-    clearWallet(password: string): Promise<boolean>;
+    clearWallet(): Promise<boolean>;
     clearLocalWallet(): Promise<boolean>;
     eventSecretCode(): void;
     exportMnemonics(password: string, walletId: number): Promise<string>;

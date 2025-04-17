@@ -1,25 +1,28 @@
-import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { smTokenAddress } from "../../common/config";
-import { getTokenOwner, sendSolanaTransaction } from "./utils";
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createTransferInstruction, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { simulateConfig, TOKEN_2022_OWNER } from "./config";
-import { priorityFeeInstruction } from "./instruction/InstructionCreator";
-import defiApi from "./defiApi";
-import UtilsService from "../../utils/UtilsService";
-import { compileTransaction, getTransactionsSignature, isInstructionsSupportReset, resetInstructions } from "./instruction";
-import { NETWORK_FEE_RATES } from "../eth/config";
+import { PublicKey, SystemProgram } from '@solana/web3.js';
+import { smTokenAddress } from '../../common/config';
+import { getTokenOwner, sendSolanaTransaction } from './utils';
+import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createTransferInstruction, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { simulateConfig, TOKEN_2022_OWNER } from './config';
+import { priorityFeeInstruction } from './instruction/InstructionCreator';
+import defiApi from './defiApi';
+import UtilsService from '../../utils/UtilsService';
+import { compileTransaction, getTransactionsSignature, isInstructionsSupportReset, resetInstructions } from './instruction';
+import { NETWORK_FEE_RATES } from '../eth/config';
 const utils = new UtilsService();
 export const solService = (HS) => {
     const { network, wallet } = HS;
     const getBalance = async (accountAddress, tokenAddress = '', isAta = false) => {
         const currentNetwork = network.get(102);
         try {
-            if ((tokenAddress && (tokenAddress === smTokenAddress)) || !tokenAddress || isAta) {
+            if ((tokenAddress && tokenAddress === smTokenAddress) || !tokenAddress || isAta) {
                 const pk = !isAta ? new PublicKey(accountAddress) : new PublicKey(tokenAddress);
                 const balanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
-                    return v.getBalance(pk).then((res) => {
+                    return v
+                        .getBalance(pk)
+                        .then((res) => {
                         return res;
-                    }).catch((error) => {
+                    })
+                        .catch((error) => {
                         return Promise.reject(error);
                     });
                 });
@@ -38,7 +41,8 @@ export const solService = (HS) => {
                 userAta = await getAssociatedTokenAddress(tpk, apk, false, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
             }
             const tokenBalanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
-                return v.getTokenAccountBalance(userAta)
+                return v
+                    .getTokenAccountBalance(userAta)
                     .then((res) => {
                     return res;
                 })
@@ -92,16 +96,16 @@ export const solService = (HS) => {
         },
         getNetWorkFees: async (gasLimit, tradeType) => {
             const gasPrice = 0.000005;
-            const netVal = tradeType !== 3 ? 0.002 : 0.001;
-            const networkRate = NETWORK_FEE_RATES['SOLANA'];
+            const netVal = tradeType !== 3 ? 0.0055 : 0.003;
+            const networkRate = tradeType !== 3 ? NETWORK_FEE_RATES['SOLANA_JITO'] : NETWORK_FEE_RATES['SOLANA'];
             const networkFees = [];
             for (let i = 0; i < networkRate.length; i++) {
                 networkFees.push({
-                    value: Number((netVal * networkRate[i]).toFixed(3)),
+                    value: Number((netVal * networkRate[i]).toFixed(4)),
                     unit: 'SOL',
                     gasLimit,
                     gasPrice: gasPrice.toString(),
-                    rate: networkRate[i],
+                    rate: networkRate[i]
                 });
             }
             return networkFees;
@@ -140,7 +144,7 @@ export const solService = (HS) => {
                     instructions.push(SystemProgram.transfer({
                         fromPubkey: senderPublicKey,
                         toPubkey: receiverPublicKey,
-                        lamports: BigInt(amount),
+                        lamports: BigInt(amount)
                     }));
                 }
                 else {
@@ -165,7 +169,7 @@ export const solService = (HS) => {
             catch (error) {
                 return {
                     error,
-                    result: null,
+                    result: null
                 };
             }
         },
@@ -175,11 +179,12 @@ export const solService = (HS) => {
             }
             let outAmount = 0;
             if (currentSymbol.isBuy && currentSymbol.currentPrice) {
-                const amountInUSD = Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.in.decimals) * currentSymbol.cryptoPriceUSD;
-                outAmount = (Math.floor(amountInUSD / Number(currentSymbol.currentPrice) * Math.pow(10, currentSymbol.out.decimals)));
+                const amountInUSD = (Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.in.decimals)) * currentSymbol.cryptoPriceUSD;
+                outAmount = Math.floor((amountInUSD / Number(currentSymbol.currentPrice)) * Math.pow(10, currentSymbol.out.decimals));
             }
             if (!currentSymbol.isBuy && currentSymbol.currentPrice) {
-                outAmount = (Math.floor(Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.in.decimals) * currentSymbol.currentPrice / currentSymbol.cryptoPriceUSD * Math.pow(10, currentSymbol.out.decimals)));
+                outAmount = Math.floor((((Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.in.decimals)) * currentSymbol.currentPrice) / currentSymbol.cryptoPriceUSD) *
+                    Math.pow(10, currentSymbol.out.decimals));
             }
             return {
                 fullAmoutOut: BigInt(outAmount).toString(),
@@ -226,17 +231,17 @@ export const solService = (HS) => {
             return {
                 gasLimit: 0,
                 data: {
-                    vertransactions: txArray,
+                    vertransactions: txArray
                 }
             };
         },
         getSwapFees: async (currentSymbol) => {
-            const { networkFee, dexFeeAmount } = currentSymbol;
-            const netFee = networkFee ? networkFee.value * (currentSymbol.tradeType === 0 ? 4 : 2) : 0.000024;
-            const dexFee = Number(dexFeeAmount) / Math.pow(10, 9);
+            const { networkFee } = currentSymbol;
+            const netFee = 0.00002;
+            const dexFee = 0;
             const mitToken = (2139280 * 2) / Math.pow(10, 9);
             const accountSave = 890880 / Math.pow(10, 9);
-            const priorityFee = Number(currentSymbol.priorityFee) / Math.pow(10, 9);
+            const priorityFee = networkFee?.value || Number(currentSymbol.priorityFee) / Math.pow(10, 9);
             return netFee + dexFee + mitToken + accountSave + priorityFee;
         },
         swap: async (currentSymbol, transaction, accountAddress) => {
@@ -254,7 +259,13 @@ export const solService = (HS) => {
             const [submitResult, simulateResponse] = await Promise.all([submitPro, simulateResponsePro]);
             console.log('交易-预估结果==>', simulateResponse);
             if (simulateResponse && simulateResponse?.value?.err) {
+                if (submitResult.hash && simulateResponse?.value?.err?.toString().toLowerCase().includes('already') && simulateResponse?.value?.logs?.length === 0) {
+                    return { error: null, result: { hash: submitResult.hash, data: { vertransactions, accountAddress, currentSymbol } } };
+                }
                 throw new Error('sol estimate error: ' + JSON.stringify(simulateResponse?.value?.logs) + JSON.stringify(simulateResponse?.value?.err));
+            }
+            if (!submitResult.hash) {
+                throw new Error('axioserror: request failed');
             }
             return { error: !submitResult.success, result: { hash: submitResult.hash, data: { vertransactions, accountAddress, currentSymbol } } };
         },
@@ -263,8 +274,8 @@ export const solService = (HS) => {
             if (status === 'Failed') {
                 const connection = await network.getProviderByChain(102);
                 const hashStatus = await connection.getParsedTransaction(hash, {
-                    commitment: "confirmed",
-                    maxSupportedTransactionVersion: 0,
+                    commitment: 'confirmed',
+                    maxSupportedTransactionVersion: 0
                 });
                 console.log('SOL 链上状态查询 confirmation===', hashStatus);
                 if (hashStatus) {

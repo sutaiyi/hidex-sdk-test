@@ -381,7 +381,7 @@ export const ethService = (HS) => {
         },
         swap: async (currentSymbol, transaction, accountAddress) => {
             const currentNetWork = network.get();
-            const provider = await network.getFastestProviderByChain(currentNetWork.chain);
+            const provider = await network.getClipProviderByChain(currentNetWork.chain);
             const { gasLimit, data } = transaction;
             const ownerKey = await wallet.ownerKey(accountAddress);
             const walletProvider = new ethers.Wallet(ownerKey, provider);
