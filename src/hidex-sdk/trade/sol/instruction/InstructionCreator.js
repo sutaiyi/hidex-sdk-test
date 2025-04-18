@@ -112,6 +112,10 @@ export function isParameterValid(currentSymbol) {
     const wsolAtaAmountBefore = new anchor.BN(currentSymbol.userwsolAtaAmount);
     const userWsolAtaLamports = new anchor.BN(currentSymbol.userWsolAtaLamports);
     const tokenAtaLamports = new anchor.BN(currentSymbol.tokenAtaLamports);
+    console.log("lamportsBefore", currentSymbol.solLamports);
+    console.log("wsolAtaAmountBefore", currentSymbol.userwsolAtaAmount);
+    console.log("userWsolAtaLamports", currentSymbol.userWsolAtaLamports);
+    console.log("tokenAtaLamports", currentSymbol.tokenAtaLamports);
     if (lamportsBefore < 0 || wsolAtaAmountBefore < 0 || userWsolAtaLamports < 0 || tokenAtaLamports < 0) {
         return false;
     }
@@ -348,7 +352,7 @@ export function getInstructionReplaceDataHex(currentSymbol, programId, dataHex, 
     }
     return finalData;
 }
-export function setTransferInstructionLamports(preAmountIn, instruction, dataHex, newLamports) {
+export function setTransferInstructionLamports(instruction, dataHex, newLamports) {
     const instructionId = instruction.data.readUInt32LE(0);
     if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
         const buffer = Buffer.alloc(8);
@@ -356,12 +360,10 @@ export function setTransferInstructionLamports(preAmountIn, instruction, dataHex
         const newInputAmountHex = buffer.toString("hex");
         const readBigUInt64LE = instruction.data.readBigUInt64LE(4);
         console.log("转账指令：", readBigUInt64LE);
-        if (BigInt(preAmountIn) == readBigUInt64LE) {
-            console.log("转账指令修改为：", newLamports);
-            const transferData = dataHex.slice(0, dataHex.length - 16) + newInputAmountHex;
-            instruction.data = Buffer.from(transferData, "hex");
-            return true;
-        }
+        console.log("转账指令修改为：", newLamports);
+        const transferData = dataHex.slice(0, dataHex.length - 16) + newInputAmountHex;
+        instruction.data = Buffer.from(transferData, "hex");
+        return true;
     }
     return false;
 }

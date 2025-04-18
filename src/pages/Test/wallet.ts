@@ -1,4 +1,4 @@
-import { HidexSDK } from '@/hidexService'
+import { HidexSDK } from '@/hidexService';
 
 const walletTest = () => {
   const { wallet } = HidexSDK;
@@ -9,7 +9,7 @@ const walletTest = () => {
         const password = '123123';
         await wallet.createPassword(password);
         await wallet.setUnLockedExpires(7);
-        console.log('密码创建成功', password)
+        console.log('密码创建成功', password);
       } catch (error) {
         console.error(error);
         alert(error);
@@ -17,14 +17,14 @@ const walletTest = () => {
     },
     修改密码123123: async () => {
       try {
-        console.log('验证密码...')
+        console.log('验证密码...');
         const oldPassword = '123123';
         const newPassword = '123123';
         await wallet.verifyPassword(oldPassword);
         // 验证无误后修改密码
-        console.log('验证无误， 开始修改密码...')
-        await wallet.resetPassword(oldPassword, newPassword)
-        console.log('密码修改成功 ' + newPassword)
+        console.log('验证无误， 开始修改密码...');
+        await wallet.resetPassword(oldPassword, newPassword);
+        console.log('密码修改成功 ' + newPassword);
       } catch (error) {
         console.error(error);
         alert(error);
@@ -48,7 +48,7 @@ const walletTest = () => {
         // 检测并同步账号
         await wallet.walletInit();
         console.log('钱包解锁成功');
-        alert('解锁成功')
+        alert('解锁成功');
       } catch (error) {
         console.error(error);
         alert(error);
@@ -56,7 +56,7 @@ const walletTest = () => {
     },
     设置密码到期时间: async () => {
       try {
-        await wallet.setUnLockedExpires(0.0001)
+        await wallet.setUnLockedExpires(0.0001);
       } catch (error) {
         console.error(error);
         alert(error);
@@ -64,7 +64,7 @@ const walletTest = () => {
     },
     查看密码到期时间: async () => {
       try {
-        console.log(await wallet.getUnLockedExpires())
+        console.log(await wallet.getUnLockedExpires());
       } catch (error) {
         console.error(error);
         alert(error);
@@ -75,7 +75,7 @@ const walletTest = () => {
         // const isUnlocked = await wallet.isUnlocked();
         // const isSetPassword = await wallet.isSetPassword();
         // const hasWallet = await wallet.hasWallet();
-        // console.log('钱包是否已解锁: ', isUnlocked); // 
+        // console.log('钱包是否已解锁: ', isUnlocked); //
         // console.log('是否设置密码: ', isSetPassword);
         // console.log('是否创建了钱包: ', hasWallet);
         const walletStatus = await wallet.getWalletStatus();
@@ -105,8 +105,18 @@ const walletTest = () => {
     },
     查看当前选中的钱包: async () => {
       try {
-        const chainName = 'SOLANA'
+        const chainName = 'SOLANA';
         const { walletItem, accountItem } = await wallet.getCurrentWallet();
+        console.log('当前选中的钱包对象: ', walletItem, accountItem, accountItem[chainName]);
+      } catch (error) {
+        console.error(error);
+        alert(error);
+      }
+    },
+    选中第二个钱包: async () => {
+      try {
+        const chainName = 'SOLANA';
+        const { walletItem, accountItem } = await wallet.setCurrentWallet(0, 1);
         console.log('当前选中的钱包对象: ', walletItem, accountItem, accountItem[chainName]);
       } catch (error) {
         console.error(error);
@@ -122,7 +132,6 @@ const walletTest = () => {
 
         // 选中该钱包(根据具体业务而定)
         await wallet.setCurrentWallet(walletAccount.id, 0);
-
       } catch (error) {
         console.error(error);
         alert(error);
@@ -133,7 +142,7 @@ const walletTest = () => {
         const password = '123123';
         await wallet.createPassword(password);
         await wallet.setUnLockedExpires(7);
-        console.log('密码创建成功', password)
+        console.log('密码创建成功', password);
         const mnemonic = await wallet.generateMnemonic();
         console.log('助记词： ', mnemonic);
         const walletAccount = await wallet.createWallet(mnemonic, 0, '发财钱包');
@@ -141,7 +150,6 @@ const walletTest = () => {
 
         // 选中该钱包(根据具体业务而定)
         // await wallet.setCurrentWallet(walletAccount.id, 0);
-
       } catch (error) {
         console.error(error);
         alert(error);
@@ -200,13 +208,12 @@ const walletTest = () => {
     },
     私钥创建钱包: async () => {
       try {
-        const privateKeyETH = '114d6696f21013bfb3a5891e6720ddb5a46dbd9d9da134042f6ceae77963f30a'
+        const privateKeyETH = '114d6696f21013bfb3a5891e6720ddb5a46dbd9d9da134042f6ceae77963f30a';
         console.log('ETH系私钥： ', privateKeyETH);
         const walletAccountETH = await wallet.createPrivateWallet(privateKeyETH);
         console.log('ETH系私钥创建成功（返回当前创建的钱包对象）: ', walletAccountETH);
 
-
-        const privateKeySOL = '3UJnoLvwCmQBx7LrEGYZmA8vdoWohX4hqfBiYSCGCk1pr5YsP6mT59YhrmxiJCSWMCa1taSFPFp8F3ohsntUCkNh'
+        const privateKeySOL = '3UJnoLvwCmQBx7LrEGYZmA8vdoWohX4hqfBiYSCGCk1pr5YsP6mT59YhrmxiJCSWMCa1taSFPFp8F3ohsntUCkNh';
         console.log('SOLANA私钥： ', privateKeySOL);
         const walletAccountSOL = await wallet.createPrivateWallet(privateKeySOL);
         console.log('SOLANA私钥创建成功（返回当前创建的钱包对象）: ', walletAccountSOL);
@@ -217,8 +224,8 @@ const walletTest = () => {
     },
     修改钱包名称: async () => {
       try {
-        await wallet.setWalletName(0, '修改后的钱包名称（发财啊）')
-        alert('修改成功')
+        await wallet.setWalletName(0, '修改后的钱包名称（发财啊）');
+        alert('修改成功');
       } catch (error) {
         console.error(error);
         alert(error);
@@ -236,7 +243,7 @@ const walletTest = () => {
           console.log('签名结果: ', signature);
           return signature;
         }
-        alert('未找到钱包账号账号')
+        alert('未找到钱包账号账号');
       } catch (error) {
         console.error(error);
         alert(error);
@@ -244,8 +251,10 @@ const walletTest = () => {
     },
     导出私钥: async () => {
       try {
-        const privateKey = await wallet.exportPrivateKey('123123', 0, 0, 'BSC')
-        console.log('私钥为: ', privateKey);
+        const privateKeySOL = await wallet.exportPrivateKey('123123', 0, 0, 'SOLANA');
+        const privateKey = await wallet.exportPrivateKey('123123', 0, 0, 'BSC');
+        console.log('SOL私钥为: ', privateKeySOL);
+        console.log('ETH私钥为: ', privateKey);
       } catch (error) {
         console.error(error);
         alert(error);
@@ -253,7 +262,7 @@ const walletTest = () => {
     },
     导出助记词: async () => {
       try {
-        const mnemonics = await wallet.exportMnemonics('123123', 0)
+        const mnemonics = await wallet.exportMnemonics('123123', 0);
         console.log('助记词为: ', mnemonics);
       } catch (error) {
         console.error(error);
@@ -263,8 +272,8 @@ const walletTest = () => {
     清空钱包: async () => {
       if (window.confirm('确定要清空钱包吗？')) {
         try {
-          await wallet.clearWallet('123123')
-          alert('清空成功')
+          await wallet.clearWallet();
+          alert('清空成功');
         } catch (error) {
           console.error(error);
           alert(error);
@@ -274,8 +283,8 @@ const walletTest = () => {
     清空本地钱包: async () => {
       if (window.confirm('确定要清空钱包吗？')) {
         try {
-          await wallet.clearLocalWallet()
-          alert('清空成功')
+          await wallet.clearLocalWallet();
+          alert('清空成功');
         } catch (error) {
           console.error(error);
           alert(error);
@@ -286,27 +295,26 @@ const walletTest = () => {
       if (window.confirm('确定要删除单个钱包吗？')) {
         try {
           const walletId = 0;
-          await wallet.deleteWallet('123123', walletId)
-          alert('删除成功')
+          await wallet.deleteWallet('123123', walletId);
+          alert('删除成功');
         } catch (error) {
           console.error(error);
           alert(error);
         }
       }
-
     },
     删除单个账号: async () => {
       if (window.confirm('确定要删除单个账号吗？')) {
         try {
-          await wallet.deleteWalletAccount('123123', 0, 0)
-          alert('删除成功')
+          await wallet.deleteWalletAccount('123123', 0, 0);
+          alert('删除成功');
         } catch (error) {
           console.error(error);
           alert(error);
         }
       }
     },
-  }
-}
+  };
+};
 
-export default walletTest
+export default walletTest;

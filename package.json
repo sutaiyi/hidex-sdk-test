@@ -19,7 +19,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "core-service-ts": "^1.0.0",
-    "hidex-sdk": "^1.1.15",
+    "hidex-sdk": "^1.1.28",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",

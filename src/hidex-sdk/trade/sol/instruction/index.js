@@ -1,6 +1,6 @@
 import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount, PublicKey } from '@solana/web3.js';
-import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, DEFAULD_SOLANA_SWAP_LIMIT, TIP_MINI_IN_PRIORITY, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, HIDEX_ADDRESS_LOOK_UP, DEFAULD_SOLANA_GAS_LIMIT, DEFAULD_BASE_GAS_FEE } from '../config';
-import { checkAccountCloseInstruction, createSimpleSwapCompleteInstruction, createSwapCompleteInstruction, createSwapPrepareInstruction, createTipTransferInstruction, deleteTransactionGasInstruction, getInstructionAmounts, getInstructionReplaceDataHex, isParameterValid, numberToLittleEndianHex, priorityFeeInstruction, setCreateAccountBySeedInstructionLamports, setTransferInstructionLamports, versionedTra } from './InstructionCreator';
+import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, DEFAULD_SOLANA_SWAP_LIMIT, TIP_MINI_IN_PRIORITY, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, HIDEX_ADDRESS_LOOK_UP, DEFAULD_SOLANA_GAS_LIMIT, } from '../config';
+import { checkAccountCloseInstruction, createSwapCompleteInstruction, createSwapPrepareInstruction, createTipTransferInstruction, deleteTransactionGasInstruction, getInstructionAmounts, getInstructionReplaceDataHex, numberToLittleEndianHex, priorityFeeInstruction, setCreateAccountBySeedInstructionLamports, setTransferInstructionLamports, versionedTra } from './InstructionCreator';
 export function resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount) {
     let transferInstructionIndex = -1;
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
@@ -12,7 +12,7 @@ export function resetInstructions(currentSymbol, transactionMessage, newInputAmo
             continue;
         const instructionId = tempInstruction.data.readUint8();
         if (tempInstruction.programId.toBase58() == SOLANA_SYSTEM_PROGRAM_ID.toBase58() && currentSymbol.isBuy) {
-            hasChange = setTransferInstructionLamports(currentSymbol.preAmountIn, tempInstruction, dataHex, newInputAmount);
+            hasChange = setTransferInstructionLamports(tempInstruction, dataHex, newInputAmount);
             if (hasChange) {
                 transferInstructionIndex = i;
                 console.log('转账指令已修改 = ' + transferInstructionIndex);
@@ -45,7 +45,7 @@ export function resetInstructions(currentSymbol, transactionMessage, newInputAmo
                         const instructionId = transferInstruction.data.readUInt32LE(0);
                         if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
                             console.log('转账指令重新修改为：', newInputAmount);
-                            setTransferInstructionLamports(newInputChangeBefore.toString(), transferInstruction, dataHex2, newInputAmount);
+                            setTransferInstructionLamports(transferInstruction, dataHex2, newInputAmount);
                             transferInstructionIndex = i;
                         }
                         else if (instructionId === SOLANA_CREATE_ACCOUNT_WITH_SEED_ID) {
@@ -160,13 +160,11 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
             transactionMessage.instructions.splice(transactionMessage.instructions.length - 1);
         }
     }
-    console.log('getTransactionsSignature.instruction13= ' + transactionMessage.instructions.length);
     const swapPrepareIx = await createSwapPrepareInstruction(currentSymbol, owner, HS.network);
-    console.log('getTransactionsSignature.instruction14= ' + transactionMessage.instructions.length);
-    const swapCompletedIx = await createSwapCompleteInstruction(currentSymbol, owner, HS.network);
-    console.log('getTransactionsSignature.instruction15= ' + transactionMessage.instructions.length);
+    let swapCompletedIx = await createSwapCompleteInstruction(currentSymbol, owner, HS.network);
     let priorityFee = Number(currentSymbol.priorityFee);
     deleteTransactionGasInstruction(transactionMessage.instructions);
+    const temTransactionInstructions = [...transactionMessage.instructions];
     if (currentSymbol.tradeType != 0) {
         transactionMessage.instructions.splice(0, 0, swapPrepareIx);
         transactionMessage.instructions.push(swapCompletedIx);
@@ -186,46 +184,27 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
             return [swapTx];
         }
         else {
-            transactionMessage.instructions.splice(2, 1);
-            transactionMessage.instructions.splice(priorityFee >= TIP_MINI_IN_PRIORITY ? transactionMessage.instructions.length - 2 : transactionMessage.instructions.length - 1, 1);
-            const swapTx = await versionedTra(transactionMessage.instructions, owner, recentBlockhash, addressLookupTableAccounts);
-            const swapTxSer = swapTx.serialize();
-            const swapTxBytesSize = swapTxSer.length;
-            console.log("交易串删除指令后的字节长度 = " + swapTxBytesSize);
-            const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(DEFAULD_SOLANA_SWAP_LIMIT, DEFAULD_SOLANA_GAS_LIMIT);
-            const simpleSwapCompletedIx = await createSimpleSwapCompleteInstruction(currentSymbol, owner, HS.network, Number(currentSymbol.priorityFee) + DEFAULD_SOLANA_GAS_LIMIT + 2 * DEFAULD_BASE_GAS_FEE);
-            const simpleCompleteSwapTx = await versionedTra([addPriorityPriceIx, addPriorityLimitIx, simpleSwapCompletedIx], owner, recentBlockhash, addressLookupTableAccounts);
-            console.log("交易串删除指令后的字节长度 = " + Buffer.from(simpleCompleteSwapTx.serialize()).toString("base64"));
-            if (isParameterValid(currentSymbol)) {
-                return [
-                    swapTx,
-                    simpleCompleteSwapTx
-                ];
-            }
-            else {
-                return [];
-            }
+            currentSymbol.tradeType = 0;
         }
     }
-    else {
-        const swapPrepareTx = await versionedTra([swapPrepareIx], owner, recentBlockhash, addressLookupTableAccounts);
-        const swapTx = await versionedTra(transactionMessage.instructions, owner, recentBlockhash, addressLookupTableAccounts);
-        const swaCompletedTx = await versionedTra([swapCompletedIx], owner, recentBlockhash, addressLookupTableAccounts);
-        const randomIndex = Math.floor(Math.random() * JITO_FEE_ACCOUNT.length);
-        console.log("选中的jito tip地址", new PublicKey(JITO_FEE_ACCOUNT[randomIndex]).toBase58());
-        const tipIx = await createTipTransferInstruction(owner.publicKey, new PublicKey(JITO_FEE_ACCOUNT[randomIndex]), BigInt(priorityFee));
-        const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(DEFAULD_SOLANA_SWAP_LIMIT, DEFAULD_SOLANA_GAS_LIMIT);
-        const tipTx = await versionedTra([addPriorityPriceIx, addPriorityLimitIx, tipIx], owner, recentBlockhash, addressLookupTableAccounts);
-        const simulateTx = await versionedTra([tipIx, swapPrepareIx, ...transactionMessage.instructions, swapCompletedIx], owner, recentBlockhash, addressLookupTableAccounts);
-        const txArray = [
-            swapPrepareTx,
-            swapTx,
-            swaCompletedTx,
-            tipTx,
-        ];
-        if (simulateTx.serialize().length < SOLANA_MAX_TX_SERIALIZE_SIGN) {
-            txArray.push(simulateTx);
-        }
-        return txArray;
+    swapCompletedIx = await createSwapCompleteInstruction(currentSymbol, owner, HS.network);
+    const swapPrepareTx = await versionedTra([swapPrepareIx], owner, recentBlockhash, addressLookupTableAccounts);
+    const swapTx = await versionedTra(temTransactionInstructions, owner, recentBlockhash, addressLookupTableAccounts);
+    const swaCompletedTx = await versionedTra([swapCompletedIx], owner, recentBlockhash, addressLookupTableAccounts);
+    const randomIndex = Math.floor(Math.random() * JITO_FEE_ACCOUNT.length);
+    console.log("选中的jito tip地址", new PublicKey(JITO_FEE_ACCOUNT[randomIndex]).toBase58());
+    const tipIx = await createTipTransferInstruction(owner.publicKey, new PublicKey(JITO_FEE_ACCOUNT[randomIndex]), BigInt(priorityFee));
+    const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(DEFAULD_SOLANA_SWAP_LIMIT, DEFAULD_SOLANA_GAS_LIMIT);
+    const tipTx = await versionedTra([addPriorityPriceIx, addPriorityLimitIx, tipIx], owner, recentBlockhash, addressLookupTableAccounts);
+    let simulateTx = await versionedTra([tipIx, swapPrepareIx, ...temTransactionInstructions, swapCompletedIx], owner, recentBlockhash, addressLookupTableAccounts);
+    if (simulateTx.serialize().length >= SOLANA_MAX_TX_SERIALIZE_SIGN) {
+        simulateTx = await versionedTra([tipIx, ...temTransactionInstructions], owner, recentBlockhash, addressLookupTableAccounts);
     }
+    return [
+        tipTx,
+        swapPrepareTx,
+        swapTx,
+        swaCompletedTx,
+        simulateTx
+    ];
 }

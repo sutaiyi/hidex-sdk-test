@@ -9,5 +9,6 @@ export const NETWORK_FEE_RATES = {
     ETH: [0.05, 0.08, 0.2],
     BASE: [0.05, 0.08, 0.2],
     SOLANA: [1, 2, 4],
-    SOLANA_JITO: [1, 1.455, 2.455]
+    SOLANA_JITO: [1, 1.455, 2.455],
+    SOLANA_SEND: [1, 1.2, 2]
 };

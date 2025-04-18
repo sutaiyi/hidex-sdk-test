@@ -19,6 +19,9 @@ class DefiApi {
         return this.lastBlockHash;
     }
     async updateLatestBlockhash(network) {
+        if (network.get().chainID !== 102) {
+            return this.lastBlockHash;
+        }
         const connection = await network.getProviderByChain(102);
         if (connection) {
             const blockhash = await connection.getLatestBlockhash();
@@ -119,6 +122,7 @@ class DefiApi {
             };
         }
         catch (error) {
+            console.log('sendBundle error', error);
             return {
                 success: false,
                 hash: ''

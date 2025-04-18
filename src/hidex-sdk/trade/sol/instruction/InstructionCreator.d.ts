@@ -43,6 +43,6 @@ export declare function getInstructionAmounts(currentSymbol: CurrentSymbol, inst
     output: bigint;
 };
 export declare function getInstructionReplaceDataHex(currentSymbol: CurrentSymbol, programId: string, dataHex: string, inputHex: string, outputHex: string): string;
-export declare function setTransferInstructionLamports(preAmountIn: string, instruction: TransactionInstruction, dataHex: string, newLamports: bigint): boolean;
+export declare function setTransferInstructionLamports(instruction: TransactionInstruction, dataHex: string, newLamports: bigint): boolean;
 export declare function setCreateAccountBySeedInstructionLamports(preAmountIn: string, instruction: TransactionInstruction, dataHex: string, newLamports: bigint): boolean;
 //# sourceMappingURL=InstructionCreator.d.ts.map

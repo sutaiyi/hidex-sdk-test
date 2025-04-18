@@ -7,7 +7,7 @@ import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 const tradeFun = () => {
   const { trade, network, wallet, dexFee, utils } = HidexSDK;
   return {
-    获取转账网络费用列表: async (info: any) => {
+    获取ETH系转账网络费用列表: async (info: any) => {
       try {
         const chain = 'BSC';
         if (!info || info.chainName !== chain) {
@@ -25,7 +25,7 @@ const tradeFun = () => {
           tokenAddress: token.address, // 发送母币种地址或者其他代币地址  注意：为空代表母币种
         });
         console.log('预估交易费用===>', gasLimit);
-        const feeArray = await trade.getNetWorkFees(gasLimit, 0);
+        const feeArray = await trade.getNetWorkFees(gasLimit, 10);
         console.log(`网络费用列表===>`, feeArray);
         return feeArray;
       } catch (error) {
@@ -33,6 +33,97 @@ const tradeFun = () => {
       }
       throw new Error('');
     },
+    获取SOL转账网络费用列表: async (info: any) => {
+      try {
+        // SOL 转账
+        const chain = 'SOLANA';
+        if (!info || info.chainName !== chain) {
+          alert(`请选择${chain}代币`);
+          throw new Error(`请选择${chain}代币`);
+        }
+        const { account } = info;
+        // 选择链网络
+        await network.choose(chain);
+        // 先预估交易
+        const { gasLimit } = await trade.getSendEstimateGas({
+          from: account.address,
+          to: '74fonSdF1PXNZ8WyucrP9eDBxgyjUigA5EjgXcPuC7rm',
+          amount: String(0.016 * Math.pow(10, 9)), // 模拟交易数量，具体需要按照代币精度来
+          tokenAddress: '', // 发送母币地址或者其他代币地址  注意：为空代表母币种
+        });
+        console.log('预估交易费用===>', gasLimit);
+        const feeArray = await trade.getNetWorkFees(gasLimit, 10);
+        console.log(`网络费用列表===>`, feeArray);
+        return feeArray;
+      } catch (error) {
+        alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message);
+      }
+      throw new Error('');
+    },
+
+    ETH系转账: async (info: any) => {
+      try {
+        // 假设用户选择了网络费用列表中的第一档
+        const networkFeeList = await tradeFun().获取ETH系转账网络费用列表(info);
+        const networkFee = networkFeeList[0];
+        console.log(networkFee);
+        const { token, account } = info;
+        const toAddress = '0x996AfF191D128b8f36b828573Fb02944cD1b357e';
+        const totalFee = await trade.getSendFees(networkFee, toAddress, token.address);
+        console.log('总的手续费' + totalFee);
+        // 判断母币是否足够
+        // ...TODO:
+        // 1、如果是转母必币，需要将“总的手续费” 加上 “转出的母币数量”  判断母币余额是否足够
+        // 2、如果是转代币，判断余额是否大于“总的手续费”
+
+        const data = await trade.sendTransaction({
+          from: account.address,
+          to: toAddress, // 自己转给自己
+          amount: String(0.0001 * Math.pow(10, token.decimals)), // 实际转转数量
+          tokenAddress: token.address, // 发送母币种地址或者其他代币地址  注意：为空代表母币种
+          currentNetWorkFee: networkFee,
+        });
+        console.log('转账结果===>', data);
+        if (data.error) {
+          throw new Error(data.error?.toString());
+        }
+        alert('发送成功， 请链上确认' + data.result.hash);
+      } catch (error) {
+        alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message);
+      }
+    },
+    SOL转账: async (info: any) => {
+      try {
+        // 假设用户选择了网络费用列表中的第一档
+        const networkFeeList = await tradeFun().获取SOL转账网络费用列表(info);
+        const networkFee = networkFeeList[0];
+        console.log(networkFee);
+        const { token, account } = info;
+        const toAddress = '74fonSdF1PXNZ8WyucrP9eDBxgyjUigA5EjgXcPuC7rm';
+        const totalFee = await trade.getSendFees(networkFee, toAddress, token.address);
+        console.log('总的手续费' + totalFee);
+        // 判断母币是否足够
+        // ...TODO:
+        // 1、如果是转母必币，需要将“总的手续费” 加上 “转出的母币数量”  判断母币余额是否足够
+        // 2、如果是转代币，判断余额是否大于“总的手续费”
+
+        const data = await trade.sendTransaction({
+          from: account.address,
+          to: toAddress, // 自己转给自己
+          amount: String(0.016 * Math.pow(10, 9)), // 实际转转数量
+          tokenAddress: '', // 发送母币种地址或者其他代币地址  注意：为空代表母币种
+          currentNetWorkFee: networkFee,
+        });
+        console.log('转账结果===>', data);
+        if (data.error) {
+          throw new Error(data.error?.toString());
+        }
+        alert('发送成功,请链上确认' + data.result.hash);
+      } catch (error) {
+        alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message);
+      }
+    },
+
     获取交易网络费用列表: async (info: any) => {
       try {
         await network.choose('ETH');
@@ -48,40 +139,6 @@ const tradeFun = () => {
         alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message);
       }
     },
-    ETH系转账: async (info: any) => {
-      try {
-        // 假设用户选择了网络费用列表中的第一档
-        const networkFeeList = await tradeFun().获取转账网络费用列表(info);
-        const networkFee = networkFeeList[0];
-        console.log(networkFee);
-        const { token, account } = info;
-
-        const toAddress = '0x996AfF191D128b8f36b828573Fb02944cD1b357e';
-        const totalFee = await trade.getSendFees(networkFee, toAddress, token.address);
-        console.log('总的手续费' + totalFee);
-
-        // 判断母币是否足够
-        // ...TODO:
-        // 1、如果是转母必币，需要将“总的手续费” 加上 “转出的母币数量”  判断母币余额是否足够
-        // 2、如果是转代币，判断余额是否大于“总的手续费”
-
-        const data = await trade.sendTransaction({
-          from: account.address,
-          to: toAddress, // 自己转给自己
-          amount: String(0.0001 * Math.pow(10, token.decimals)), // 实际转转数量
-          tokenAddress: token.address, // 发送母币种地址或者其他代币地址  注意：为空代表母币种
-          currentNetWorkFee: networkFee,
-        });
-        console.log('转账结果===>', data);
-        if (!data.error) {
-          throw new Error(data.error?.toString());
-        }
-        alert('发送成功' + data.result.hash);
-      } catch (error) {
-        alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message);
-      }
-    },
-    SOL转账: async () => {},
     'SOL换WSOL(0.001)': async () => {
       try {
         console.time('tradeFullTimer');

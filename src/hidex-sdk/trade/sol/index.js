@@ -95,13 +95,17 @@ export const solService = (HS) => {
             return balances;
         },
         getNetWorkFees: async (gasLimit, tradeType) => {
-            const gasPrice = 0.000005;
-            const netVal = tradeType !== 3 ? 0.0055 : 0.003;
-            const networkRate = tradeType !== 3 ? NETWORK_FEE_RATES['SOLANA_JITO'] : NETWORK_FEE_RATES['SOLANA'];
             const networkFees = [];
+            const gasPrice = 0.000005;
+            let netVal = tradeType !== 3 ? 0.0055 : 0.003;
+            let networkRate = tradeType !== 3 ? NETWORK_FEE_RATES['SOLANA_JITO'] : NETWORK_FEE_RATES['SOLANA'];
+            if (tradeType === 10) {
+                netVal = 0.00001;
+                networkRate = NETWORK_FEE_RATES['SOLANA_SEND'];
+            }
             for (let i = 0; i < networkRate.length; i++) {
                 networkFees.push({
-                    value: Number((netVal * networkRate[i]).toFixed(4)),
+                    value: Number((netVal * networkRate[i]).toFixed(5)),
                     unit: 'SOL',
                     gasLimit,
                     gasPrice: gasPrice.toString(),
@@ -132,7 +136,7 @@ export const solService = (HS) => {
             return netFee + dexFee + accountSave + priorityFee + ataCreateFee;
         },
         sendTransaction: async (sendParams) => {
-            const { from, to, amount, tokenAddress } = sendParams;
+            const { from, to, amount, tokenAddress, currentNetWorkFee } = sendParams;
             try {
                 const ownerKey = await wallet.ownerKey(from);
                 const senderKeypair = utils.ownerKeypair(ownerKey);
@@ -159,7 +163,7 @@ export const solService = (HS) => {
                     }
                     instructions.push(createTransferInstruction(fromTokenAta, toTokenAta, senderPublicKey, BigInt(amount), [], is2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID));
                 }
-                const insPriority = await priorityFeeInstruction(200000, 0.0002);
+                const insPriority = await priorityFeeInstruction(200000, currentNetWorkFee.value);
                 instructions.unshift(...insPriority);
                 const { blockhash } = await connection.getLatestBlockhash();
                 const result = await sendSolanaTransaction(connection, senderKeypair, instructions, blockhash);
@@ -238,7 +242,7 @@ export const solService = (HS) => {
         getSwapFees: async (currentSymbol) => {
             const { networkFee } = currentSymbol;
             const netFee = 0.00002;
-            const dexFee = 0;
+            const dexFee = 0.0001;
             const mitToken = (2139280 * 2) / Math.pow(10, 9);
             const accountSave = 890880 / Math.pow(10, 9);
             const priorityFee = networkFee?.value || Number(currentSymbol.priorityFee) / Math.pow(10, 9);
