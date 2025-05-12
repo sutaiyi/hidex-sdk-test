@@ -165,7 +165,6 @@ class TradeService extends EventEmitter {
             vertransaction.sign([sender]);
             const rawTransaction = vertransaction.serialize();
             const hash = await connection.sendRawTransaction(rawTransaction);
-            ;
             if (hash) {
                 const result = { error: null, result: { hash, data: [vertransaction] } };
                 console.log('第二次交易结果：', result);

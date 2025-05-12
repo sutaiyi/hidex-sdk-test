@@ -53,6 +53,7 @@ export interface IWalletService {
         hasWallet: boolean;
         pathIndex: number;
     }>;
+    decryptionS3Data(text: any, password: string): Promise<any>;
 }
 export type WalletStore = {
     walletList: WalletList[];

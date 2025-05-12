@@ -1,70 +1,80 @@
-import { HidexSDK } from '@/hidexService'
+import { HidexSDK } from '@/hidexService';
 const networkFuns = () => {
   const { network } = HidexSDK;
 
   return {
-    '获取当前网络': () => {
+    获取当前网络: () => {
       try {
         const currentChain = network.get();
-        console.log(currentChain.chain, currentChain)
+        console.log(currentChain.chain, currentChain);
       } catch (error) {
-        console.log('获取当前网络失败：', error)
+        console.log('获取当前网络失败：', error);
       }
     },
-    '获取网络列表': () => {
+    获取网络列表: () => {
       try {
         const chainList = network.getChainList();
-        console.log(chainList)
+        console.log(chainList);
       } catch (error) {
-        console.log('获取当前网络列表失败：', error)
+        console.log('获取当前网络列表失败：', error);
       }
     },
     '选择网络(ETH)': async () => {
       try {
-        await network.choose('ETH')
+        await network.choose('ETH');
         const currentChain = network.get();
-        console.log('网络选择成功：', currentChain.chain, currentChain)
+        console.log('网络选择成功：', currentChain.chain, currentChain);
       } catch (error) {
-        console.log('网络选择失败：', error)
+        console.log('网络选择失败：', error);
       }
     },
-    '获取网络PRC实例': async () => {
+    获取网络PRC实例: async () => {
       try {
-        const provide = await network.getProviderByChain(102)
-        console.log('网络实例获取成功：', provide)
+        const provide = await network.getProviderByChain(102);
+        console.log('网络实例获取成功：', provide);
       } catch (error) {
-        console.log('网络实例获取失败：', error)
+        console.log('网络实例获取失败：', error);
       }
     },
-    'RPC并发': async () => {
+    RPC并发: async () => {
       try {
         const chainName = network.getChainNameByChainId(102);
         const logResultPro = network.sysProviderRpcs[chainName].map((v: any) => {
           return v.getLatestBlockhash();
         });
         const result = await Promise.any(logResultPro);
-        console.log('并发请求结果：', result)
+        console.log('并发请求结果：', result);
       } catch (error) {
-        console.log('并发请求获取失败：', error)
+        console.log('并发请求获取失败：', error);
       }
     },
-    '获取最快的网络': async () => {
+    获取最快的网络: async () => {
       try {
         const rpc = await network.getFastestRpc(102);
-        console.log('当前网络最快的RPC：', rpc)
+        console.log('当前网络最快的RPC：', rpc);
       } catch (error) {
-        console.log('获取失败：', error)
+        console.log('获取失败：', error);
       }
     },
-    '获取最快RPC实例': async () => {
+    获取最快RPC实例: async () => {
       try {
         const provide = await network.getFastestProviderByChain(102);
-        console.log('当前网络最快的RPC实例：', provide)
+        console.log('当前网络最快的RPC实例：', provide);
       } catch (error) {
-        console.log('获取失败：', error)
+        console.log('获取失败：', error);
       }
-    }
-  }
-}
+    },
+    '获取codexChainId&okxChainId': async () => {
+      try {
+        const codexChainId = await network.getCodexChainIdByChain(102);
+        const okxChainId = await network.getOkxChainIdByChain(102);
+        console.log('codexChainId：', codexChainId);
+        console.log('okxChainId：', okxChainId);
+      } catch (error) {
+        console.log('获取失败：', error);
+      }
+    },
+  };
+};
 
-export default networkFuns
+export default networkFuns;

@@ -50,6 +50,7 @@ declare class TradeService extends EventEmitter implements ITradeService {
     }>;
     getHashStatus(hash: string, chain: string | number): Promise<{
         status: HashStatus;
+        message?: any;
     }>;
     wrappedExchange(chain: string | number, accountAddress: string, type: number, priorityFee: string, amount?: string): Promise<{
         error: any;

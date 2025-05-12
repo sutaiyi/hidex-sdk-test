@@ -11,43 +11,64 @@ const requireConfig = (apparatus, token) => {
 };
 const walletMap = new Map();
 const getBootedOssItem = async (token, apparatus, key) => {
-    const result = await axios.get('/api/frontend/app/personal/getItem', requireConfig(apparatus, token));
-    if (result?.status === 200 && result?.data?.code === 200) {
-        if (result.data.data?.putBooted) {
-            const encryptedWallet = await passworder.decrypt(HIDEXKEYWORD, result.data.data.putBooted);
-            const data = JSON.parse(encryptedWallet);
-            walletMap.set('WalletBooted', data);
-            if (key) {
-                return data[key];
+    try {
+        const result = await axios.get('/api/frontend/app/personal/getItem', requireConfig(apparatus, token));
+        if (result?.status === 200 && result?.data?.code === 200) {
+            if (result.data?.data?.putBooted) {
+                const encryptedWallet = await passworder.decrypt(HIDEXKEYWORD, result.data.data.putBooted);
+                const data = JSON.parse(encryptedWallet);
+                walletMap.set('WalletBooted', data);
+                if (key) {
+                    return data[key];
+                }
+                return data;
             }
-            return data;
+            walletMap.set('WalletBooted', defaluBoootedOss);
+            if (key) {
+                return defaluBoootedOss[key];
+            }
+            return defaluBoootedOss;
         }
-        walletMap.set('WalletBooted', defaluBoootedOss);
-        if (key) {
-            return defaluBoootedOss[key];
-        }
-        return defaluBoootedOss;
+        throw new Error('Failed get s3 store');
     }
-    throw new Error('Failed get s3 store');
+    catch (error) {
+        throw new Error('Failed get s3 store' + error);
+    }
 };
-const setBootedOssItem = async (token, apparatus, key, value) => {
-    let walletPutData = walletMap.get('WalletBooted');
-    if (!walletPutData && key !== 'all') {
-        walletPutData = await getBootedOssItem(token, apparatus);
+const setBootedOssItem = async (token, apparatus, key, value, isClear) => {
+    try {
+        let walletPutData = walletMap.get('WalletBooted');
+        if (!walletPutData && key !== 'all') {
+            walletPutData = await getBootedOssItem(token, apparatus);
+        }
+        if (walletPutData && key !== 'all' && value) {
+            walletPutData[key] = value;
+        }
+        if (key == 'all' && value) {
+            walletPutData = value;
+        }
+        if (!isClear &&
+            ((walletPutData?.walletBooted && typeof walletPutData?.walletBooted === 'object' && Object.keys(walletPutData?.walletBooted).length === 0) ||
+                typeof walletPutData?.walletBooted !== 'object' ||
+                !walletPutData?.booted ||
+                !walletPutData?.walletBooted ||
+                walletPutData?.walletBooted === 'null' ||
+                walletPutData?.walletBooted === 'undefined' ||
+                walletPutData?.booted === 'null' ||
+                walletPutData?.booted === 'undefined')) {
+            return true;
+        }
+        walletMap.set('WalletBooted', walletPutData);
+        const putBooted = await passworder.encrypt(HIDEXKEYWORD, JSON.stringify(walletPutData));
+        const result = await axios.post('/api/frontend/app/personal/setItem', { putBooted }, requireConfig(apparatus, token));
+        if (result?.status === 200 && result?.data && result?.data?.code === 200) {
+            return true;
+        }
+        throw new Error('Failed set s3 store');
     }
-    if (walletPutData && key !== 'all' && value) {
-        walletPutData[key] = value;
+    catch (error) {
+        throw new Error('Failed set s3 store' + error);
     }
-    if (key == 'all' && value) {
-        walletPutData = value;
-    }
-    walletMap.set('WalletBooted', walletPutData);
-    const putBooted = await passworder.encrypt(HIDEXKEYWORD, JSON.stringify(walletPutData));
-    const result = await axios.post('/api/frontend/app/personal/setItem', { putBooted }, requireConfig(apparatus, token));
-    if (result?.status === 200 && result?.data && result?.data?.code === 200) {
-        return true;
-    }
-    throw new Error('Failed set s3 store');
 };
 const getWalletStoreItem = async (catcher, key) => {
     const result = await catcher.getItem('dataCache');

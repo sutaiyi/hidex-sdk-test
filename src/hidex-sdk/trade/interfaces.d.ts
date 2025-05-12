@@ -15,6 +15,7 @@ export interface ITradeOthersFunction {
     getTransactionsSignature(transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any): Promise<Array<VersionedTransaction>>;
     getHashStatus(hash: string, chain: string | number): Promise<{
         status: HashStatus;
+        message?: any;
     }>;
     wrappedExchange(chain: string | number, accountAddress: string, type: number, priorityFee: string, amount?: string): Promise<{
         error: any;
@@ -30,7 +31,7 @@ export interface ITradeOthersFunction {
         };
     }>;
 }
-export interface ITradeService extends ITradeFunctions, ITradeOthersFunction {
+export interface ITradeService extends ITradeFunctions, ITradeOthersFunction, EventEmitter {
     approve: IApproveService;
     checkHash: ITradeHashStatusService;
 }
@@ -68,6 +69,7 @@ export interface ITradeFunctions {
 export interface ITradeAbout extends ITradeFunctions {
     hashStatus(hash: string, chain?: string): Promise<{
         status: HashStatus;
+        message?: string;
     }>;
 }
 export interface ITradeHashStatusService extends EventEmitter {
@@ -83,6 +85,10 @@ export type HashStatusParams = {
     updateTime?: number;
     timer?: any;
     data?: any;
+    message?: any;
+    tradeType: number;
+    bundles?: Array<string>;
+    failedType?: number;
 };
 export interface IDexFeeService {
 }
@@ -106,8 +112,10 @@ export interface IDefiApi {
     submitSwapByJito(transactions: Array<Transaction>): Promise<{
         success: boolean;
         hash: string;
+        data?: any;
     }>;
     getSwapStatus(hash: string): Promise<any>;
+    bundlesStatuses(bundles: Array<string>): Promise<HashStatus>;
 }
 export interface IApproveService {
     execute(tokenAddress: string, accountAddress: string, authorizedAddress: string, chain: string | number): Promise<boolean>;
@@ -145,6 +153,7 @@ export type CurrentSymbol = {
     commissionRate?: number;
     compile?: any;
     currentPrice: number;
+    okxPrice?: number;
     cryptoPriceUSD: number;
     preAmountIn: string;
     preAmountOut: string;

@@ -2,10 +2,10 @@ import { HidexSDK } from '@/hidexService';
 import { swapSign } from './utils';
 
 import { getBeforeTradeData, getCurrentSymbolTest, setBeforeTradeData } from './solTrade';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 const tradeFun = () => {
   const { trade, network, wallet, dexFee, utils } = HidexSDK;
+  const LAMPORTS_PER_SOL = 1000000000;
   return {
     获取ETH系转账网络费用列表: async (info: any) => {
       try {
@@ -165,6 +165,7 @@ const tradeFun = () => {
             hash: result.hash,
             createTime: new Date().getTime(),
             data: result.data,
+            tradeType: 10,
           };
           trade.checkHash.action(hashItem);
         }
@@ -192,6 +193,7 @@ const tradeFun = () => {
             hash: result.hash,
             createTime: new Date().getTime(),
             data: result.data,
+            tradeType: 10,
           };
           trade.checkHash.action(hashItem);
         }
@@ -289,6 +291,7 @@ const tradeFun = () => {
         console.time('tradeswapTimer');
         const { error, result } = await trade.swap(currentSymbol, estimateResult, address);
         console.timeEnd('tradeswapTimer');
+        console.log('交易结果：', result);
         if (!error) {
           console.log('交易已提交：', result);
           const hashItem = {
@@ -296,6 +299,8 @@ const tradeFun = () => {
             hash: result.hash,
             createTime: new Date().getTime(),
             data: result.data,
+            tradeType: currentSymbol.tradeType,
+            bundles: result?.data?.data?.jitoBundle,
           };
           trade.checkHash.action(hashItem);
           // 更新交易预请求数据
@@ -468,6 +473,9 @@ const tradeFun = () => {
         const { code, message } = utils.getErrorMessage(error);
         alert(code + '-' + message);
       }
+    },
+    监听器的使用: async () => {
+      trade.emit('testtest');
     },
   };
 };

@@ -1,5 +1,5 @@
-import EventEmitter from "../common/eventEmitter";
-import { isSol } from "./utils";
+import EventEmitter from '../common/eventEmitter';
+import { isSol } from './utils';
 const HashStatusMap = new Map();
 export class TradeHashStatusService extends EventEmitter {
     DEFAULTKEY = 'TradeHashes';
@@ -14,7 +14,6 @@ export class TradeHashStatusService extends EventEmitter {
         this.timeCount = 50;
         this.maxTime = 15000;
     }
-    ;
     getHashes = async () => {
         const list = await this.HS.catcher.getItem(this.DEFAULTKEY);
         if (list && list.length > 0) {
@@ -29,13 +28,19 @@ export class TradeHashStatusService extends EventEmitter {
     };
     action = async (hashItem) => {
         const checkCreate = async () => {
-            const { hash, chain } = hashItem;
+            const { hash, chain, tradeType, bundles } = hashItem;
             this.timeCount = 50;
-            if (!isSol(chain)) {
-                this.timeCount = 1000;
+            if (isSol(chain)) {
+                this.timeCount = 50;
+                this.maxTime = 15000;
             }
-            console.log('hash status checkTimer: ' + hash);
-            const { status } = await this.trade.getHashStatus(hash, chain);
+            else {
+                this.timeCount = 1000;
+                this.maxTime = 15000;
+            }
+            console.log('hash status checkTimer: ', hashItem);
+            const { status, message } = await this.trade.getHashStatus(hash, chain);
+            hashItem.message = message;
             if (status !== 'Pending') {
                 hashItem.status = status;
                 console.log('hash status checkTimer: ', hashItem);
@@ -44,7 +49,15 @@ export class TradeHashStatusService extends EventEmitter {
                 return;
             }
             if (new Date().getTime() - hashItem.createTime >= this.maxTime) {
-                hashItem.status = 'Failed';
+                if (tradeType === 0 && bundles?.length) {
+                    hashItem.status = await this.trade.defiApi.bundlesStatuses(bundles);
+                }
+                else {
+                    hashItem.status = 'Failed';
+                }
+                if (hashItem.status === 'Failed') {
+                    hashItem.failedType = 1;
+                }
                 this.emit('HashStatusEvent', hashItem);
                 hashItem.timer && global.clearTimeout(hashItem.timer);
                 return;

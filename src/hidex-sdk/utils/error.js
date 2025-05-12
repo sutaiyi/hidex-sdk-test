@@ -2,8 +2,8 @@ import errorInfo from './errorInfo';
 export default (error) => {
     let strMessage = error.toString();
     if (error instanceof AggregateError) {
-        console.info('AggregateError', error, (error.errors).toString());
-        strMessage = (error.errors).toString();
+        console.info('AggregateError', error, error.errors.toString());
+        strMessage = error.errors.toString();
     }
     if (strMessage?.toLowerCase()?.includes('incorrect password')) {
         return { code: 13001, message: errorInfo['13001'] };
@@ -14,13 +14,21 @@ export default (error) => {
     if (strMessage?.toLowerCase()?.includes('transfer amount exceeds balance')) {
         return { code: 14000, message: errorInfo['14000'] };
     }
+    if (strMessage?.toLowerCase()?.includes('insufficient allowance')) {
+        const code = 14008;
+        return { code, message: errorInfo[code] };
+    }
+    if (strMessage?.toLowerCase()?.includes('pump-amm insufficient account balance')) {
+        const code = 14009;
+        return { code, message: errorInfo[code] };
+    }
     if (strMessage?.toLowerCase()?.includes('insufficient') || strMessage?.toLowerCase()?.includes('insufficientfundsforfee')) {
         return { code: 14001, message: errorInfo['14001'] };
     }
     if (strMessage?.toLowerCase()?.includes('transaction may fail or may require manual gas limit')) {
         return { code: 14002, message: errorInfo['14002'] };
     }
-    if (strMessage?.toLowerCase()?.includes('slippage')) {
+    if (strMessage?.toLowerCase()?.includes('slippage') || strMessage?.toLowerCase()?.includes('minamountoutnotreached')) {
         return { code: 14003, message: errorInfo['14003'] };
     }
     if (strMessage?.toLowerCase()?.includes('swap txarray is empty')) {
@@ -33,21 +41,16 @@ export default (error) => {
         const code = 14006;
         return { code, message: errorInfo[code] };
     }
-    if (strMessage?.toLowerCase()?.includes('aggregateerror')
-        || strMessage?.toLowerCase()?.includes('e.getmultipleaccountsinfo is not a function')) {
+    if (strMessage?.toLowerCase()?.includes('aggregateerror') || strMessage?.toLowerCase()?.includes('e.getmultipleaccountsinfo is not a function')) {
         const code = 14007;
-        return { code, message: errorInfo[code] };
-    }
-    if (strMessage?.toLowerCase()?.includes('insufficient allowance')) {
-        const code = 14008;
-        return { code, message: errorInfo[code] };
-    }
-    if (strMessage?.toLowerCase()?.includes('pump-amm insufficient account balance')) {
-        const code = 14009;
         return { code, message: errorInfo[code] };
     }
     if (strMessage?.toLowerCase()?.includes('sol estimate error')) {
         const code = 14010;
+        return { code, message: errorInfo[code] };
+    }
+    if (strMessage?.toLowerCase()?.includes('not support transaction')) {
+        const code = 14011;
         return { code, message: errorInfo[code] };
     }
     return { code: 13000, message: errorInfo['13000'] + strMessage };

@@ -1,7 +1,7 @@
 import keysing from './keysing';
 import { checkAddressChain, getUseToken, isValidSHA256, numberToCharCode, sha256 } from '../common/utils';
 import { deepCopy, findAndIncrementMax, isValidEthPrivateKey, isValidSolanaPrivateKey, whosePrivater } from '../common/utils';
-import { defaluBoootedOss, defalutWalletStore, ENCRYPTION_NAME, ETH_SERIES, NAMES } from '../common/config';
+import { defaluBoootedOss, defalutWalletStore, ENCRYPTION_NAME, ETH_SERIES, HIDEXKEYWORD, NAMES } from '../common/config';
 import { ossStore } from '../common/ossStore';
 import passworder from '../common/browser/passworder';
 import { ethers } from 'ethers';
@@ -39,11 +39,11 @@ class WalletService {
             throw new Error(error);
         }
     }
-    async setCloudBootedOss(HS, key, value) {
+    async setCloudBootedOss(HS, key, value, isClear) {
         try {
             const { apparatus } = HS;
             const token = getUseToken();
-            const res = await ossStore.setBootedOssItem(token, apparatus, key, value);
+            const res = await ossStore.setBootedOssItem(token, apparatus, key, value, isClear);
             this.walletMap = ossStore.getWalletMap();
             this.bootedOss = this.walletMap.get('WalletBooted');
             return res;
@@ -78,9 +78,9 @@ class WalletService {
     getBootedOss() {
         return this.bootedOss;
     }
-    async setBootedOss(bootedOssStore) {
+    async setBootedOss(bootedOssStore, isClear) {
         this.bootedOss = bootedOssStore;
-        await this.setCloudBootedOss(this.HS, 'all', bootedOssStore);
+        await this.setCloudBootedOss(this.HS, 'all', bootedOssStore, isClear);
     }
     async walletInit() {
         const walletStore = this.getWalletStore();
@@ -226,6 +226,10 @@ class WalletService {
         return apt;
     }
     async createWallet(mnemonic, pathIndex = 0, walletName = '', id = 0) {
+        const createWallet = await this.hasWallet();
+        if (createWallet) {
+            throw new Error(JSON.stringify({ code: 10018, message: '助记词账户已创建' }));
+        }
         const bootedOss = this.getBootedOss();
         let useMnemonic = mnemonic;
         const walletBootedArr = Object.keys(bootedOss.walletBooted);
@@ -531,7 +535,8 @@ class WalletService {
     async clearWallet() {
         const res = await this.clearLocalWallet();
         if (res) {
-            await this.setBootedOss(defaluBoootedOss);
+            const isClear = true;
+            await this.setBootedOss(defaluBoootedOss, isClear);
         }
         this.password = '';
         return true;
@@ -821,6 +826,77 @@ class WalletService {
         const messageUint8 = new TextEncoder().encode(message);
         const signature = nacl.sign.detached(messageUint8, this.HS.utils.ownerKeypair(privateKey).secretKey);
         return bs58.encode(signature);
+    }
+    async decryptionS3Data(text, password) {
+        const encryptedWallet = await passworder.decrypt(HIDEXKEYWORD, text);
+        const jsonData = JSON.parse(encryptedWallet);
+        let shaPassword = password;
+        if (!isValidSHA256(password)) {
+            shaPassword = await sha256(password);
+        }
+        await passworder.decrypt(shaPassword, jsonData.booted);
+        const walletBootedArr = Object.keys(jsonData.walletBooted);
+        const maxPathIndex = jsonData.pathIndex;
+        let id = 0;
+        let walletList = null;
+        const creatWalletTest = async (mnemonic, pathIndex = 0, id = 0) => {
+            const account = {};
+            const items = [];
+            for (const key of Object.keys(this.ADDRESS_PATH_TYPE)) {
+                const getPath = this.getPathByChain(key, pathIndex);
+                if (key.toUpperCase() === 'SOLANA' || key.toUpperCase() === 'ETH') {
+                    items.push(this.createByMnemonicAndSave(key, mnemonic, getPath.path, pathIndex, key));
+                }
+            }
+            for (const key of Object.keys(this.ADDRESS_PATH_TYPE)) {
+                let item = {};
+                if (key === 'SOLANA') {
+                    item = items.find((v) => v.chain.toUpperCase() === 'SOLANA');
+                }
+                else {
+                    const itemEth = items.find((v) => v.chain.toUpperCase() === 'ETH');
+                    if (itemEth) {
+                        item = deepCopy(itemEth);
+                        item.chain = key;
+                    }
+                }
+                account[key] = item;
+                const jsonItem = JSON.parse(JSON.stringify(item));
+                if (key.toUpperCase() === 'SOLANA' || key.toUpperCase() === 'ETH') {
+                    this.atpkeys.push(this.setEncryptionWallet(this.password, 0, jsonItem.address, jsonItem.privateKey));
+                }
+                if (account[key] && account[key].privateKey) {
+                    delete account[key].privateKey;
+                }
+            }
+            const mha = await sha256(mnemonic);
+            this.atpkeys.push(this.setEncryptionWallet(this.password, 1, mha, mnemonic));
+            account.id = pathIndex;
+            if (!walletList) {
+                walletList = {
+                    mnemonic,
+                    usePrivateKey: false,
+                    accountList: [account],
+                    id
+                };
+            }
+            else {
+                walletList.accountList.push(account);
+            }
+        };
+        for (const key of walletBootedArr) {
+            if (key.includes('MNEMONIC_HASH')) {
+                id++;
+                const hash = key.split('_')[2];
+                const mmcoiBooted = jsonData.walletBooted[`${ENCRYPTION_NAME[1]}${hash.toLowerCase()}`];
+                const mmcoi = await passworder.decrypt(shaPassword, mmcoiBooted);
+                for (const pathIndex of Array.from({ length: maxPathIndex + 1 }, (_, i) => i)) {
+                    console.log('pathIndex', pathIndex);
+                    await creatWalletTest(mmcoi, pathIndex, id);
+                }
+            }
+        }
+        return walletList;
     }
 }
 export default WalletService;

@@ -1,6 +1,6 @@
-import { PublicKey, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
-import { simulateConfig, TOKEN_2022_OWNER } from "./config";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import { PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
+import { simulateConfig, TOKEN_2022_OWNER } from './config';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 export async function getTokenOwner(tokenAddress, connection) {
     const tokenAccountPubkey = new PublicKey(tokenAddress);
     const accountInfo = await connection.getAccountInfo(tokenAccountPubkey);
@@ -18,7 +18,7 @@ export async function sendSolanaTransaction(connection, sender, instructions, bl
     const message = new TransactionMessage({
         payerKey: sender.publicKey,
         recentBlockhash: blockhash,
-        instructions,
+        instructions
     }).compileToV0Message();
     const versionedTx = new VersionedTransaction(message);
     versionedTx.sign([sender]);
@@ -38,4 +38,12 @@ export async function getUserTokenAtaAddress(userAddress, tokenAddress, TOKEN_20
         userAtaAccount = await getAssociatedTokenAddress(mintPublic, publicOwner, false, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
     }
     return userAtaAccount.toBase58();
+}
+export function vertransactionsToBase64(transactions) {
+    try {
+        return transactions.map((tx) => Buffer.from(tx.serialize()).toString('base64'));
+    }
+    catch (error) {
+        console.log('vertransactionsToBase64 error==>', error);
+    }
 }

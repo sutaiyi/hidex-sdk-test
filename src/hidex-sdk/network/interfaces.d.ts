@@ -10,6 +10,7 @@ export interface INetworkService {
     getChainNameByChainId(chainId: number): string;
     getChainIdByChainName(chainName: string): number;
     getCodexChainIdByChain(chain: string | number): number;
+    getOkxChainIdByChain(chain: string | number): number;
     getChainIds(): Array<number>;
     getChainList(): Array<ChainItem>;
     getCodexChainIds(): Array<number>;
@@ -29,6 +30,7 @@ export type ChainItem = {
     gmgnChain: string;
     chainID: number;
     codexChainId: number;
+    okxChainId: number;
     token: string;
     tokens: TokenInfo[];
     aliasChain: string[];

@@ -1,6 +1,6 @@
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { smTokenAddress } from '../../common/config';
-import { getTokenOwner, sendSolanaTransaction } from './utils';
+import { getTokenOwner, sendSolanaTransaction, vertransactionsToBase64 } from './utils';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createTransferInstruction, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { simulateConfig, TOKEN_2022_OWNER } from './config';
 import { priorityFeeInstruction } from './instruction/InstructionCreator';
@@ -126,7 +126,7 @@ export const solService = (HS) => {
         getSendFees: async (networkFee, toAddress, tokenAddress) => {
             const netFee = networkFee.value;
             const dexFee = 0;
-            const priorityFee = 100000 / Math.pow(10, 9);
+            const priorityFee = 10000 / Math.pow(10, 9);
             let ataCreateFee = 0;
             const balanceWsol = await getBalance(toAddress, tokenAddress);
             if (Number(balanceWsol) === 0) {
@@ -231,7 +231,18 @@ export const solService = (HS) => {
             if (txArray.length === 0) {
                 throw new Error('Failed to swap txArray is empty');
             }
-            console.log('txArray: ===>', txArray);
+            console.time('timer simulateTransaction');
+            const vertransaction = txArray.length === 5 ? txArray[4] : txArray[0];
+            if (vertransaction) {
+                const connection = await network.getProviderByChain(102);
+                const simulateResponse = await connection.simulateTransaction(vertransaction, simulateConfig);
+                console.log('交易 - 预估', simulateResponse);
+                if (simulateResponse && simulateResponse?.value?.err) {
+                    throw new Error(JSON.stringify(simulateResponse.value.logs) + vertransactionsToBase64(txArray));
+                }
+            }
+            console.timeEnd('timer simulateTransaction');
+            console.log('txArray: ===>', JSON.parse(JSON.stringify(txArray)));
             return {
                 gasLimit: 0,
                 data: {
@@ -242,7 +253,7 @@ export const solService = (HS) => {
         getSwapFees: async (currentSymbol) => {
             const { networkFee } = currentSymbol;
             const netFee = 0.00002;
-            const dexFee = 0.0001;
+            const dexFee = 0.001;
             const mitToken = (2139280 * 2) / Math.pow(10, 9);
             const accountSave = 890880 / Math.pow(10, 9);
             const priorityFee = networkFee?.value || Number(currentSymbol.priorityFee) / Math.pow(10, 9);
@@ -250,31 +261,27 @@ export const solService = (HS) => {
         },
         swap: async (currentSymbol, transaction, accountAddress) => {
             const { vertransactions } = transaction?.data;
-            let submitPro = null;
+            let submitResult = null;
+            let txSplice = [];
             if (vertransactions?.length >= 4) {
-                submitPro = defiApi.submitSwapByJito(vertransactions.splice(0, 4));
+                txSplice = vertransactions.slice(0, 4);
+                submitResult = await defiApi.submitSwapByJito(txSplice);
             }
             else {
-                submitPro = defiApi.submitSwap(currentSymbol, vertransactions[0]);
-            }
-            const connection = await network.getProviderByChain(102);
-            const vertransaction = vertransactions.length === 5 ? vertransactions[4] : vertransactions[0];
-            const simulateResponsePro = connection.simulateTransaction(vertransaction, simulateConfig);
-            const [submitResult, simulateResponse] = await Promise.all([submitPro, simulateResponsePro]);
-            console.log('交易-预估结果==>', simulateResponse);
-            if (simulateResponse && simulateResponse?.value?.err) {
-                if (submitResult.hash && simulateResponse?.value?.err?.toString().toLowerCase().includes('already') && simulateResponse?.value?.logs?.length === 0) {
-                    return { error: null, result: { hash: submitResult.hash, data: { vertransactions, accountAddress, currentSymbol } } };
-                }
-                throw new Error('sol estimate error: ' + JSON.stringify(simulateResponse?.value?.logs) + JSON.stringify(simulateResponse?.value?.err));
+                txSplice = vertransactions[0];
+                submitResult = await defiApi.submitSwap(currentSymbol, vertransactions[0]);
             }
             if (!submitResult.hash) {
                 throw new Error('axioserror: request failed');
             }
-            return { error: !submitResult.success, result: { hash: submitResult.hash, data: { vertransactions, accountAddress, currentSymbol } } };
+            return {
+                error: !submitResult.success,
+                result: { hash: submitResult.hash, data: { vertransactions: vertransactionsToBase64(txSplice), accountAddress, currentSymbol, ...submitResult } }
+            };
         },
         hashStatus: async (hash) => {
             const status = await defiApi.getSwapStatus(hash);
+            let message = '';
             if (status === 'Failed') {
                 const connection = await network.getProviderByChain(102);
                 const hashStatus = await connection.getParsedTransaction(hash, {
@@ -283,13 +290,13 @@ export const solService = (HS) => {
                 });
                 console.log('SOL 链上状态查询 confirmation===', hashStatus);
                 if (hashStatus) {
-                    const { meta } = hashStatus;
-                    if (meta && meta.err) {
-                        throw new Error(meta.logMessages?.toString() || 'Unknown error');
+                    const { meta } = hashStatus || {};
+                    if (meta && meta?.err) {
+                        message = meta.logMessages?.toString() || 'Unknown error';
                     }
                 }
             }
-            return { status };
+            return { status, message };
         }
     };
 };

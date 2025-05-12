@@ -1,8 +1,8 @@
-import { ICatcher } from "../catch/interfaces";
-import { ITradeService } from "./interfaces";
-import { HashStatusParams, ITradeHashStatusService } from "./interfaces";
-import { OptionsCommon } from "../main/interfaces";
-import EventEmitter from "../common/eventEmitter";
+import { ICatcher } from '../catch/interfaces';
+import { ITradeService } from './interfaces';
+import { HashStatusParams, ITradeHashStatusService } from './interfaces';
+import { OptionsCommon } from '../main/interfaces';
+import EventEmitter from '../common/eventEmitter';
 export declare class TradeHashStatusService extends EventEmitter implements ITradeHashStatusService {
     private DEFAULTKEY;
     private HS;

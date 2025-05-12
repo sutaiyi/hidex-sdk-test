@@ -82,6 +82,7 @@ class DefiApi {
         }
     }
     async submitSwapByJito(transactions) {
+        const jitoPostTime = new Date().getTime();
         try {
             const endpoints = [
                 'https://mainnet.block-engine.jito.wtf/api/v1/bundles',
@@ -95,13 +96,15 @@ class DefiApi {
                 serializedTransactions.push(bs58.encode(transaction.serialize()));
             }
             const signatureBase58 = transactions[3].signatures.map((sig) => bs58.encode(sig));
-            const requests = endpoints.map((url) => axios
-                .post(url, {
+            const signatureBase58_swap = transactions[2].signatures.map((sig) => bs58.encode(sig));
+            const params = {
                 jsonrpc: '2.0',
                 id: 1,
                 method: 'sendBundle',
                 params: [serializedTransactions]
-            })
+            };
+            const requests = endpoints.map((url) => axios
+                .post(url, params)
                 .then((res) => {
                 Promise.resolve(res);
                 return res;
@@ -110,10 +113,16 @@ class DefiApi {
                 return Promise.reject(error);
             }));
             const results = await Promise.any(requests);
-            if (results.status === 200 && results.data && results.data.result) {
+            if (results.status === 200 && results?.data?.result) {
+                this.handlerJitoPost(endpoints, params);
                 return {
                     success: true,
-                    hash: signatureBase58[0]
+                    hash: signatureBase58[0],
+                    data: {
+                        swapHash: signatureBase58_swap[0],
+                        jitoBundle: [results?.data?.result],
+                        jitoPostTime
+                    }
                 };
             }
             return {
@@ -123,10 +132,37 @@ class DefiApi {
         }
         catch (error) {
             console.log('sendBundle error', error);
+            if (error instanceof AggregateError) {
+                if (error?.errors?.length) {
+                    const errRes = error.errors[0];
+                    if (errRes?.response?.data?.error?.message) {
+                        throw new Error(errRes.response.data.error.message);
+                    }
+                }
+            }
             return {
                 success: false,
                 hash: ''
             };
+        }
+    }
+    async handlerJitoPost(endpoints, params) {
+        try {
+            endpoints.forEach((url) => {
+                axios.post(url, params);
+            });
+        }
+        catch (error) {
+            console.log('handlerJitoPost error', error);
+        }
+        try {
+            for (const url of endpoints) {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                await axios.post(url, params);
+            }
+        }
+        catch (error) {
+            console.log('handlerJitoPost error', error);
         }
     }
     async getSwapStatus(hash) {
@@ -147,6 +183,32 @@ class DefiApi {
             return 'Pending';
         }
         throw new Error('Get Transaction Status Error');
+    }
+    async bundlesStatuses(bundles) {
+        try {
+            console.log('bundlesStatuses --data', bundles);
+            const res = await (await fetch('https://mainnet.block-engine.jito.wtf/api/v1/getBundleStatuses', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: 'getBundleStatuses',
+                    params: [bundles]
+                })
+            })).json();
+            if (res?.result?.value?.length) {
+                const status = ['processed', 'confirmed', 'finalized'];
+                return status.includes(res.result.value[0]?.confirmation_status) ? 'Confirmed' : 'Pending';
+            }
+            return 'Failed';
+        }
+        catch (error) {
+            console.log('bundlesStatuses --error', error);
+            return 'Failed';
+        }
     }
 }
 export default new DefiApi();

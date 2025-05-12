@@ -97,15 +97,20 @@ export function getTotalFee(currentSymbol) {
     const total = BigInt(Math.floor(fee)) + BigInt(5000 * 4);
     return total.toString();
 }
-export function deleteTransactionGasInstruction(instructions) {
-    let countToDelete = 0;
-    for (let i = 0; i < instructions.length; i++) {
-        const txIx = instructions[i];
-        if (txIx.programId.toBase58() == ComputeBudgetProgram.programId.toBase58()) {
-            countToDelete++;
+export async function deleteTransactionGasInstruction(instructions) {
+    let indexToDelete = 0;
+    while (indexToDelete >= 0) {
+        indexToDelete = -1;
+        console.log("指令长度", instructions.length);
+        for (let i = 0; i < instructions.length; i++) {
+            const txIx = instructions[i];
+            if (txIx.programId.toBase58() == ComputeBudgetProgram.programId.toBase58()) {
+                indexToDelete = i;
+                instructions.splice(i, 1);
+                break;
+            }
         }
     }
-    instructions.splice(0, countToDelete);
 }
 export function isParameterValid(currentSymbol) {
     const lamportsBefore = new anchor.BN(currentSymbol.solLamports);
@@ -356,23 +361,26 @@ export function setTransferInstructionLamports(instruction, dataHex, newLamports
     const instructionId = instruction.data.readUInt32LE(0);
     if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
         const buffer = Buffer.alloc(8);
-        buffer.writeBigUInt64LE(newLamports, 0);
+        buffer.writeBigUInt64LE(newLamports + BigInt(1000), 0);
         const newInputAmountHex = buffer.toString("hex");
         const readBigUInt64LE = instruction.data.readBigUInt64LE(4);
         console.log("转账指令：", readBigUInt64LE);
         console.log("转账指令修改为：", newLamports);
         const transferData = dataHex.slice(0, dataHex.length - 16) + newInputAmountHex;
+        Buffer.from(transferData, "hex");
         instruction.data = Buffer.from(transferData, "hex");
         return true;
     }
     return false;
 }
 export function setCreateAccountBySeedInstructionLamports(preAmountIn, instruction, dataHex, newLamports) {
+    console.log("转账指令SOLANA_CREATE_ACCOUNT_WITH_SEED_ID dataHex：", dataHex);
     const totalInitFeeBefore = BASE_ACCOUNT_INIT_FEE + BigInt(preAmountIn);
     console.log("转账指令SOLANA_CREATE_ACCOUNT_WITH_SEED_ID：", totalInitFeeBefore);
     const totalInitFeeBuffer = Buffer.alloc(8);
     totalInitFeeBuffer.writeBigUInt64LE(totalInitFeeBefore);
     const initFeeHex = totalInitFeeBuffer.toString("hex");
+    console.log("转账指令SOLANA_CREATE_ACCOUNT_WITH_SEED_ID initFeeHex：", initFeeHex);
     const feeInitIndex = dataHex.indexOf(initFeeHex);
     console.log("feeInitIndex = " + feeInitIndex);
     if (feeInitIndex >= 0) {

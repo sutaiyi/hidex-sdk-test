@@ -46,6 +46,13 @@ class NetworkController extends EventEmitter {
         }
         throw new Error('chain not found');
     }
+    getOkxChainIdByChain(chain) {
+        let item = this.HS.chains(chain);
+        if (item) {
+            return item.okxChainId;
+        }
+        throw new Error('chain not found');
+    }
     get sysProviderRpcs() {
         if (this._sysProviderRpcs['ETH'] === undefined || this._sysProviderRpcs['ETH'].length === 0) {
             for (const chain of Object.keys(this.rpcs)) {

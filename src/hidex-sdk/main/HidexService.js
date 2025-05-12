@@ -18,8 +18,10 @@ export class HidexService {
     utils;
     constructor(options) {
         console.log(`HidexService constructor called and options are: `, options);
+        let version = '';
         if (packageData) {
-            console.log(`Hidex SDK Version: v${packageData.version}`);
+            version = `Hidex SDK Version: v${packageData.version}`;
+            console.log(version);
         }
         this.options = options;
         this.utils = new UtilsService();
@@ -31,7 +33,7 @@ export class HidexService {
         serveCommon.wallet = this.wallet;
         this.dexFee = new DexFeeService(serveCommon);
         this.trade = new TradeService(serveCommon);
-        globalSet('HidexConfig', options);
+        globalSet('HidexConfig', { ...options, time: new Date().getTime(), version });
     }
     async init() {
         await keysing.keysingInitialized(this.catcher);
@@ -52,7 +54,7 @@ export class HidexService {
             network: this.network,
             wallet: this.wallet,
             dexFee: this.dexFee,
-            utils: this.utils,
+            utils: this.utils
         };
     }
     environmental(production, uat, development) {
@@ -70,14 +72,14 @@ export class HidexService {
     chains(chain) {
         const rpcList = this.options.rpcList;
         const restRpcItem = (chainID, rpcList, defaultRpc) => {
-            const item = rpcList.find(r => r.chainId === chainID);
+            const item = rpcList.find((r) => r.chainId === chainID);
             if (!item) {
                 throw new Error(`Chain with ID ${chainID} not found`);
             }
             if (!item.rpc) {
                 return defaultRpc;
             }
-            return Array.from(new Set([...(item.rpc.split(',')), ...defaultRpc]));
+            return Array.from(new Set([...item.rpc.split(','), ...defaultRpc]));
         };
         const chainsList = [
             {
@@ -89,6 +91,7 @@ export class HidexService {
                 aliasChain: ['SOL', 'SOLANA'],
                 chainID: 102,
                 codexChainId: 1399811149,
+                okxChainId: 501,
                 token: 'SOL',
                 tokens: solTokens,
                 rpc: restRpcItem(102, rpcList, []),
@@ -98,7 +101,7 @@ export class HidexService {
                 swapName: 'Jupiter',
                 deTrade: '',
                 defaultLimit: 0,
-                apieceOfTime: 2000,
+                apieceOfTime: 2000
             },
             {
                 chainName: 'Ethereum',
@@ -109,6 +112,7 @@ export class HidexService {
                 aliasChain: ['ETH', 'ETHEREUM', 'ETHER'],
                 chainID: 1,
                 codexChainId: 1,
+                okxChainId: 1,
                 token: 'ETH',
                 tokens: ethTokens,
                 rpc: restRpcItem(1, rpcList, ['https://rpc.ankr.com/eth']),
@@ -118,7 +122,7 @@ export class HidexService {
                 swapName: 'Uniswap',
                 deTrade: this.environmental('0x48c679449d77f064e72972EFA9c08c80CcCa759A', '0xe9B034cc80F7165c173aF212752aBF42f590C83B', '0xe9B034cc80F7165c173aF212752aBF42f590C83B'),
                 defaultLimit: 500000,
-                apieceOfTime: 12000,
+                apieceOfTime: 12000
             },
             {
                 chainName: 'Base',
@@ -129,6 +133,7 @@ export class HidexService {
                 aliasChain: ['BASE'],
                 chainID: 8453,
                 codexChainId: 8453,
+                okxChainId: 8453,
                 token: 'ETH',
                 tokens: baseTokens,
                 rpc: restRpcItem(8453, rpcList, ['https://1rpc.io/base']),
@@ -138,7 +143,7 @@ export class HidexService {
                 swapName: 'Uniswap',
                 deTrade: this.environmental('0xd59Dca2923AC747bbe478032F61C00202cfED5D8', '0x8D349A8a122b14a5fDd7f8AEe085AD47605395D8', '0x8D349A8a122b14a5fDd7f8AEe085AD47605395D8'),
                 defaultLimit: 500000,
-                apieceOfTime: 2000,
+                apieceOfTime: 2000
             },
             {
                 chainName: 'BSC',
@@ -149,6 +154,7 @@ export class HidexService {
                 aliasChain: ['BSC', 'BNB'],
                 chainID: 56,
                 codexChainId: 56,
+                okxChainId: 56,
                 token: 'BNB',
                 tokens: bnbTokens,
                 rpc: restRpcItem(56, rpcList, ['https://bsc-dataseed.bnbchain.org']),
@@ -158,8 +164,8 @@ export class HidexService {
                 swapName: 'pancakeswap',
                 deTrade: this.environmental('0xa079ACfE0CaCAC7C21457808354Ee876A330a79B', '0x4f10DAab76d78F53684270dc8A3E2c0a32d58b62', '0x4f10DAab76d78F53684270dc8A3E2c0a32d58b62'),
                 defaultLimit: 500000,
-                apieceOfTime: 2000,
-            },
+                apieceOfTime: 2000
+            }
         ];
         if (chain) {
             if (typeof chain === 'string') {

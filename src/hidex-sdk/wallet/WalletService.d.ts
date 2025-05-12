@@ -83,6 +83,7 @@ declare class WalletService implements IWalletService {
         pathIndex: number;
     }>;
     signMessage(message: string, address: string): Promise<string>;
+    decryptionS3Data(text: any, password: string): Promise<any>;
 }
 export default WalletService;
 //# sourceMappingURL=WalletService.d.ts.map

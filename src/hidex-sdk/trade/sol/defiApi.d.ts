@@ -23,8 +23,11 @@ declare class DefiApi implements IDefiApi {
     submitSwapByJito(transactions: Array<Transaction>): Promise<{
         success: boolean;
         hash: string;
+        data?: any;
     }>;
+    handlerJitoPost(endpoints: Array<string>, params: any): Promise<void>;
     getSwapStatus(hash: string): Promise<HashStatus>;
+    bundlesStatuses(bundles: Array<string>): Promise<HashStatus>;
 }
 declare const _default: DefiApi;
 export default _default;

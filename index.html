@@ -4,10 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
+    <meta name="description" content="Web site created using create-react-app" />
     <!--
       manifest.json provides metadata used when your web app is installed on a
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
@@ -22,6 +19,44 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>React App</title>
+
+    <!-- <script src="https://www.google.com/recaptcha/api.js?render=6LdUByYrAAAAAN1ae-SLJHI9n2cj6qjWhJy2IP_O"></script> -->
+    <script>
+      // console.log('Hidex-------------------');
+      // grecaptcha.ready(() => {
+      //   grecaptcha.execute('6LdUByYrAAAAAN1ae-SLJHI9n2cj6qjWhJy2IP_O', { action: 'submit' }).then(async (token) => {
+      //     // 将 token 添加到表单提交中
+      //     console.log('token-------------------', token);
+      //     if (document?.getElementById('recaptcha-response')) {
+
+      //       document?.getElementById('recaptcha-response')?.value = token;
+      //     }
+      //     try {
+      //       // 将数据转换为 URL 编码格式
+      //       const formBody = new URLSearchParams();
+      //       const data = {
+      //         secret: '6LdUByYrAAAAAHrY8KgPTbLW3B6uQSHrvN_gYilP',
+      //         response: token,
+      //       };
+      //       for (const [key, value] of Object.entries(data)) {
+      //         formBody.append(key, value);
+      //       }
+      //       const response = await fetch('/recaptcha/api/siteverify', {
+      //         method: 'POST',
+      //         headers: {
+      //           'Content-Type': 'application/x-www-form-urlencoded',
+      //         },
+      //         body: formBody.toString(),
+      //       });
+      //       const result = await response.json();
+      //       console.log('result-------------------', result);
+      //       return result;
+      //     } catch (error) {
+      //       console.log('Error:', error);
+      //     }
+      //   });
+      // });
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
