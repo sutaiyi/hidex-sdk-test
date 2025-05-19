@@ -420,7 +420,11 @@ export const ethService = (HS) => {
             return { error: !submitResult.hash, result: { hash: submitResult.hash, data: { accountAddress, currentSymbol } } };
         },
         hashStatus: async (hash, chain) => {
-            const profun = network.sysProviderRpcs[chain].map((v) => {
+            let chainName = chain;
+            if (typeof chain === 'number') {
+                chainName = network.getChainNameByChainId(chain);
+            }
+            const profun = network.sysProviderRpcs[chainName].map((v) => {
                 return v
                     .getTransaction(hash)
                     .then((res) => {

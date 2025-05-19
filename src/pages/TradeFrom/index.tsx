@@ -2,12 +2,8 @@ import { codex } from '@/data';
 import React, { useState, useEffect } from 'react';
 import { HidexSDK } from '@/hidexService';
 import { queryStringify, simpleAddress, strToNumberByDecimals } from '@/common/utils';
-import { getChainsTokenPriceUsd } from '@/data/api';
+import { getChainsTokenPriceUsd, swapCommission } from '@/data/api';
 import { getTokenInfo } from '@/data/codex/query';
-
-
-
-
 
 interface SearchComponentProps {
   onResultSelect: (result: any) => void;
@@ -21,7 +17,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
   const [isLoading, setIsLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
-  const [defalutAddresses, setDefalutAddresses] = useState<Array<{chainName: string, address: string, symbol?: string}>>([
+  const [defalutAddresses, setDefalutAddresses] = useState<Array<{ chainName: string; address: string; symbol?: string }>>([
     {
       chainName: 'SOLANA',
       address: '6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN',
@@ -37,7 +33,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
     {
       chainName: 'ETH',
       address: '0x1121acc14c63f3c872bfca497d10926a6098aac5',
-    }
+    },
   ]);
 
   const handleSearch = async (query: string) => {
@@ -54,10 +50,10 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           id: index + 1,
           token: v.token,
           pair: v.pair.address,
-          priceUSD: v.priceUSD
-        }
-      })
-    }
+          priceUSD: v.priceUSD,
+        };
+      });
+    };
 
     try {
       const searchResults = await onSearch(query);
@@ -68,7 +64,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     setIsLoading(false);
@@ -87,7 +83,6 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
   }, [inputValue]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    
     setInputValue(e.target.value);
   };
 
@@ -97,50 +92,50 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
     setShowDropdown(false);
     if (result && result?.token) {
       try {
-        const chainName = network.getChainNameByChainId(result?.token?.networkId)
-        const currentNetwork = await network.choose(chainName)
-        const { accountItem }: {accountItem: any} = await wallet.getCurrentWallet()
-        const account = accountItem[chainName]
+        const chainName = network.getChainNameByChainId(result?.token?.networkId);
+        const currentNetwork = await network.choose(chainName);
+
+        const { accountItem }: { accountItem: any } = await wallet.getCurrentWallet();
+        const account = accountItem[chainName];
+        const commissionPro = swapCommission({ chainId: currentNetwork.chainID, walletAddress: account.address });
+
         let IS_TOKEN_2022 = false;
         let userWsolAtaLamports = '0';
         let tokenAtaLamports = '0';
         if (utils.trade.isSol(chainName)) {
           IS_TOKEN_2022 = await utils.trade?.isToken2022(result?.token.address, network.getProviderByChain(102));
-          const wsolAtaAddress = await utils.trade?.getUserTokenAtaAddress(account.address, currentNetwork.tokens[1].address, IS_TOKEN_2022)
-          const tokenAtaAddress = await utils.trade?.getUserTokenAtaAddress(account.address, result?.token.address, IS_TOKEN_2022)
-          console.log('wsolAtaAddress==>', wsolAtaAddress, 'tokenAtaAddress==>', tokenAtaAddress)
+          const wsolAtaAddress = await utils.trade?.getUserTokenAtaAddress(account.address, currentNetwork.tokens[1].address, IS_TOKEN_2022);
+          const tokenAtaAddress = await utils.trade?.getUserTokenAtaAddress(account.address, result?.token.address, IS_TOKEN_2022);
+          console.log('wsolAtaAddress==>', wsolAtaAddress, 'tokenAtaAddress==>', tokenAtaAddress);
           const [userWsolAtaLamportsP, tokenAtaLamportsP] = await Promise.all([
             trade.getBalance(account.address, wsolAtaAddress, true),
             trade.getBalance(account.address, tokenAtaAddress, true),
             getChainsTokenPriceUsd(network.getChainIds()),
-          ])
-          userWsolAtaLamports = userWsolAtaLamportsP
-          tokenAtaLamports = tokenAtaLamportsP
+          ]);
+          userWsolAtaLamports = userWsolAtaLamportsP;
+          tokenAtaLamports = tokenAtaLamportsP;
         }
 
-        
-
-
-        const [balance, tokenBalance, wbalance, priceWeiItem, tokenInfo] = await Promise.all([
+        const [balance, tokenBalance, wbalance, priceWeiItem, tokenInfo, commissionData] = await Promise.all([
           trade.getBalance(account.address),
-          trade.getBalance(account.address,result?.token.address),
+          trade.getBalance(account.address, result?.token.address),
           trade.getBalance(account.address, currentNetwork.tokens[1].address),
           getChainsTokenPriceUsd(network.getChainIds()),
-          getTokenInfo(queryStringify({address: result?.token.address, networkId: network.getCodexChainIdByChain(currentNetwork.chain)}))
-        ])
+          getTokenInfo(queryStringify({ address: result?.token.address, networkId: network.getCodexChainIdByChain(currentNetwork.chain) })),
+          commissionPro,
+        ]);
 
+        localStorage.setItem('commissionData', JSON.stringify(commissionData));
 
-
-
-        const isPump = tokenInfo?.data?.token?.launchpad?.completed === false
-        const cryptoPriceUSD = 1 / Number(priceWeiItem[currentNetwork.chainID]) * 10 ** currentNetwork.tokens[0].decimals;
+        const isPump = tokenInfo?.data?.token?.launchpad?.completed === false;
+        const cryptoPriceUSD = (1 / Number(priceWeiItem[currentNetwork.chainID])) * 10 ** currentNetwork.tokens[0].decimals;
         const tradeInfo = {
-          ...result, 
+          ...result,
           account: account,
           chainName,
           chainId: network.getChainIdByChainName(chainName),
-          balance: strToNumberByDecimals(balance, currentNetwork.tokens[0].decimals), 
-          wbalance: strToNumberByDecimals(wbalance, currentNetwork.tokens[1].decimals), 
+          balance: strToNumberByDecimals(balance, currentNetwork.tokens[0].decimals),
+          wbalance: strToNumberByDecimals(wbalance, currentNetwork.tokens[1].decimals),
           tokenBalance: strToNumberByDecimals(tokenBalance, result?.token.decimals),
           balanceStr: balance,
           wbalanceStr: wbalance,
@@ -152,13 +147,13 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           symbol: network.get(chainName).tokens[0].symbol,
           wSymbol: network.get(chainName).tokens[1].symbol,
           isPump,
-        }
-        setSelected(tradeInfo)
+          commissionData,
+        };
+        setSelected(tradeInfo);
         onResultSelect(tradeInfo);
-      } catch (error:any) {
+      } catch (error: any) {
         alert(error.message);
       }
-      
     }
   };
 
@@ -169,107 +164,125 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
   };
 
   return (
-    <div style={{marginBottom: '10px'}}>
-      <div style={{fontSize: '16px', marginTop: '10px', marginBottom: '5px', color: '#999'}}>搜索/选择代币</div>
+    <div style={{ marginBottom: '10px' }}>
+      <div style={{ fontSize: '16px', marginTop: '10px', marginBottom: '5px', color: '#999' }}>搜索/选择代币</div>
       <div style={{ position: 'relative', width: '360px' }}>
-      <input
-        type="text"
-        value={inputValue}
-        onChange={handleInputChange}
-        onBlur={handleBlur}
-        placeholder="输入代币地址..."
-        style={{
-          width: '100%',
-          padding: '8px',
-          color: '#333',
-          fontSize: '16px',
-          borderRadius: '4px',
-          boxSizing: 'border-box',
-          border: '1px solid #ccc'
-        }}
-      />
+        <input
+          type="text"
+          value={inputValue}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          placeholder="输入代币地址..."
+          style={{
+            width: '100%',
+            padding: '8px',
+            color: '#333',
+            fontSize: '16px',
+            borderRadius: '4px',
+            boxSizing: 'border-box',
+            border: '1px solid #ccc',
+          }}
+        />
 
-      {(showDropdown || isLoading) && (
-        <div style={{
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          width: '100%',
-          right: 0,
-          maxHeight: '300px',
-          overflowY: 'auto',
-          backgroundColor: 'white',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          marginTop: '4px',
-          fontSize: '16px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          {isLoading ? (
-            <div style={{ padding: '8px', color: '#666' }}>Loading...</div>
-          ) : results.length > 0 ? (
-            results.map((result: any) => (
+        {(showDropdown || isLoading) && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              width: '100%',
+              right: 0,
+              maxHeight: '300px',
+              overflowY: 'auto',
+              backgroundColor: 'white',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              marginTop: '4px',
+              fontSize: '16px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            }}
+          >
+            {isLoading ? (
+              <div style={{ padding: '8px', color: '#666' }}>Loading...</div>
+            ) : results.length > 0 ? (
+              results.map((result: any) => (
+                <div
+                  key={result.id}
+                  onClick={() => handleResultClick(result)}
+                  style={{
+                    padding: '8px',
+                    cursor: 'pointer',
+                    color: '#333',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>
+                      【{network.getChainNameByChainId(result.token.networkId)}】{result.token.symbol}
+                    </span>
+                    <span>价格：${result.priceUSD}</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div style={{ padding: '8px', color: '#666' }}>No results found</div>
+            )}
+          </div>
+        )}
+      </div>
+      {defalutAddresses && defalutAddresses.length > 0 && (
+        <div style={{ display: 'flex', marginTop: '10px', justifyContent: 'left', gap: '20px', alignItems: 'center' }}>
+          {defalutAddresses.map((item: any) => {
+            return (
               <div
-                key={result.id}
-                onClick={() => handleResultClick(result)}
-                style={{
-                  padding: '8px',
-                  cursor: 'pointer',
-                  color: '#333',
+                key={item.address}
+                style={{ cursor: 'pointer', color: '#666', fontSize: '14px' }}
+                onClick={() => {
+                  setInputValue(item.address);
                 }}
               >
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <span>
-                    【{network.getChainNameByChainId(result.token.networkId)}】{result.token.symbol}
-                  </span>
-                  <span>
-                    价格：${result.priceUSD}
-                  </span>
-                </div>
+                <span style={{ color: '#999' }}>
+                  {item.chainName}
+                  {item.symbol ? `(${item.symbol})` : ''}
+                </span>
+                ：{simpleAddress(item.address, 2)}
               </div>
-            ))
-          ) : (
-            <div style={{ padding: '8px', color: '#666' }}>No results found</div>
-          )}
+            );
+          })}
         </div>
       )}
-    </div>
-    {
-      defalutAddresses && defalutAddresses.length > 0 && (
-        <div style={{display: 'flex', marginTop: '10px', justifyContent: 'left', gap: '20px' , alignItems: 'center'}}>
-          {
-            defalutAddresses.map((item: any) => {
-              return <div key={item.address} style={{cursor: 'pointer', color: '#666', fontSize: '14px'}} onClick={() => {
-                setInputValue(item.address)
-              }}><span style={{color: '#999'}}>{item.chainName}{item.symbol ? `(${item.symbol})` : ''}</span>：{simpleAddress(item.address, 2)}</div>
-            })
-          }
+      {selected && (
+        <div>
+          <div style={{ fontSize: '16px', marginTop: '10px', marginBottom: '5px', color: '#999' }}>
+            当前交易信息：
+            <span
+              style={{ cursor: 'pointer', color: '#1890ff', marginLeft: '10px' }}
+              onClick={async () => {
+                await handleResultClick(selected);
+                console.log('刷新完成!');
+              }}
+            >
+              刷新
+            </span>
+          </div>
+          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '14px', margin: '0 0 10px 0' }}>
+            代币名称：{selected?.token?.symbol} <br />
+            代币地址：{selected?.token?.address} <br />
+            代币精度：{selected?.token?.decimals} <br />
+            代币价格：${selected?.priceUSD} <br />
+            所属链：{network.getChainNameByChainId(selected?.token?.networkId)} (母币价格：${selected.cryptoPriceUSD?.toFixed(6)})<br />
+            是否为Pump未毕业：{selected?.isPump ? '是' : '否'}
+            <br />
+            <br />
+            当前钱包地址：{selected?.account?.address}
+            <br />
+            钱包余额：{selected?.balance} {selected.symbol}
+            <br />
+            {selected?.wSymbol}余额：{selected?.wbalance} {selected.wSymbol}
+            <br />
+            代币余额：{utils.common.formatNumberWithPrecision(selected?.tokenBalance, 4)} {selected?.token?.symbol}
+          </pre>
         </div>
-      )
-    }
-    {
-      selected && <div>
-        <div style={{fontSize: '16px', marginTop: '10px', marginBottom: '5px', color: '#999'}}>当前交易信息：
-          <span style={{cursor: 'pointer', color: '#1890ff', marginLeft: '10px'}} onClick={async ()=> {
-            await handleResultClick(selected);
-            console.log('刷新完成!')
-          }}>刷新</span>
-        </div>
-        <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '14px', margin: '0 0 10px 0'}}>
-          代币名称：{selected?.token?.symbol} <br/>
-          代币地址：{selected?.token?.address} <br/>
-          代币精度：{selected?.token?.decimals} <br/>
-          代币价格：${selected?.priceUSD} <br/>
-          所属链：{network.getChainNameByChainId(selected?.token?.networkId)} (母币价格：${selected.cryptoPriceUSD?.toFixed(6)})<br/>
-          是否为Pump未毕业：{selected?.isPump ? '是' : '否'}<br/>
-          <br/>
-          当前钱包地址：{selected?.account?.address}<br/>
-          钱包余额：{selected?.balance} {selected.symbol}<br/>
-          {selected?.wSymbol}余额：{selected?.wbalance} {selected.wSymbol}<br/>
-          代币余额：{utils.common.formatNumberWithPrecision(selected?.tokenBalance, 4)} {selected?.token?.symbol}
-        </pre>
-      </div>
-    }
+      )}
     </div>
   );
 };

@@ -30,8 +30,8 @@ class TradeService extends EventEmitter {
     resetInstructions = (currentSymbol, transactionMessage, newInputAmount, newOutputAmount) => {
         return resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount);
     };
-    getTransactionsSignature = (transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner) => {
-        return getTransactionsSignature(transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner, this.HS);
+    getTransactionsSignature = (transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner, HS) => {
+        return getTransactionsSignature(transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner, HS);
     };
     compileTransaction = (swapBase64Str) => {
         return compileTransaction(swapBase64Str, this.HS);
@@ -138,15 +138,11 @@ class TradeService extends EventEmitter {
         }
         throw new Error('app undefined');
     };
-    getHashStatus(hash, chain) {
-        let chainName = chain;
-        if (typeof chain === 'number') {
-            chainName = this.HS.network.getChainNameByChainId(chain);
-        }
+    getHashStatus(hash, chain, bundles = []) {
         if (isSol(chain)) {
-            return solService(this.HS).hashStatus(hash);
+            return solService(this.HS).hashStatus(hash, chain, bundles);
         }
-        return ethService(this.HS).hashStatus(hash, chainName);
+        return ethService(this.HS).hashStatus(hash, chain);
     }
     async wrappedExchange(chain, accountAddress, type, priorityFee, amount = '0') {
         const privateKey = await this.HS.wallet.ownerKey(accountAddress);

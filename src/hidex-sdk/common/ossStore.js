@@ -10,7 +10,14 @@ const requireConfig = (apparatus, token) => {
     };
 };
 const walletMap = new Map();
-const getBootedOssItem = async (token, apparatus, key) => {
+const getBootedOssItem = async (token, apparatus) => {
+    if (!token) {
+        return {
+            ...defaluBoootedOss,
+            passwordStatus: undefined,
+            walletStatus: undefined
+        };
+    }
     try {
         const result = await axios.get('/api/frontend/app/personal/getItem', requireConfig(apparatus, token));
         if (result?.status === 200 && result?.data?.code === 200) {
@@ -18,51 +25,62 @@ const getBootedOssItem = async (token, apparatus, key) => {
                 const encryptedWallet = await passworder.decrypt(HIDEXKEYWORD, result.data.data.putBooted);
                 const data = JSON.parse(encryptedWallet);
                 walletMap.set('WalletBooted', data);
-                if (key) {
-                    return data[key];
-                }
-                return data;
+                return {
+                    ...data,
+                    passwordStatus: data.booted ? 1 : 0,
+                    walletStatus: Object.keys(data.walletBooted).length ? 1 : 0
+                };
             }
             walletMap.set('WalletBooted', defaluBoootedOss);
-            if (key) {
-                return defaluBoootedOss[key];
-            }
             return defaluBoootedOss;
         }
-        throw new Error('Failed get s3 store');
+        return {
+            ...defaluBoootedOss,
+            passwordStatus: undefined,
+            walletStatus: undefined
+        };
     }
     catch (error) {
-        throw new Error('Failed get s3 store' + error);
+        console.log('s3 get error', error);
+        return {
+            ...defaluBoootedOss,
+            passwordStatus: undefined,
+            walletStatus: undefined
+        };
     }
 };
 const setBootedOssItem = async (token, apparatus, key, value, isClear) => {
+    if (!token) {
+        return {
+            ...defaluBoootedOss,
+            passwordStatus: undefined,
+            walletStatus: undefined
+        };
+    }
     try {
-        let walletPutData = walletMap.get('WalletBooted');
-        if (!walletPutData && key !== 'all') {
-            walletPutData = await getBootedOssItem(token, apparatus);
+        let walletPutData = await getBootedOssItem(token, apparatus);
+        if (walletPutData?.walletStatus === undefined) {
+            throw new Error('Failed get s3 store');
         }
         if (walletPutData && key !== 'all' && value) {
             walletPutData[key] = value;
         }
         if (key == 'all' && value) {
-            walletPutData = value;
-        }
-        if (!isClear &&
-            ((walletPutData?.walletBooted && typeof walletPutData?.walletBooted === 'object' && Object.keys(walletPutData?.walletBooted).length === 0) ||
-                typeof walletPutData?.walletBooted !== 'object' ||
-                !walletPutData?.booted ||
-                !walletPutData?.walletBooted ||
-                walletPutData?.walletBooted === 'null' ||
-                walletPutData?.walletBooted === 'undefined' ||
-                walletPutData?.booted === 'null' ||
-                walletPutData?.booted === 'undefined')) {
-            return true;
+            if (isClear) {
+                walletPutData = defaluBoootedOss;
+            }
+            else {
+                if (walletPutData.walletBooted && !value.walletBooted) {
+                    throw new Error('[Failed set s3 store] 数据比对异常');
+                }
+                walletPutData = value;
+            }
         }
         walletMap.set('WalletBooted', walletPutData);
         const putBooted = await passworder.encrypt(HIDEXKEYWORD, JSON.stringify(walletPutData));
         const result = await axios.post('/api/frontend/app/personal/setItem', { putBooted }, requireConfig(apparatus, token));
         if (result?.status === 200 && result?.data && result?.data?.code === 200) {
-            return true;
+            return walletPutData;
         }
         throw new Error('Failed set s3 store');
     }

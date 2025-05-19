@@ -50,7 +50,7 @@ export class TradeHashStatusService extends EventEmitter {
             }
             if (new Date().getTime() - hashItem.createTime >= this.maxTime) {
                 if (tradeType === 0 && bundles?.length) {
-                    hashItem.status = await this.trade.defiApi.bundlesStatuses(bundles);
+                    hashItem.status = 'Failed';
                 }
                 else {
                     hashItem.status = 'Failed';

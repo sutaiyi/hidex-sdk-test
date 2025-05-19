@@ -10,7 +10,7 @@ declare class WalletService implements IWalletService {
     private walletStore;
     private bootedOss;
     constructor(options: OptionsCommon);
-    getCloudBootedOss(HS: OptionsCommon, key?: string): Promise<BootedOssStore>;
+    getCloudBootedOss(HS: OptionsCommon): Promise<BootedOssStore>;
     private setCloudBootedOss;
     getWalletCatch(catcher: ICatcher, key?: string): Promise<WalletStore>;
     private setWalletCatch;
@@ -74,12 +74,12 @@ declare class WalletService implements IWalletService {
     private generatePrivateKeyByChain;
     private getPublicKey;
     isUnlocked(): Promise<boolean>;
-    isSetPassword(): Promise<boolean>;
-    hasWallet(): Promise<boolean>;
+    isSetPassword(): Promise<number | undefined>;
+    hasWallet(): Promise<number | undefined>;
     getWalletStatus(): Promise<{
         isUnlocked: boolean;
-        isSetPassword: boolean;
-        hasWallet: boolean;
+        isSetPassword: number | undefined;
+        hasWallet: number | undefined;
         pathIndex: number;
     }>;
     signMessage(message: string, address: string): Promise<string>;

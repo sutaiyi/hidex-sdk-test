@@ -1,5 +1,4 @@
 import { HidexSDK } from '@/hidexService';
-import { swapSign } from './utils';
 
 import { getBeforeTradeData, getCurrentSymbolTest, setBeforeTradeData } from './solTrade';
 
@@ -254,28 +253,31 @@ const tradeFun = () => {
         // 当前母币时时价格
         currentSymbol.cryptoPriceUSD = cryptoPriceUSD;
 
-        console.time('swapPath&swapSignTimer');
-        const [swapPath, signRes] = await Promise.all([trade.getSwapPath(currentSymbol), swapSign(currentNetwork.chainID, account.address)]);
-        console.timeEnd('swapPath&swapSignTimer');
+        console.time('swapPathTimer');
+        const swapPath = await trade.getSwapPath(currentSymbol);
+        console.timeEnd('swapPathTimer');
+
         console.time('dexFeeTimer');
         currentSymbol.amountOutMin = await dexFee.getAmountOutMin(currentSymbol, swapPath.fullAmoutOut);
         console.timeEnd('dexFeeTimer');
 
-        console.time('approveTimer');
         // 交易授权
         if (!currentSymbol.isBuy) {
+          console.time('approveTimer');
           await trade.approve.execute(currentSymbol.in.address, address, swapPath.authorizationTarget || currentNetwork.deTrade, currentSymbol.chain);
           console.log('Swapp Approved');
+          console.timeEnd('approveTimer');
         }
-        console.timeEnd('approveTimer');
 
-        // ETH系需要获取交易签名
+        const commissionDataStr = localStorage.getItem('commissionData');
+        let commissionData = commissionDataStr ? JSON.parse(commissionDataStr) : {};
+
         Object.assign(currentSymbol, {
-          inviter: currentSymbol.inviter ? currentSymbol.inviter : signRes.inviterAddress || '',
-          feeRate: signRes.feeRate || 0,
-          commissionRate: signRes.commissionRate || 0,
-          contents: signRes.contents || '',
-          signature: signRes.signature || '',
+          inviter: currentSymbol.inviter ? currentSymbol.inviter : commissionData.inviterAddress || '',
+          feeRate: commissionData.feeRate || 0,
+          commissionRate: commissionData.commissionRate || 0,
+          contents: commissionData.contents || '',
+          signature: commissionData.signature || '',
         });
 
         console.time('getSwapEstimateGasTimer');
@@ -351,28 +353,31 @@ const tradeFun = () => {
         // 当前母币时时价格
         currentSymbol.cryptoPriceUSD = cryptoPriceUSD;
 
-        console.time('swapPath&swapSignTimer');
-        const [swapPath, signRes] = await Promise.all([trade.getSwapPath(currentSymbol), swapSign(currentNetwork.chainID, account.address)]);
-        console.timeEnd('swapPath&swapSignTimer');
+        console.time('swapPathTimer');
+        const swapPath = await trade.getSwapPath(currentSymbol);
+        console.timeEnd('swapPathTimer');
+
         console.time('dexFeeTimer');
         currentSymbol.amountOutMin = await dexFee.getAmountOutMin(currentSymbol, swapPath.fullAmoutOut);
         console.timeEnd('dexFeeTimer');
 
-        console.time('approveTimer');
         // ETH系交易授权
         if (!currentSymbol.isBuy) {
+          console.time('approveTimer');
           await trade.approve.execute(currentSymbol.in.address, address, swapPath.authorizationTarget || currentNetwork.deTrade, currentSymbol.chain);
           console.log('Swapp Approved');
+          console.timeEnd('approveTimer');
         }
-        console.timeEnd('approveTimer');
 
-        // ETH系需要获取交易签名
+        const commissionDataStr = localStorage.getItem('commissionData');
+        let commissionData = commissionDataStr ? JSON.parse(commissionDataStr) : {};
+
         Object.assign(currentSymbol, {
-          inviter: currentSymbol.inviter ? currentSymbol.inviter : signRes.inviterAddress || '',
-          feeRate: signRes.feeRate || 0,
-          commissionRate: signRes.commissionRate || 0,
-          contents: signRes.contents || '',
-          signature: signRes.signature || '',
+          inviter: currentSymbol.inviter ? currentSymbol.inviter : commissionData.inviterAddress || '',
+          feeRate: commissionData.feeRate || 0,
+          commissionRate: commissionData.commissionRate || 0,
+          contents: commissionData.contents || '',
+          signature: commissionData.signature || '',
         });
 
         console.time('getSwapEstimateGasTimer');
@@ -395,6 +400,7 @@ const tradeFun = () => {
             hash: result.hash,
             createTime: new Date().getTime(),
             data: result.data,
+            tradeType: currentSymbol.tradeType,
           };
           trade.checkHash.action(hashItem);
           // 更新交易预请求数据
@@ -408,23 +414,24 @@ const tradeFun = () => {
     },
     后台多条Hash状态查询: async () => {
       try {
-        const hashItem1 = {
-          chain: 56,
-          hash: '0x1190a8c49883fb1c4e02bea72b7df2596d3db42aab6390a9e23ae7c03086747a',
-          createTime: new Date().getTime(),
-          data: {},
-        };
+        // const hashItem1 = {
+        //   chain: 56,
+        //   hash: '0x1190a8c49883fb1c4e02bea72b7df2596d3db42aab6390a9e23ae7c03086747a',
+        //   createTime: new Date().getTime(),
+        //   data: {},
+        // };
         const hashItem2 = {
           chain: 102,
           hash: '27Nhtf5dp6D8F4nmuAX5akXbwtMAiDViHyH9afVB2sdsdvNHgGHsahyGpj43AdUpZcdnmhRMtZJA6vPiY63yLPGL',
           createTime: new Date().getTime(),
           data: {},
+          tradeType: 0,
         };
-        trade.checkHash.action(hashItem1);
+        trade.checkHash.action(hashItem2);
 
-        setTimeout(() => {
-          trade.checkHash.action(hashItem2);
-        }, 1000);
+        // setTimeout(() => {
+        //   trade.checkHash.action(hashItem2);
+        // }, 1000);
       } catch (error) {
         const { code, message } = utils.getErrorMessage(error);
         alert(code + '-' + message);

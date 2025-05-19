@@ -218,5 +218,7 @@ export const defaluBoootedOss = {
     walletBooted: {},
     pathIndex: 0,
     currentWalletId: '0&0',
-    booted: ''
+    booted: '',
+    passwordStatus: 0,
+    walletStatus: 0
 };

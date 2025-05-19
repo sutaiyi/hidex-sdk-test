@@ -13,7 +13,8 @@ const getCurrentSymbolTest = async (
   address: string;
 }> => {
   const { utils, network } = HidexSDK;
-  const { token, account, tokenBalanceStr, balanceStr, balance, inviter, cryptoPriceUSD, wbalanceStr, userWsolAtaLamportsStr, tokenAtaLamportsStr, IS_TOKEN_2022 } = info;
+  const { token, account, tokenBalanceStr, balanceStr, balance, inviter, cryptoPriceUSD, wbalanceStr, userWsolAtaLamportsStr, tokenAtaLamportsStr, IS_TOKEN_2022, commissionData } =
+    info;
   const { address } = account;
   const tokenAddress = token.address;
   const decimals = token.decimals;
@@ -28,15 +29,14 @@ const getCurrentSymbolTest = async (
   const feeAccountStr = Math.floor(0.0055 * Math.pow(10, 9)).toString();
   const buyTestAmount = Math.floor((Number(balanceStr) - Number(feeAccountStr)) * 0.1).toString();
   const amountIn = isBuy ? buyTestAmount : tokenBalanceStr;
-
   const currentSymbol = {
     in: isBuy ? inToken : outToken,
     out: isBuy ? outToken : inToken,
     amountIn, // 兑换数量
-    slipPersent: 0, // 兑换滑点
+    slipPersent: 0, // 兑换滑点(预请求时候使用)
     amountOutMin: '0', // 最少得到数量
     dexFeeAmount: '0', // 交易手续费
-    priorityFee: (0.0001 * Math.pow(10, 9)).toString(), // 优先费
+    priorityFee: (0.001 * Math.pow(10, 9)).toString(), // 优先费
     inviter, // 邀请地址
     isBuy,
     networkFee: {
@@ -92,14 +92,15 @@ const setBeforeTradeData = async (info: any, { isBuy, isPump, currentNetwork }: 
 
 const getBeforeTradeData = (isBuy: boolean, chainName: string, tokenAddress: string) => {
   const mapItems = beforeTradeDataMap.get('compiles');
-  if (mapItems && typeof mapItems === 'object') {
-    return mapItems[`${isBuy ? 'buy' : 'sell'}_${chainName}_${tokenAddress}`];
-  }
-  return {
+  const defaultBack = {
     compile: null,
     preAmountIn: 0,
     preAmountOut: 0,
   };
+  if (mapItems && typeof mapItems === 'object') {
+    return mapItems[`${isBuy ? 'buy' : 'sell'}_${chainName}_${tokenAddress}`] || defaultBack;
+  }
+  return defaultBack;
 };
 
 export { getCurrentSymbolTest, setBeforeTradeData, getBeforeTradeData };

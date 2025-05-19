@@ -2,6 +2,8 @@ import axios from 'axios';
 import bs58 from 'bs58';
 class DefiApi {
     clearTimer;
+    maxBlockHashCount;
+    currentBlockHashCount;
     lastBlockHash;
     constructor() {
         this.clearTimer = null;
@@ -9,6 +11,8 @@ class DefiApi {
             blockhash: '',
             lastValidBlockHeight: 0
         };
+        this.currentBlockHashCount = 0;
+        this.maxBlockHashCount = 10;
     }
     async getLatestBlockhash(network) {
         await this.updateLatestBlockhash(network);
@@ -19,16 +23,39 @@ class DefiApi {
         return this.lastBlockHash;
     }
     async updateLatestBlockhash(network) {
-        if (network.get().chainID !== 102) {
-            return this.lastBlockHash;
+        try {
+            if (network.get().chainID !== 102) {
+                return this.lastBlockHash;
+            }
+            const connection = await network.getProviderByChain(102);
+            if (connection) {
+                const blockhash = await connection.getLatestBlockhash();
+                if (blockhash && blockhash.blockhash) {
+                    this.lastBlockHash = blockhash;
+                    this.currentBlockHashCount = 0;
+                    return blockhash;
+                }
+            }
+            throw new Error("Can't get latest blockhash");
         }
-        const connection = await network.getProviderByChain(102);
-        if (connection) {
-            const blockhash = await connection.getLatestBlockhash();
-            this.lastBlockHash = blockhash;
-            return blockhash;
+        catch (error) {
+            if (this.currentBlockHashCount < this.maxBlockHashCount) {
+                return new Promise((resolve) => {
+                    setTimeout(async () => {
+                        try {
+                            this.currentBlockHashCount++;
+                            const res = await this.updateLatestBlockhash(network);
+                            resolve(res);
+                            return res;
+                        }
+                        catch (error) { }
+                    }, 1000);
+                });
+            }
+            else {
+                return this.lastBlockHash;
+            }
         }
-        return this.lastBlockHash;
     }
     stopLatestBlockhash() {
         this.clearTimer && global?.clearInterval(this.clearTimer);
@@ -81,30 +108,38 @@ class DefiApi {
             throw new Error(JSON.stringify(error));
         }
     }
+    async submitByQuiknode() {
+    }
     async submitSwapByJito(transactions) {
         const jitoPostTime = new Date().getTime();
         try {
+            const endpointsByQuiknode = ['https://sleek-thrilling-owl.solana-mainnet.quiknode.pro/ad3162ba7f548c9dfc2215e4614036e6e2787ecb'];
             const endpoints = [
-                'https://mainnet.block-engine.jito.wtf/api/v1/bundles',
-                'https://amsterdam.mainnet.block-engine.jito.wtf/api/v1/bundles',
-                'https://frankfurt.mainnet.block-engine.jito.wtf/api/v1/bundles',
-                'https://ny.mainnet.block-engine.jito.wtf/api/v1/bundles',
-                'https://tokyo.mainnet.block-engine.jito.wtf/api/v1/bundles'
+                ...endpointsByQuiknode,
+                'https://mainnet.block-engine.jito.wtf/api/v1/transactions',
+                'https://amsterdam.mainnet.block-engine.jito.wtf/api/v1/transactions',
+                'https://frankfurt.mainnet.block-engine.jito.wtf/api/v1/transactions',
+                'https://ny.mainnet.block-engine.jito.wtf/api/v1/transactions',
+                'https://tokyo.mainnet.block-engine.jito.wtf/api/v1/transactions'
             ];
-            const serializedTransactions = [];
-            for (const transaction of transactions) {
-                serializedTransactions.push(bs58.encode(transaction.serialize()));
-            }
-            const signatureBase58 = transactions[3].signatures.map((sig) => bs58.encode(sig));
-            const signatureBase58_swap = transactions[2].signatures.map((sig) => bs58.encode(sig));
+            const signedTx = Buffer.from(transactions[0].serialize()).toString('base64');
+            const signatureBase58 = transactions[0].signatures.map((sig) => bs58.encode(sig));
+            const signatureBase58_swap = signatureBase58;
             const params = {
                 jsonrpc: '2.0',
                 id: 1,
-                method: 'sendBundle',
-                params: [serializedTransactions]
+                method: 'sendTransaction',
+                params: [
+                    signedTx,
+                    {
+                        encoding: 'base64'
+                    }
+                ]
             };
             const requests = endpoints.map((url) => axios
-                .post(url, params)
+                .post(url, params, {
+                timeout: 3000
+            })
                 .then((res) => {
                 Promise.resolve(res);
                 return res;
@@ -113,8 +148,8 @@ class DefiApi {
                 return Promise.reject(error);
             }));
             const results = await Promise.any(requests);
+            console.log('submitSwapByJito results', results);
             if (results.status === 200 && results?.data?.result) {
-                this.handlerJitoPost(endpoints, params);
                 return {
                     success: true,
                     hash: signatureBase58[0],
@@ -134,7 +169,7 @@ class DefiApi {
             console.log('sendBundle error', error);
             if (error instanceof AggregateError) {
                 if (error?.errors?.length) {
-                    const errRes = error.errors[0];
+                    const errRes = error.errors[1];
                     if (errRes?.response?.data?.error?.message) {
                         throw new Error(errRes.response.data.error.message);
                     }
@@ -147,46 +182,47 @@ class DefiApi {
         }
     }
     async handlerJitoPost(endpoints, params) {
-        try {
-            endpoints.forEach((url) => {
-                axios.post(url, params);
-            });
-        }
-        catch (error) {
-            console.log('handlerJitoPost error', error);
-        }
-        try {
-            for (const url of endpoints) {
+        for (const url of endpoints) {
+            try {
                 await new Promise((resolve) => setTimeout(resolve, 1000));
                 await axios.post(url, params);
             }
-        }
-        catch (error) {
-            console.log('handlerJitoPost error', error);
+            catch (error) {
+                console.log('handlerJitoPost error', error);
+            }
         }
     }
     async getSwapStatus(hash) {
-        const latestBlockhash = this.lastBlockHash;
-        const url = `/gmgn/defi/router/v1/sol/tx/get_transaction_status?hash=${hash}&last_valid_height=${latestBlockhash?.lastValidBlockHeight}`;
-        const response = await axios.get(url);
-        if (response.status === 200 && response.data?.code === 0) {
-            const { data } = response.data;
-            if (data.expired) {
-                return 'Expired';
+        try {
+            const latestBlockhash = this.lastBlockHash;
+            const url = `/gmgn/defi/router/v1/sol/tx/get_transaction_status?hash=${hash}&last_valid_height=${latestBlockhash?.lastValidBlockHeight}`;
+            const response = await axios.get(url, {
+                timeout: 1000
+            });
+            if (response.status === 200 && response.data?.code === 0) {
+                const { data } = response.data;
+                if (data.expired) {
+                    return 'Expired';
+                }
+                if (data.success && !data.err) {
+                    return 'Confirmed';
+                }
+                if (data.failed) {
+                    return 'Failed';
+                }
+                return 'Pending';
             }
-            if (data.success && !data.err) {
-                return 'Confirmed';
-            }
-            if (data.failed) {
-                return 'Failed';
-            }
+            throw new Error('Get Transaction Status Error');
+        }
+        catch (error) {
             return 'Pending';
         }
-        throw new Error('Get Transaction Status Error');
     }
     async bundlesStatuses(bundles) {
         try {
             console.log('bundlesStatuses --data', bundles);
+            if (!bundles?.length)
+                return 'Pending';
             const res = await (await fetch('https://mainnet.block-engine.jito.wtf/api/v1/getBundleStatuses', {
                 method: 'POST',
                 headers: {
@@ -201,13 +237,30 @@ class DefiApi {
             })).json();
             if (res?.result?.value?.length) {
                 const status = ['processed', 'confirmed', 'finalized'];
-                return status.includes(res.result.value[0]?.confirmation_status) ? 'Confirmed' : 'Pending';
+                const statusRes = status.includes(res.result.value[0]?.confirmation_status) ? 'Confirmed' : 'Pending';
+                if (statusRes === 'Confirmed') {
+                    return 'Confirmed';
+                }
+                return 'Pending';
             }
             return 'Failed';
         }
         catch (error) {
             console.log('bundlesStatuses --error', error);
             return 'Failed';
+        }
+    }
+    async rpcSwapStatus(hash, connection) {
+        try {
+            const result = await connection.getSignatureStatus(hash, { searchTransactionHistory: true });
+            console.log('SOL RPC状态查询 confirmation===', result);
+            if (result?.value?.confirmationStatus === 'confirmed' || result?.value?.confirmationStatus === 'finalized') {
+                return 'Confirmed';
+            }
+            return 'Pending';
+        }
+        catch (error) {
+            return 'Pending';
         }
     }
 }

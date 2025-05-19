@@ -2,13 +2,14 @@ import { HidexSDK } from '@/hidexService';
 
 const walletTest = () => {
   const { wallet } = HidexSDK;
-  let password = '1231234';
-  let newPassword = '1231234';
+  let password = 'S123123';
+  let newPassword = 'S123123';
   return {
     创建密码123123: async () => {
       try {
         await wallet.createPassword(password);
         await wallet.setUnLockedExpires(7);
+        await wallet.walletInit();
         console.log('密码创建成功', password);
       } catch (error) {
         console.error(error);
@@ -24,7 +25,7 @@ const walletTest = () => {
         console.log('验证无误， 开始修改密码...');
         await wallet.resetPassword(oldPassword, newPassword);
         console.log('密码修改成功 ' + newPassword);
-        wallet.walletInit();
+        await wallet.walletInit();
       } catch (error) {
         console.error(error);
         alert(error);

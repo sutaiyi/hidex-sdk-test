@@ -36,6 +36,8 @@ export declare const BASE_ACCOUNT_INIT_FEE: bigint;
 export declare const TIP_MINI_IN_PRIORITY: bigint;
 export declare const DEFAULD_SOLANA_SWAP_LIMIT: number;
 export declare const DEFAULD_SOLANA_GAS_LIMIT: number;
+export declare const PREPARE_SOLANA_GAS_LIMIT: number;
+export declare const COMMISSION_SOLANA_GAS_LIMIT: number;
 export declare const DEFAULD_BASE_GAS_FEE: number;
 export declare const VERSION_TRANSACTION_PREFIX = "AQAAAAAAA";
 export declare const PRE_PAID_EXPENSES: number;

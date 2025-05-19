@@ -10,6 +10,7 @@ import WalletFrom from '../WalletFrom';
 import { setBeforeTradeData } from './solTrade';
 import { HidexSDK } from '@/hidexService';
 import Decryption from './decryption';
+import TestOther from './testOther';
 
 const Test = React.memo(() => {
   const { network, trade } = HidexSDK;
@@ -76,6 +77,9 @@ const Test = React.memo(() => {
 
       <div className="footer">
         <Decryption></Decryption>
+      </div>
+      <div className="footer">
+        <TestOther></TestOther>
       </div>
     </div>
   );

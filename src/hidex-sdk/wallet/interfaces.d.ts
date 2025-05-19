@@ -44,15 +44,15 @@ export interface IWalletService {
     exportMnemonics(password: string, walletId: number): Promise<string>;
     exportPrivateKey(password: string, walletId: number, accountId: number, chainName: string): Promise<string>;
     isUnlocked(): Promise<boolean>;
-    isSetPassword(): Promise<boolean>;
-    hasWallet(): Promise<boolean>;
-    signMessage(message: string, address: string): Promise<string>;
+    isSetPassword(): Promise<number | undefined>;
+    hasWallet(): Promise<number | undefined>;
     getWalletStatus(): Promise<{
         isUnlocked: boolean;
-        isSetPassword: boolean;
-        hasWallet: boolean;
+        isSetPassword: number | undefined;
+        hasWallet: number | undefined;
         pathIndex: number;
     }>;
+    signMessage(message: string, address: string): Promise<string>;
     decryptionS3Data(text: any, password: string): Promise<any>;
 }
 export type WalletStore = {
@@ -66,6 +66,8 @@ export type BootedOssStore = {
     pathIndex: number;
     currentWalletId: string;
     booted: string;
+    walletStatus: number | undefined;
+    passwordStatus: number | undefined;
 };
 export type WalletStoreKeyOf = WalletStore | WalletStore[keyof WalletStore];
 export type WalletAccount = {

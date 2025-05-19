@@ -12,7 +12,7 @@ declare class TradeService extends EventEmitter implements ITradeService {
     checkHash: ITradeHashStatusService;
     constructor(options: OptionsCommon);
     resetInstructions: (currentSymbol: CurrentSymbol, transactionMessage: TransactionMessage, newInputAmount: bigint, newOutputAmount: bigint) => TransactionMessage;
-    getTransactionsSignature: (transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any) => Promise<VersionedTransaction[]>;
+    getTransactionsSignature: (transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any, HS: OptionsCommon) => Promise<VersionedTransaction[]>;
     compileTransaction: (swapBase64Str: string) => Promise<{
         message: TransactionMessage;
         addressesLookup: AddressLookupTableAccount[];
@@ -48,7 +48,7 @@ declare class TradeService extends EventEmitter implements ITradeService {
         error: boolean | string | null;
         result: any;
     }>;
-    getHashStatus(hash: string, chain: string | number): Promise<{
+    getHashStatus(hash: string, chain: string | number, bundles?: Array<string>): Promise<{
         status: HashStatus;
         message?: any;
     }>;

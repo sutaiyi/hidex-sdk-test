@@ -25,6 +25,7 @@ export declare function priorityFeeInstruction(limit: number, fee: number): Prom
 export declare function versionedTra(instructions: TransactionInstruction[], owner: any, latestBlockhash: string, addressLookupTableAccounts: AddressLookupTableAccount[]): Promise<VersionedTransaction>;
 export declare function getTotalFee(currentSymbol: CurrentSymbol): string;
 export declare function deleteTransactionGasInstruction(instructions: TransactionInstruction[]): Promise<void>;
+export declare function getTransactionGasLimitUintsInInstruction(instructions: TransactionInstruction[]): number;
 export declare function isParameterValid(currentSymbol: CurrentSymbol): false | undefined;
 export declare function createSwapPrepareInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function createSimpleSwapCompleteInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService, gasFee: number): Promise<anchor.web3.TransactionInstruction>;

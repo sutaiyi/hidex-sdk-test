@@ -101,7 +101,6 @@ export async function deleteTransactionGasInstruction(instructions) {
     let indexToDelete = 0;
     while (indexToDelete >= 0) {
         indexToDelete = -1;
-        console.log("指令长度", instructions.length);
         for (let i = 0; i < instructions.length; i++) {
             const txIx = instructions[i];
             if (txIx.programId.toBase58() == ComputeBudgetProgram.programId.toBase58()) {
@@ -111,6 +110,21 @@ export async function deleteTransactionGasInstruction(instructions) {
             }
         }
     }
+}
+export function getTransactionGasLimitUintsInInstruction(instructions) {
+    console.log("指令长度", instructions.length);
+    let gaslimit = 0;
+    for (let i = 0; i < instructions.length; i++) {
+        const txIx = instructions[i];
+        if (txIx.programId.toBase58() == ComputeBudgetProgram.programId.toBase58()) {
+            if (txIx.data[0] === 0x02) {
+                const last8Bytes = txIx.data.slice(1);
+                gaslimit = last8Bytes.readInt32LE(0);
+                break;
+            }
+        }
+    }
+    return gaslimit;
 }
 export function isParameterValid(currentSymbol) {
     const lamportsBefore = new anchor.BN(currentSymbol.solLamports);

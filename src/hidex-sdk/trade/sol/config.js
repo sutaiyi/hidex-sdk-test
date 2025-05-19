@@ -27,16 +27,22 @@ export const SUPPORT_CHANGE_PROGRAM_IDS = new Map([
     ['whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc', 16],
     ['LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo', 16],
     ['Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB', 16],
-    ['JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4', 38],
     ['6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P', 16],
     ['pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA', 16],
-    ['GMGNEaLkcH1QFd5buhBH4511bX9D2NHWeYcMFASNY9qC', 16]
+    ['GMGNEaLkcH1QFd5buhBH4511bX9D2NHWeYcMFASNY9qC', 16],
+    ['DGMgNKpqygARV2pHZfW4kNQSHT9F3Ly2BKWqvpYrAg5C', 16],
+    ['dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN', 16]
 ]);
 export const NEED_CHANGE_SLIPPAGE_PROGRAM_IDS = [
     'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4'
 ];
 export const TOKEN_PROGRAM_OWNS = ['TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb', 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'];
-export const JITO_FEE_ACCOUNT = ['HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe', 'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh'];
+export const JITO_FEE_ACCOUNT = [
+    "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe",
+    "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt",
+    "ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49",
+    "DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh",
+];
 export const HIDEX_ADDRESS_LOOK_UP = new PublicKey('5ZF8nmsRMPB24j5UDU7ztjvxVBJ7pprZJvzbujZ5nKpQ');
 export const SOLANA_SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111');
 export const PUMP_PROGRAM_ID = new PublicKey('6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P');
@@ -52,8 +58,10 @@ export const DEFAULT_SWAP_SOL_LAMPORTS = BigInt('5000000000');
 export const DEFAULT_SWAP_PUMP_LAMPORTS = BigInt('500000000');
 export const BASE_ACCOUNT_INIT_FEE = BigInt('2039280');
 export const TIP_MINI_IN_PRIORITY = BigInt('2000000');
-export const DEFAULD_SOLANA_SWAP_LIMIT = Number('600000');
-export const DEFAULD_SOLANA_GAS_LIMIT = Number('100000');
+export const DEFAULD_SOLANA_SWAP_LIMIT = Number('500000');
+export const DEFAULD_SOLANA_GAS_LIMIT = Number('50000');
+export const PREPARE_SOLANA_GAS_LIMIT = Number('60000');
+export const COMMISSION_SOLANA_GAS_LIMIT = Number('100000');
 export const DEFAULD_BASE_GAS_FEE = Number('5000');
 export const VERSION_TRANSACTION_PREFIX = 'AQAAAAAAA';
 export const PRE_PAID_EXPENSES = Number('6000000');

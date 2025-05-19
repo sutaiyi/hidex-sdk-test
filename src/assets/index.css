@@ -16,4 +16,5 @@ code {
 input,
 textarea {
   color: #333333;
+  border-radius: 4px !important;
 }

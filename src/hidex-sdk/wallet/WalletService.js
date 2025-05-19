@@ -26,13 +26,13 @@ class WalletService {
         this.walletStore = defalutWalletStore;
         this.bootedOss = defaluBoootedOss;
     }
-    async getCloudBootedOss(HS, key) {
+    async getCloudBootedOss(HS) {
         try {
             const { apparatus } = HS;
             const token = getUseToken();
-            const res = await ossStore.getBootedOssItem(token, apparatus, key);
+            const res = await ossStore.getBootedOssItem(token, apparatus);
             this.walletMap = ossStore.getWalletMap();
-            this.bootedOss = this.walletMap.get('WalletBooted');
+            this.bootedOss = res;
             return res;
         }
         catch (error) {
@@ -45,7 +45,7 @@ class WalletService {
             const token = getUseToken();
             const res = await ossStore.setBootedOssItem(token, apparatus, key, value, isClear);
             this.walletMap = ossStore.getWalletMap();
-            this.bootedOss = this.walletMap.get('WalletBooted');
+            this.bootedOss = res;
             return res;
         }
         catch (error) {
@@ -88,7 +88,7 @@ class WalletService {
         console.log('walletInit...');
         console.log('walletStore', walletStore);
         console.log('bootedOss', bootedOss);
-        if (!walletStore.walletList?.length || walletStore.pathIndex !== bootedOss.pathIndex) {
+        if (bootedOss && (!walletStore.walletList?.length || walletStore.pathIndex !== bootedOss.pathIndex)) {
             console.log('WalletResting...');
             const maxPathIndex = bootedOss.pathIndex;
             let id = 0;
@@ -226,9 +226,11 @@ class WalletService {
         return apt;
     }
     async createWallet(mnemonic, pathIndex = 0, walletName = '', id = 0) {
-        const createWallet = await this.hasWallet();
-        if (createWallet) {
-            throw new Error(JSON.stringify({ code: 10018, message: '助记词账户已创建' }));
+        if (!isValidSHA256(mnemonic)) {
+            const isWalletTrue = await this.hasWallet();
+            if (isWalletTrue) {
+                throw new Error(JSON.stringify({ code: 10018, message: '助记词账户已创建' }));
+            }
         }
         const bootedOss = this.getBootedOss();
         let useMnemonic = mnemonic;
@@ -799,21 +801,21 @@ class WalletService {
         return false;
     }
     async isSetPassword() {
-        const data = await this.getCloudBootedOss(this.HS, 'booted');
-        return !!data;
+        const data = await this.getWalletStatus();
+        return data.isSetPassword;
     }
     async hasWallet() {
-        const walletBooted = await this.getCloudBootedOss(this.HS, 'walletBooted');
-        return Object.keys(walletBooted)?.length > 0;
+        const data = await this.getWalletStatus();
+        return data.hasWallet;
     }
     async getWalletStatus() {
         const bootpro = this.getCloudBootedOss(this.HS);
-        const [isUnlocked, { walletBooted, booted, pathIndex }] = await Promise.all([this.isUnlocked(), bootpro]);
+        const [isUnlocked, { pathIndex, walletStatus, passwordStatus }] = await Promise.all([this.isUnlocked(), bootpro]);
         return {
             isUnlocked,
-            isSetPassword: !!booted,
+            isSetPassword: passwordStatus,
             pathIndex: pathIndex || 0,
-            hasWallet: Object.keys(walletBooted)?.length > 0
+            hasWallet: walletStatus
         };
     }
     async signMessage(message, address) {

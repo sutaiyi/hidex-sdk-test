@@ -7,7 +7,7 @@
   flex-direction: column;
   align-items: left;
   justify-content: top;
-  font-size: calc(10px + 2vmin);
+  font-size: 14px;
   color: white;
 }
 .tip {
@@ -101,6 +101,7 @@
 
 h3 {
   margin: 0 0 5px;
+  font-size: 18px;
 }
 
 .lh-trade {

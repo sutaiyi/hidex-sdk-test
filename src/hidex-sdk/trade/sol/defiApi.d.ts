@@ -1,8 +1,10 @@
 import { CurrentSymbol, HashStatus, IDefiApi } from '../interfaces';
-import { BlockhashWithExpiryBlockHeight, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { BlockhashWithExpiryBlockHeight, Connection, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { INetworkService } from '../../network/interfaces';
 declare class DefiApi implements IDefiApi {
     clearTimer: NodeJS.Timeout | null;
+    maxBlockHashCount: number;
+    currentBlockHashCount: number;
     lastBlockHash: BlockhashWithExpiryBlockHeight;
     constructor();
     getLatestBlockhash(network: INetworkService): Promise<BlockhashWithExpiryBlockHeight>;
@@ -20,6 +22,7 @@ declare class DefiApi implements IDefiApi {
         hash: string;
         currentSymbol: CurrentSymbol;
     }>;
+    submitByQuiknode(): Promise<void>;
     submitSwapByJito(transactions: Array<Transaction>): Promise<{
         success: boolean;
         hash: string;
@@ -28,6 +31,7 @@ declare class DefiApi implements IDefiApi {
     handlerJitoPost(endpoints: Array<string>, params: any): Promise<void>;
     getSwapStatus(hash: string): Promise<HashStatus>;
     bundlesStatuses(bundles: Array<string>): Promise<HashStatus>;
+    rpcSwapStatus(hash: string, connection: Connection): Promise<HashStatus>;
 }
 declare const _default: DefiApi;
 export default _default;

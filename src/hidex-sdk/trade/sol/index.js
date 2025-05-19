@@ -2,7 +2,7 @@ import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { smTokenAddress } from '../../common/config';
 import { getTokenOwner, sendSolanaTransaction, vertransactionsToBase64 } from './utils';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createTransferInstruction, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { simulateConfig, TOKEN_2022_OWNER } from './config';
+import { TOKEN_2022_OWNER } from './config';
 import { priorityFeeInstruction } from './instruction/InstructionCreator';
 import defiApi from './defiApi';
 import UtilsService from '../../utils/UtilsService';
@@ -200,20 +200,28 @@ export const solService = (HS) => {
             let compileUse = compile;
             let resetResult = null;
             let txArray = [];
+            console.time('getOwnerKeyTimer');
             const owner = HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress));
+            console.timeEnd('getOwnerKeyTimer');
             if (compileUse) {
                 const isSupport = isInstructionsSupportReset(compileUse['message'], currentSymbol);
+                console.log('------------isSupport------------------', isSupport);
                 if (isSupport) {
+                    console.time('SupportTrueTimer');
                     resetResult = resetInstructions(currentSymbol, compileUse['message'], BigInt(amountIn), BigInt(amountOutMin));
                     txArray = await getTransactionsSignature(resetResult, compileUse['addressesLookup'], defiApi.lastBlockHash.blockhash, currentSymbol, owner, HS);
+                    console.timeEnd('SupportTrueTimer');
                 }
             }
             if (txArray.length === 0) {
+                console.time('NoSupportTimer');
                 const { success, swapTransaction, data } = await defiApi.swapRoute(currentSymbol, accountAddress);
                 if (!success) {
                     throw new Error('Failed to swap' + path);
                 }
+                console.time('compileTransactionTimer');
                 compileUse = await compileTransaction(swapTransaction, HS);
+                console.timeEnd('compileTransactionTimer');
                 currentSymbol.preAmountIn = data.inAmount;
                 currentSymbol.preAmountOut = data.otherAmountThreshold;
                 let isSupport = false;
@@ -226,23 +234,14 @@ export const solService = (HS) => {
                 else {
                     resetResult = compileUse['message'];
                 }
+                console.time('getTransactionsSignatureTimer');
                 txArray = await getTransactionsSignature(resetResult, compileUse['addressesLookup'], defiApi.lastBlockHash.blockhash, currentSymbol, owner, HS);
+                console.timeEnd('getTransactionsSignatureTimer');
+                console.timeEnd('NoSupportTimer');
             }
             if (txArray.length === 0) {
                 throw new Error('Failed to swap txArray is empty');
             }
-            console.time('timer simulateTransaction');
-            const vertransaction = txArray.length === 5 ? txArray[4] : txArray[0];
-            if (vertransaction) {
-                const connection = await network.getProviderByChain(102);
-                const simulateResponse = await connection.simulateTransaction(vertransaction, simulateConfig);
-                console.log('交易 - 预估', simulateResponse);
-                if (simulateResponse && simulateResponse?.value?.err) {
-                    throw new Error(JSON.stringify(simulateResponse.value.logs) + vertransactionsToBase64(txArray));
-                }
-            }
-            console.timeEnd('timer simulateTransaction');
-            console.log('txArray: ===>', JSON.parse(JSON.stringify(txArray)));
             return {
                 gasLimit: 0,
                 data: {
@@ -253,7 +252,7 @@ export const solService = (HS) => {
         getSwapFees: async (currentSymbol) => {
             const { networkFee } = currentSymbol;
             const netFee = 0.00002;
-            const dexFee = 0.001;
+            const dexFee = 0.0012;
             const mitToken = (2139280 * 2) / Math.pow(10, 9);
             const accountSave = 890880 / Math.pow(10, 9);
             const priorityFee = networkFee?.value || Number(currentSymbol.priorityFee) / Math.pow(10, 9);
@@ -262,28 +261,33 @@ export const solService = (HS) => {
         swap: async (currentSymbol, transaction, accountAddress) => {
             const { vertransactions } = transaction?.data;
             let submitResult = null;
-            let txSplice = [];
-            if (vertransactions?.length >= 4) {
-                txSplice = vertransactions.slice(0, 4);
-                submitResult = await defiApi.submitSwapByJito(txSplice);
+            if (currentSymbol.tradeType === 3) {
+                submitResult = await defiApi.submitSwap(currentSymbol, vertransactions[0]);
             }
             else {
-                txSplice = vertransactions[0];
-                submitResult = await defiApi.submitSwap(currentSymbol, vertransactions[0]);
+                submitResult = await defiApi.submitSwapByJito(vertransactions);
             }
             if (!submitResult.hash) {
                 throw new Error('axioserror: request failed');
             }
             return {
                 error: !submitResult.success,
-                result: { hash: submitResult.hash, data: { vertransactions: vertransactionsToBase64(txSplice), accountAddress, currentSymbol, ...submitResult } }
+                result: { hash: submitResult.hash, data: { vertransactions: vertransactionsToBase64(vertransactions), accountAddress, currentSymbol, ...submitResult } }
             };
         },
-        hashStatus: async (hash) => {
-            const status = await defiApi.getSwapStatus(hash);
-            let message = '';
+        hashStatus: async (hash, chainId) => {
+            const connection = network.getProviderByChain(chainId || 102);
+            const gmgnStatusPro = defiApi.getSwapStatus(hash);
+            const rpcStatusPro = defiApi.rpcSwapStatus(hash, connection);
+            const statusArr = await Promise.all([gmgnStatusPro, rpcStatusPro]);
+            console.log('SOL 链上状态查询===》', ['GMGN', 'JITO', 'RPC'], statusArr);
+            let status = statusArr.includes('Confirmed') ? 'Confirmed' : 'Pending';
+            let message = 'HashStatus...';
+            if (statusArr.filter((v) => v === 'Failed').length === statusArr.length) {
+                status = 'Failed';
+                message = 'HashStatus Error';
+            }
             if (status === 'Failed') {
-                const connection = await network.getProviderByChain(102);
                 const hashStatus = await connection.getParsedTransaction(hash, {
                     commitment: 'confirmed',
                     maxSupportedTransactionVersion: 0

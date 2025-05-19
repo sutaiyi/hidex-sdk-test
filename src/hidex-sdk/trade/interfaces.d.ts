@@ -1,7 +1,8 @@
-import { AddressLookupTableAccount, BlockhashWithExpiryBlockHeight, Transaction, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
+import { AddressLookupTableAccount, BlockhashWithExpiryBlockHeight, Connection, Transaction, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
 import { ChainItem, INetworkService } from '../network/interfaces';
 import { ICatcher } from '../catch/interfaces';
 import EventEmitter from '../common/eventEmitter';
+import { OptionsCommon } from '../main/interfaces';
 export type HashStatus = 'Confirmed' | 'Pending' | 'Failed' | 'Expired';
 export interface ITradeOthersFunction {
     defiApi: IDefiApi;
@@ -12,7 +13,7 @@ export interface ITradeOthersFunction {
         message: TransactionMessage;
         addressesLookup: AddressLookupTableAccount[];
     }>;
-    getTransactionsSignature(transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any): Promise<Array<VersionedTransaction>>;
+    getTransactionsSignature(transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any, HS: OptionsCommon): Promise<Array<VersionedTransaction>>;
     getHashStatus(hash: string, chain: string | number): Promise<{
         status: HashStatus;
         message?: any;
@@ -67,7 +68,7 @@ export interface ITradeFunctions {
     }>;
 }
 export interface ITradeAbout extends ITradeFunctions {
-    hashStatus(hash: string, chain?: string): Promise<{
+    hashStatus(hash: string, chain?: string | number, bundles?: Array<string>): Promise<{
         status: HashStatus;
         message?: string;
     }>;
@@ -116,6 +117,7 @@ export interface IDefiApi {
     }>;
     getSwapStatus(hash: string): Promise<any>;
     bundlesStatuses(bundles: Array<string>): Promise<HashStatus>;
+    rpcSwapStatus(hash: string, connection: Connection): Promise<HashStatus>;
 }
 export interface IApproveService {
     execute(tokenAddress: string, accountAddress: string, authorizedAddress: string, chain: string | number): Promise<boolean>;

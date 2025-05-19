@@ -11,6 +11,10 @@ export default (error) => {
     if (strMessage?.toLowerCase()?.includes('failed get s3 store')) {
         return { code: 13002, message: errorInfo['13002'] };
     }
+    if (strMessage?.toLowerCase()?.includes('bad secret key')) {
+        const code = 13003;
+        return { code, message: errorInfo[code] };
+    }
     if (strMessage?.toLowerCase()?.includes('transfer amount exceeds balance')) {
         return { code: 14000, message: errorInfo['14000'] };
     }
