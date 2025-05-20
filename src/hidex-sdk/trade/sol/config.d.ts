@@ -41,4 +41,6 @@ export declare const COMMISSION_SOLANA_GAS_LIMIT: number;
 export declare const DEFAULD_BASE_GAS_FEE: number;
 export declare const VERSION_TRANSACTION_PREFIX = "AQAAAAAAA";
 export declare const PRE_PAID_EXPENSES: number;
+export declare const QUIKNODE_SEND_URL: string[];
+export declare const JITO_SEND_URL: string[];
 //# sourceMappingURL=config.d.ts.map

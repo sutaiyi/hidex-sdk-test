@@ -5,6 +5,7 @@ import abis from '../../../common/abis';
 import CustomWallet from '../../../wallet/custom';
 import { sTokenAddress, zero } from '../../../common/config';
 import { AssociateTokenProgram, BASE_ACCOUNT_INIT_FEE, JUPITER_PROGRAM_ID, PROGRAMID, PUEM_INSTRUCTION_PREFIX, PUMP_AMM_PROGRAM_ID, PUMP_PROGRAM_ID, SEED_DATA, SEED_SWAP, SEED_TRADE, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SUPPORT_CHANGE_PROGRAM_IDS, TOKEN_PROGRAM_OWNS } from '../config';
+import { createMemoInstruction } from '@solana/spl-memo';
 export const isBuy = (currentSymbol) => {
     return !!currentSymbol.isBuy;
 };
@@ -410,4 +411,26 @@ export function setCreateAccountBySeedInstructionLamports(preAmountIn, instructi
         return true;
     }
     return false;
+}
+export function createMemoInstructionWithTxInfo(currentSymbol) {
+    const txType = currentSymbol.isBuy ? 1 : 2;
+    let memoHex = `0x${txType.toString(16).padStart(2, '0').toUpperCase()}`;
+    const swapInstructionBuffer = Buffer.alloc(8);
+    swapInstructionBuffer.writeBigUInt64LE(BigInt(currentSymbol.amountIn));
+    const newInputReverseHex = swapInstructionBuffer.toString('hex');
+    swapInstructionBuffer.writeBigUInt64LE(BigInt(currentSymbol.amountOutMin));
+    const newOutputReverseHex = swapInstructionBuffer.toString('hex');
+    const tokenAddr = currentSymbol.isBuy ? currentSymbol.out.address : currentSymbol.in.address;
+    const memoInstruction = createMemoInstruction(memoHex + newInputReverseHex + newOutputReverseHex + tokenAddr);
+    return memoInstruction;
+}
+export async function getDexCommisionReceiverAndLamports(currentSymbol) {
+    const programId = new PublicKey(PROGRAMID());
+    const [swap_pda,] = await PublicKey.findProgramAddress([Buffer.from(SEED_SWAP)], programId);
+    console.log("currentSymbol.feeRate", currentSymbol.feeRate);
+    console.log("currentSymbol.commissionRate", currentSymbol.commissionRate);
+    console.log("currentSymbol.dexFeeAmount", currentSymbol.dexFeeAmount);
+    const commissionAmount = currentSymbol.isBuy ? Math.floor(Number(currentSymbol.amountIn) / 100) : Math.floor(Number(currentSymbol.amountOutMin) / 100);
+    console.log("commissionAmount", commissionAmount);
+    return { swap_pda, commissionAmount };
 }

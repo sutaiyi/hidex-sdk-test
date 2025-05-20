@@ -484,6 +484,9 @@ const tradeFun = () => {
     监听器的使用: async () => {
       trade.emit('testtest');
     },
+    提前建立链接: async () => {
+      trade.defiApi.establishingConnection();
+    },
   };
 };
 export default tradeFun;

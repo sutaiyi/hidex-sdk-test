@@ -46,4 +46,9 @@ export declare function getInstructionAmounts(currentSymbol: CurrentSymbol, inst
 export declare function getInstructionReplaceDataHex(currentSymbol: CurrentSymbol, programId: string, dataHex: string, inputHex: string, outputHex: string): string;
 export declare function setTransferInstructionLamports(instruction: TransactionInstruction, dataHex: string, newLamports: bigint): boolean;
 export declare function setCreateAccountBySeedInstructionLamports(preAmountIn: string, instruction: TransactionInstruction, dataHex: string, newLamports: bigint): boolean;
+export declare function createMemoInstructionWithTxInfo(currentSymbol: CurrentSymbol): TransactionInstruction;
+export declare function getDexCommisionReceiverAndLamports(currentSymbol: CurrentSymbol): Promise<{
+    swap_pda: PublicKey;
+    commissionAmount: number;
+}>;
 //# sourceMappingURL=InstructionCreator.d.ts.map

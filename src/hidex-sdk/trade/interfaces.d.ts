@@ -118,6 +118,7 @@ export interface IDefiApi {
     getSwapStatus(hash: string): Promise<any>;
     bundlesStatuses(bundles: Array<string>): Promise<HashStatus>;
     rpcSwapStatus(hash: string, connection: Connection): Promise<HashStatus>;
+    establishingConnection(): void;
 }
 export interface IApproveService {
     execute(tokenAddress: string, accountAddress: string, authorizedAddress: string, chain: string | number): Promise<boolean>;

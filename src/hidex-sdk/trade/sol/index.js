@@ -242,6 +242,7 @@ export const solService = (HS) => {
             if (txArray.length === 0) {
                 throw new Error('Failed to swap txArray is empty');
             }
+            console.log('txArray: ===>', txArray);
             return {
                 gasLimit: 0,
                 data: {
@@ -261,7 +262,7 @@ export const solService = (HS) => {
         swap: async (currentSymbol, transaction, accountAddress) => {
             const { vertransactions } = transaction?.data;
             let submitResult = null;
-            if (currentSymbol.tradeType === 3) {
+            if (currentSymbol.tradeType === 3 && vertransactions.length === 1) {
                 submitResult = await defiApi.submitSwap(currentSymbol, vertransactions[0]);
             }
             else {

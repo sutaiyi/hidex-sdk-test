@@ -32,6 +32,7 @@ declare class DefiApi implements IDefiApi {
     getSwapStatus(hash: string): Promise<HashStatus>;
     bundlesStatuses(bundles: Array<string>): Promise<HashStatus>;
     rpcSwapStatus(hash: string, connection: Connection): Promise<HashStatus>;
+    establishingConnection(): void;
 }
 declare const _default: DefiApi;
 export default _default;

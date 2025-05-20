@@ -1,5 +1,7 @@
 import axios from 'axios';
 import bs58 from 'bs58';
+import { JITO_SEND_URL, QUIKNODE_SEND_URL } from './config';
+import { urlPattern } from './utils';
 class DefiApi {
     clearTimer;
     maxBlockHashCount;
@@ -113,31 +115,40 @@ class DefiApi {
     async submitSwapByJito(transactions) {
         const jitoPostTime = new Date().getTime();
         try {
-            const endpointsByQuiknode = ['https://sleek-thrilling-owl.solana-mainnet.quiknode.pro/ad3162ba7f548c9dfc2215e4614036e6e2787ecb'];
-            const endpoints = [
-                ...endpointsByQuiknode,
-                'https://mainnet.block-engine.jito.wtf/api/v1/transactions',
-                'https://amsterdam.mainnet.block-engine.jito.wtf/api/v1/transactions',
-                'https://frankfurt.mainnet.block-engine.jito.wtf/api/v1/transactions',
-                'https://ny.mainnet.block-engine.jito.wtf/api/v1/transactions',
-                'https://tokyo.mainnet.block-engine.jito.wtf/api/v1/transactions'
-            ];
+            const endpoints = [...QUIKNODE_SEND_URL, ...JITO_SEND_URL];
             const signedTx = Buffer.from(transactions[0].serialize()).toString('base64');
-            const signatureBase58 = transactions[0].signatures.map((sig) => bs58.encode(sig));
-            const signatureBase58_swap = signatureBase58;
+            let signatureBase58 = transactions[0].signatures.map((sig) => bs58.encode(sig));
+            let signatureBase58_swap = signatureBase58;
+            const serializedTransactions = [];
+            if (transactions.length >= 4) {
+                for (const transaction of transactions) {
+                    serializedTransactions.push(bs58.encode(transaction.serialize()));
+                }
+                signatureBase58_swap = transactions[1].signatures.map((sig) => bs58.encode(sig));
+                signatureBase58 = transactions[2].signatures.map((sig) => bs58.encode(sig));
+            }
+            const paramsData = transactions.length === 1
+                ? {
+                    method: 'sendTransaction',
+                    params: [
+                        signedTx,
+                        {
+                            encoding: 'base64'
+                        }
+                    ]
+                }
+                : {
+                    method: 'sendBundle',
+                    params: [serializedTransactions]
+                };
             const params = {
                 jsonrpc: '2.0',
                 id: 1,
-                method: 'sendTransaction',
-                params: [
-                    signedTx,
-                    {
-                        encoding: 'base64'
-                    }
-                ]
+                ...paramsData
             };
+            const postPath = transactions.length === 1 ? 'transactions' : 'bundles';
             const requests = endpoints.map((url) => axios
-                .post(url, params, {
+                .post(`${url}/${url.includes('quiknode') ? '' : postPath}`, params, {
                 timeout: 3000
             })
                 .then((res) => {
@@ -262,6 +273,13 @@ class DefiApi {
         catch (error) {
             return 'Pending';
         }
+    }
+    establishingConnection() {
+        const endpoints = [...QUIKNODE_SEND_URL, ...JITO_SEND_URL];
+        endpoints.forEach((url) => {
+            const ht = url.match(urlPattern);
+            ht && axios.get(ht[0]);
+        });
     }
 }
 export default new DefiApi();

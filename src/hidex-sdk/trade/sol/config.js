@@ -38,10 +38,10 @@ export const NEED_CHANGE_SLIPPAGE_PROGRAM_IDS = [
 ];
 export const TOKEN_PROGRAM_OWNS = ['TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb', 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'];
 export const JITO_FEE_ACCOUNT = [
-    "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe",
-    "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt",
-    "ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49",
-    "DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh",
+    'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+    'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+    'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+    'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh'
 ];
 export const HIDEX_ADDRESS_LOOK_UP = new PublicKey('5ZF8nmsRMPB24j5UDU7ztjvxVBJ7pprZJvzbujZ5nKpQ');
 export const SOLANA_SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111');
@@ -65,3 +65,8 @@ export const COMMISSION_SOLANA_GAS_LIMIT = Number('100000');
 export const DEFAULD_BASE_GAS_FEE = Number('5000');
 export const VERSION_TRANSACTION_PREFIX = 'AQAAAAAAA';
 export const PRE_PAID_EXPENSES = Number('6000000');
+export const QUIKNODE_SEND_URL = ['https://sleek-thrilling-owl.solana-mainnet.quiknode.pro/ad3162ba7f548c9dfc2215e4614036e6e2787ecb'];
+export const JITO_SEND_URL = [
+    'https://mainnet.block-engine.jito.wtf/api/v1',
+    'https://amsterdam.mainnet.block-engine.jito.wtf/api/v1'
+];

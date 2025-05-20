@@ -47,3 +47,4 @@ export function vertransactionsToBase64(transactions) {
         console.log('vertransactionsToBase64 error==>', error);
     }
 }
+export const urlPattern = /https?:\/\/([a-zA-Z0-9.-]+)/;
