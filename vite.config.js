@@ -50,6 +50,7 @@ export default defineConfig({
       global: 'window',
     },
     global: 'window',
+    'process.env.NODE_DEBUG': JSON.stringify(process.env.NODE_DEBUG || ''),
   },
   resolve: {
     alias: {
