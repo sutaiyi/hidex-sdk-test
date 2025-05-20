@@ -419,6 +419,9 @@ export const ethService = (HS) => {
             console.timeEnd('tradeTimer');
             return { error: !submitResult.hash, result: { hash: submitResult.hash, data: { accountAddress, currentSymbol } } };
         },
+        claimCommission: async (data) => {
+            return Promise.resolve({ data: data, error: null });
+        },
         hashStatus: async (hash, chain) => {
             let chainName = chain;
             if (typeof chain === 'number') {

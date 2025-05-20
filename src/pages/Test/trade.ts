@@ -487,6 +487,9 @@ const tradeFun = () => {
     提前建立链接: async () => {
       trade.defiApi.establishingConnection();
     },
+    领取佣金: async () => {
+      trade.claimCommission({ test: 1 });
+    },
   };
 };
 export default tradeFun;

@@ -48,6 +48,10 @@ declare class TradeService extends EventEmitter implements ITradeService {
         error: boolean | string | null;
         result: any;
     }>;
+    claimCommission: (data: any) => Promise<{
+        data: any;
+        error: any;
+    }>;
     getHashStatus(hash: string, chain: string | number, bundles?: Array<string>): Promise<{
         status: HashStatus;
         message?: any;

@@ -138,6 +138,13 @@ class TradeService extends EventEmitter {
         }
         throw new Error('app undefined');
     };
+    claimCommission = async (data) => {
+        const result = await this.app?.claimCommission(data);
+        if (result) {
+            return result;
+        }
+        throw new Error('app undefined');
+    };
     getHashStatus(hash, chain, bundles = []) {
         if (isSol(chain)) {
             return solService(this.HS).hashStatus(hash, chain, bundles);

@@ -66,6 +66,10 @@ export interface ITradeFunctions {
         error: boolean | string | null;
         result: any;
     }>;
+    claimCommission(data: any): Promise<{
+        data: any;
+        error: any;
+    }>;
 }
 export interface ITradeAbout extends ITradeFunctions {
     hashStatus(hash: string, chain?: string | number, bundles?: Array<string>): Promise<{

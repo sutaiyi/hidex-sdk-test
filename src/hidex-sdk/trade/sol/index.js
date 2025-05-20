@@ -302,6 +302,10 @@ export const solService = (HS) => {
                 }
             }
             return { status, message };
+        },
+        claimCommission: async (data) => {
+            console.log('claimCommission', data);
+            return Promise.resolve({ data: data, error: null });
         }
     };
 };
