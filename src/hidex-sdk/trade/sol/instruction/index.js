@@ -1,5 +1,5 @@
 import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount, PublicKey } from '@solana/web3.js';
-import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, TIP_MINI_IN_PRIORITY, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, HIDEX_ADDRESS_LOOK_UP, VERSION_TRANSACTION_PREFIX, PRE_PAID_EXPENSES, DEFAULD_SOLANA_GAS_LIMIT, COMMISSION_SOLANA_GAS_LIMIT } from '../config';
+import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, TIP_MINI_IN_PRIORITY, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, VERSION_TRANSACTION_PREFIX, PRE_PAID_EXPENSES, DEFAULD_SOLANA_GAS_LIMIT, COMMISSION_SOLANA_GAS_LIMIT } from '../config';
 import { checkAccountCloseInstruction, createClaimInstruction, createEd25519ProgramIx, createMemoInstructionWithTxInfo, createTipTransferInstruction, deleteTransactionGasInstruction, getDexCommisionReceiverAndLamports, getInstructionAmounts, getInstructionReplaceDataHex, getTransactionGasLimitUintsInInstruction, nomalVersionedTransaction, numberToLittleEndianHex, priorityFeeInstruction, setCreateAccountBySeedInstructionLamports, setTransferInstructionLamports, versionedTra } from './InstructionCreator';
 export function resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount) {
     console.log('传入的输出代币数量', newOutputAmount);
@@ -101,7 +101,7 @@ export async function compileTransaction(swapBase64Str, HS) {
     const addressTables = transaction.message.addressTableLookups.map((value) => {
         return value.accountKey;
     });
-    addressTables.push(HIDEX_ADDRESS_LOOK_UP);
+    console.log('addressLookupTableAccounts1', addressTables.length);
     const connection = HS.network.getProviderByChain(102);
     const mutiAccountInfo = await connection.getMultipleAccountsInfo(addressTables);
     const addressLookupTableAccounts = new Array(addressTables.length);
@@ -119,7 +119,7 @@ export async function compileTransaction(swapBase64Str, HS) {
         addressLookupTableAccounts: addressLookupTableAccounts
     });
     console.log('programId', transactionMessage.instructions[0].programId.toBase58());
-    console.log('addressLookupTableAccounts', addressLookupTableAccounts.length);
+    console.log('addressLookupTableAccounts2', addressLookupTableAccounts.length);
     const validAddressLookupTableAccounts = [];
     const currentSlot = await connection.getSlot();
     for (let i = 0; i < addressLookupTableAccounts.length; i++) {
@@ -127,7 +127,7 @@ export async function compileTransaction(swapBase64Str, HS) {
             validAddressLookupTableAccounts.push(addressLookupTableAccounts[i]);
         }
     }
-    console.log('validAddressLookupTableAccounts', validAddressLookupTableAccounts.length);
+    console.log("validAddressLookupTableAccounts3", validAddressLookupTableAccounts.length);
     return { message: transactionMessage, addressesLookup: validAddressLookupTableAccounts };
 }
 export function isInstructionsSupportReset(transactionMessage, currentSymbol) {
@@ -203,6 +203,7 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
     const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(gasLimitInIx * 1.5, priorityFee);
     transactionMessage.instructions.splice(0, 0, addPriorityLimitIx);
     transactionMessage.instructions.splice(0, 0, addPriorityPriceIx);
+    console.log("addressLookupTableAccounts", addressLookupTableAccounts.length);
     const swapTx = await versionedTra([...transactionMessage.instructions], owner, recentBlockhash, addressLookupTableAccounts);
     const swapTxSer = swapTx.serialize();
     const swapTxBytesSize = swapTxSer.length;

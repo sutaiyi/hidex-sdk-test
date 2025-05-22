@@ -2,7 +2,7 @@ import { HidexSDK } from '@/hidexService';
 
 const walletTest = () => {
   const { wallet } = HidexSDK;
-  let password = 'test1234';
+  let password = 'S123123';
   let newPassword = 'S123123';
   return {
     创建密码123123: async () => {

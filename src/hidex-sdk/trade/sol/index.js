@@ -206,7 +206,7 @@ export const solService = (HS) => {
             console.timeEnd('getOwnerKeyTimer');
             if (compileUse) {
                 const isSupport = isInstructionsSupportReset(compileUse['message'], currentSymbol);
-                console.log('------------isSupport------------------', isSupport);
+                console.log('------------isSupportTimer------------------', isSupport);
                 if (isSupport) {
                     console.time('SupportTrueTimer');
                     resetResult = resetInstructions(currentSymbol, compileUse['message'], BigInt(amountIn), BigInt(amountOutMin));
@@ -216,7 +216,9 @@ export const solService = (HS) => {
             }
             if (txArray.length === 0) {
                 console.time('NoSupportTimer');
+                console.time('GmgnRouterTimer');
                 const { success, swapTransaction, data } = await defiApi.swapRoute(currentSymbol, accountAddress);
+                console.timeEnd('GmgnRouterTimer');
                 if (!success) {
                     throw new Error('Failed to swap' + path);
                 }
@@ -282,7 +284,7 @@ export const solService = (HS) => {
             const gmgnStatusPro = defiApi.getSwapStatus(hash);
             const rpcStatusPro = defiApi.rpcSwapStatus(hash, connection);
             const statusArr = await Promise.all([gmgnStatusPro, rpcStatusPro]);
-            console.log('SOL 链上状态查询===》', ['GMGN', 'JITO', 'RPC'], statusArr);
+            console.log('SOL状态查询===》', ['GMGN', 'RPC'], statusArr);
             let status = statusArr.includes('Confirmed') ? 'Confirmed' : 'Pending';
             let message = 'HashStatus...';
             if (statusArr.filter((v) => v === 'Failed').length === statusArr.length) {

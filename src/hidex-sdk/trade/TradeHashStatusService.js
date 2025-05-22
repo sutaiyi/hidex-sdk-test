@@ -27,6 +27,7 @@ export class TradeHashStatusService extends EventEmitter {
         return await catcher.setItem(this.DEFAULTKEY, hashItem);
     };
     action = async (hashItem) => {
+        console.time('HashStatusTimer');
         const checkCreate = async () => {
             const { hash, chain, tradeType, bundles } = hashItem;
             this.timeCount = 50;
@@ -38,12 +39,11 @@ export class TradeHashStatusService extends EventEmitter {
                 this.timeCount = 1000;
                 this.maxTime = 15000;
             }
-            console.log('hash status checkTimer: ', hashItem);
             const { status, message } = await this.trade.getHashStatus(hash, chain);
+            console.log('hash status checkTimer: ', hashItem);
             hashItem.message = message;
             if (status !== 'Pending') {
                 hashItem.status = status;
-                console.log('hash status checkTimer: ', hashItem);
                 this.emit('HashStatusEvent', hashItem);
                 hashItem.timer && global.clearTimeout(hashItem.timer);
                 return;
