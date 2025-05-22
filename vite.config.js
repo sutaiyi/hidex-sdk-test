@@ -41,6 +41,10 @@ export default defineConfig({
         target: 'https://test.hidex.pro',
         changeOrigin: true,
       },
+      '/jito': {
+        target: 'https://test.hidex.pro',
+        changeOrigin: true,
+      },
     },
   },
   define: {

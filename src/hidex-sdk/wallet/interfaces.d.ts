@@ -95,6 +95,7 @@ export type AccountItem = {
     address: string;
     pathIndex: number;
     publicKey: string;
+    privateKey?: string;
     chain: string;
     value?: string;
     block?: number;

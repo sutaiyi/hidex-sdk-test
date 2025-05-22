@@ -138,8 +138,8 @@ class TradeService extends EventEmitter {
         }
         throw new Error('app undefined');
     };
-    claimCommission = async (data) => {
-        const result = await this.app?.claimCommission(data);
+    claimCommission = async (params) => {
+        const result = await this.app?.claimCommission(params);
         if (result) {
             return result;
         }

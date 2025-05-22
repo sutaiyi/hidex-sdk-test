@@ -1,4 +1,4 @@
-import { baseTokens, bnbTokens, ethTokens, solTokens } from '../common/config';
+import { bnbTokens, solTokens } from '../common/config';
 import NetworkService from '../network/NetworkService';
 import CatcherService from '../catch';
 import WalletService from '../wallet/WalletService';
@@ -33,7 +33,7 @@ export class HidexService {
         serveCommon.wallet = this.wallet;
         this.dexFee = new DexFeeService(serveCommon);
         this.trade = new TradeService(serveCommon);
-        globalSet('HidexConfig', { ...options, time: new Date().getTime(), version });
+        globalSet('HidexConfig', { ...options, rpcList: this.chains(), time: new Date().getTime(), version });
     }
     async init() {
         await keysing.keysingInitialized(this.catcher);
@@ -101,48 +101,6 @@ export class HidexService {
                 swapName: 'Jupiter',
                 deTrade: '',
                 defaultLimit: 0,
-                apieceOfTime: 2000
-            },
-            {
-                chainName: 'Ethereum',
-                chain: 'ETH',
-                dexscreenerChain: 'ethereum',
-                aveChain: 'eth',
-                gmgnChain: 'eth',
-                aliasChain: ['ETH', 'ETHEREUM', 'ETHER'],
-                chainID: 1,
-                codexChainId: 1,
-                okxChainId: 1,
-                token: 'ETH',
-                tokens: ethTokens,
-                rpc: restRpcItem(1, rpcList, ['https://rpc.ankr.com/eth']),
-                blockExplorerUrls: ['https://etherscan.io'],
-                blockExplorerName: 'Etherscan',
-                defaultPath: `m/44'/60'/0'/0/0`,
-                swapName: 'Uniswap',
-                deTrade: this.environmental('0x48c679449d77f064e72972EFA9c08c80CcCa759A', '0xe9B034cc80F7165c173aF212752aBF42f590C83B', '0xe9B034cc80F7165c173aF212752aBF42f590C83B'),
-                defaultLimit: 500000,
-                apieceOfTime: 12000
-            },
-            {
-                chainName: 'Base',
-                chain: 'BASE',
-                dexscreenerChain: 'base',
-                aveChain: 'base',
-                gmgnChain: 'base',
-                aliasChain: ['BASE'],
-                chainID: 8453,
-                codexChainId: 8453,
-                okxChainId: 8453,
-                token: 'ETH',
-                tokens: baseTokens,
-                rpc: restRpcItem(8453, rpcList, ['https://1rpc.io/base']),
-                blockExplorerUrls: ['https://basescan.org'],
-                blockExplorerName: 'Basescan',
-                defaultPath: `m/44'/60'/0'/0/0`,
-                swapName: 'Uniswap',
-                deTrade: this.environmental('0xd59Dca2923AC747bbe478032F61C00202cfED5D8', '0x8D349A8a122b14a5fDd7f8AEe085AD47605395D8', '0x8D349A8a122b14a5fDd7f8AEe085AD47605395D8'),
-                defaultLimit: 500000,
                 apieceOfTime: 2000
             },
             {

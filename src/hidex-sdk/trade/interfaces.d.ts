@@ -66,10 +66,11 @@ export interface ITradeFunctions {
         error: boolean | string | null;
         result: any;
     }>;
-    claimCommission(data: any): Promise<{
-        data: any;
-        error: any;
-    }>;
+    claimCommission(params: {
+        chainId: number;
+        walletAddress: string;
+        amount: string;
+    }): Promise<WithdrawSign>;
 }
 export interface ITradeAbout extends ITradeFunctions {
     hashStatus(hash: string, chain?: string | number, bundles?: Array<string>): Promise<{
@@ -219,5 +220,19 @@ export type PumpDetail = {
     username: string;
     profile_image: string | null;
     usd_market_cap: number;
+};
+export type WithdrawSign = {
+    code: number;
+    message: string;
+    txhash?: string;
+    data: {
+        amount: string;
+        contents: string;
+        signature: string;
+        sendTs: number;
+        id: string;
+        signer: string;
+        nonce: number;
+    } | null;
 };
 //# sourceMappingURL=interfaces.d.ts.map

@@ -19,6 +19,7 @@ export const simulateConfig = {
 export const SEED_SWAP = 'chill_swap';
 export const SEED_DATA = 'chill_data';
 export const SEED_TRADE = 'trade_config_data';
+export const SEED_NONCE = 'nonce_data';
 export const WSOL_MINT = new PublicKey('So11111111111111111111111111111111111111112');
 export const SUPPORT_CHANGE_PROGRAM_IDS = new Map([
     ['675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', 2],
@@ -67,6 +68,5 @@ export const VERSION_TRANSACTION_PREFIX = 'AQAAAAAAA';
 export const PRE_PAID_EXPENSES = Number('6000000');
 export const QUIKNODE_SEND_URL = ['https://sleek-thrilling-owl.solana-mainnet.quiknode.pro/ad3162ba7f548c9dfc2215e4614036e6e2787ecb'];
 export const JITO_SEND_URL = [
-    'https://mainnet.block-engine.jito.wtf/api/v1',
-    'https://amsterdam.mainnet.block-engine.jito.wtf/api/v1'
+    '/jito/api/v1'
 ];

@@ -70,59 +70,7 @@ export default {
             ]
         },
         {
-            "name": "initializeTradeConfigPda",
-            "accounts": [
-                {
-                    "name": "tradeConfigPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "signer",
-                    "isMut": true,
-                    "isSigner": true
-                },
-                {
-                    "name": "systemProgram",
-                    "isMut": false,
-                    "isSigner": false
-                }
-            ],
-            "args": [
-                {
-                    "name": "owner",
-                    "type": "publicKey"
-                }
-            ]
-        },
-        {
-            "name": "buySwapPrepare",
-            "accounts": [
-                {
-                    "name": "tradeConfigPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "userTokenAtaAccount",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "userWsolAtaAccount",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "user",
-                    "isMut": true,
-                    "isSigner": true
-                }
-            ],
-            "args": []
-        },
-        {
-            "name": "buySwapCompleted",
+            "name": "claimCommission",
             "accounts": [
                 {
                     "name": "swapPda",
@@ -135,7 +83,7 @@ export default {
                     "isSigner": false
                 },
                 {
-                    "name": "tradeConfigPda",
+                    "name": "noncePda",
                     "isMut": true,
                     "isSigner": false
                 },
@@ -145,229 +93,7 @@ export default {
                     "isSigner": true
                 },
                 {
-                    "name": "userAtaAccount",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "userWsolAtaAccount",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "inviter",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "associateTokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "tokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "systemProgram",
-                    "isMut": false,
-                    "isSigner": false
-                }
-            ],
-            "args": [
-                {
-                    "name": "isAntiMev",
-                    "type": "u8"
-                },
-                {
-                    "name": "transactionType",
-                    "type": "u8"
-                },
-                {
-                    "name": "commissionDiscountRate",
-                    "type": "u64"
-                },
-                {
-                    "name": "inviteCommissionRate",
-                    "type": "u64"
-                }
-            ]
-        },
-        {
-            "name": "buySwapCompletedSimple",
-            "accounts": [
-                {
-                    "name": "swapPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "configPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "tradeConfigPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "user",
-                    "isMut": true,
-                    "isSigner": true
-                },
-                {
-                    "name": "userAtaAccount",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "userWsolAtaAccount",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "inviter",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "associateTokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "tokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "systemProgram",
-                    "isMut": false,
-                    "isSigner": false
-                }
-            ],
-            "args": [
-                {
-                    "name": "isAntiMev",
-                    "type": "u8"
-                },
-                {
-                    "name": "transactionType",
-                    "type": "u8"
-                },
-                {
-                    "name": "commissionDiscountRate",
-                    "type": "u64"
-                },
-                {
-                    "name": "inviteCommissionRate",
-                    "type": "u64"
-                },
-                {
-                    "name": "lamportsBefore",
-                    "type": "u64"
-                },
-                {
-                    "name": "userWsolAtaLamports",
-                    "type": "u64"
-                },
-                {
-                    "name": "tokenAtaAmountBefore",
-                    "type": "u64"
-                },
-                {
-                    "name": "tokenAtaLamports",
-                    "type": "u64"
-                },
-                {
-                    "name": "gasFee",
-                    "type": "u64"
-                }
-            ]
-        },
-        {
-            "name": "saleSwapPrepare",
-            "accounts": [
-                {
-                    "name": "tradeConfigPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "userWsolAtaAccount",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "user",
-                    "isMut": true,
-                    "isSigner": true
-                },
-                {
-                    "name": "userAtaAccount",
-                    "isMut": true,
-                    "isSigner": false
-                }
-            ],
-            "args": []
-        },
-        {
-            "name": "saleSwapCompleted",
-            "accounts": [
-                {
-                    "name": "swapPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "configPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "tradeConfigPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "wsolMint",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "userWsolAtaAccount",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "swapPdaWsolAtaAccount",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "user",
-                    "isMut": true,
-                    "isSigner": true
-                },
-                {
-                    "name": "userAtaAccount",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "inviter",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "associateTokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "tokenProgram",
+                    "name": "ixSysvar",
                     "isMut": false,
                     "isSigner": false
                 },
@@ -383,139 +109,17 @@ export default {
                     "type": "u8"
                 },
                 {
-                    "name": "amount",
-                    "type": "u64"
+                    "name": "contents",
+                    "type": "bytes"
                 },
                 {
-                    "name": "isAntiMev",
-                    "type": "u8"
-                },
-                {
-                    "name": "transactionType",
-                    "type": "u8"
-                },
-                {
-                    "name": "commissionDiscountRate",
-                    "type": "u64"
-                },
-                {
-                    "name": "inviteCommissionRate",
-                    "type": "u64"
-                }
-            ]
-        },
-        {
-            "name": "saleSwapCompletedSimple",
-            "accounts": [
-                {
-                    "name": "swapPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "configPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "tradeConfigPda",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "wsolMint",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "userWsolAtaAccount",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "swapPdaWsolAtaAccount",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "user",
-                    "isMut": true,
-                    "isSigner": true
-                },
-                {
-                    "name": "userAtaAccount",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "inviter",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "associateTokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "tokenProgram",
-                    "isMut": false,
-                    "isSigner": false
-                },
-                {
-                    "name": "systemProgram",
-                    "isMut": false,
-                    "isSigner": false
-                }
-            ],
-            "args": [
-                {
-                    "name": "bump",
-                    "type": "u8"
-                },
-                {
-                    "name": "amount",
-                    "type": "u64"
-                },
-                {
-                    "name": "isAntiMev",
-                    "type": "u8"
-                },
-                {
-                    "name": "transactionType",
-                    "type": "u8"
-                },
-                {
-                    "name": "commissionDiscountRate",
-                    "type": "u64"
-                },
-                {
-                    "name": "inviteCommissionRate",
-                    "type": "u64"
-                },
-                {
-                    "name": "lamportsBefore",
-                    "type": "u64"
-                },
-                {
-                    "name": "wsolAtaAmountBefore",
-                    "type": "u64"
-                },
-                {
-                    "name": "userWsolAtaLamports",
-                    "type": "u64"
-                },
-                {
-                    "name": "tokenAtaLamports",
-                    "type": "u64"
-                },
-                {
-                    "name": "tokenMintStr",
-                    "type": "string"
-                },
-                {
-                    "name": "gasFee",
-                    "type": "u64"
+                    "name": "signature",
+                    "type": {
+                        "array": [
+                            "u8",
+                            64
+                        ]
+                    }
                 }
             ]
         },
@@ -558,6 +162,27 @@ export default {
                     "type": "u64"
                 }
             ]
+        },
+        {
+            "name": "initializeNonceInfo",
+            "accounts": [
+                {
+                    "name": "noncePda",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "signer",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": []
         }
     ],
     "accounts": [
@@ -602,7 +227,7 @@ export default {
             }
         },
         {
-            "name": "TradeConfigData",
+            "name": "NonceData",
             "type": {
                 "kind": "struct",
                 "fields": [
@@ -611,32 +236,77 @@ export default {
                         "type": "publicKey"
                     },
                     {
-                        "name": "lamportsBefore",
-                        "type": "u64"
+                        "name": "nonceArr",
+                        "type": {
+                            "array": [
+                                "u64",
+                                50
+                            ]
+                        }
                     },
                     {
-                        "name": "wsolMint",
-                        "type": "publicKey"
+                        "name": "timeStampArr",
+                        "type": {
+                            "array": [
+                                "u64",
+                                50
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "types": [
+        {
+            "name": "ChillErrorCode",
+            "type": {
+                "kind": "enum",
+                "variants": [
+                    {
+                        "name": "InvalidReturnData"
                     },
                     {
-                        "name": "wsolAtaAmountBefore",
-                        "type": "u64"
+                        "name": "IncorrectOwner"
                     },
                     {
-                        "name": "tokenMint",
-                        "type": "publicKey"
+                        "name": "InsufficientBalance"
                     },
                     {
-                        "name": "tokenAtaAmountBefore",
-                        "type": "u64"
+                        "name": "InvalidAccountOrInsufficientBalance"
                     },
                     {
-                        "name": "tokenAtaLamports",
-                        "type": "u64"
+                        "name": "InvalidTokenMintAccount"
                     },
                     {
-                        "name": "userWsolAtaLamports",
-                        "type": "u64"
+                        "name": "InvalidWithdrawer"
+                    },
+                    {
+                        "name": "InvalidRequire"
+                    },
+                    {
+                        "name": "InvalidSwapRequire"
+                    },
+                    {
+                        "name": "InvalidDataLength"
+                    },
+                    {
+                        "name": "ConversionFailed"
+                    },
+                    {
+                        "name": "InvalidSignature"
+                    },
+                    {
+                        "name": "InvalidInviter"
+                    },
+                    {
+                        "name": "SignatureHasExpired"
+                    },
+                    {
+                        "name": "RepeatedRequests"
+                    },
+                    {
+                        "name": "TooManyRequests"
                     }
                 ]
             }
@@ -645,55 +315,8 @@ export default {
     "errors": [
         {
             "code": 6000,
-            "name": "InvalidReturnData"
-        },
-        {
-            "code": 6001,
-            "name": "IncorrectOwner"
-        },
-        {
-            "code": 6002,
-            "name": "InsufficientBalance"
-        },
-        {
-            "code": 6003,
-            "name": "InvalidAccountOrInsufficientBalance"
-        },
-        {
-            "code": 6004,
-            "name": "InvalidTokenMintAccount"
-        },
-        {
-            "code": 6005,
-            "name": "InvalidWithdrawer"
-        },
-        {
-            "code": 6006,
-            "name": "InvalidRequire"
-        },
-        {
-            "code": 6007,
-            "name": "InvalidSwapRequire"
-        },
-        {
-            "code": 6008,
-            "name": "InvalidDataLength"
-        },
-        {
-            "code": 6009,
-            "name": "ConversionFailed"
-        },
-        {
-            "code": 6010,
-            "name": "InvalidSignature"
-        },
-        {
-            "code": 6011,
-            "name": "InvalidInviter"
-        },
-        {
-            "code": 6012,
-            "name": "SignatureHasExpired"
+            "name": "SigVerificationFailed",
+            "msg": "Signature verification failed."
         }
     ]
 };

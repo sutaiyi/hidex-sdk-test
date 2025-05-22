@@ -254,24 +254,44 @@ declare const abis: {
                 isMut: boolean;
                 isSigner: boolean;
             }[];
-            args: {
+            args: ({
                 name: string;
                 type: string;
-            }[];
+            } | {
+                name: string;
+                type: {
+                    array: (string | number)[];
+                };
+            })[];
         }[];
         accounts: {
             name: string;
             type: {
                 kind: string;
-                fields: {
+                fields: ({
                     name: string;
                     type: string;
+                } | {
+                    name: string;
+                    type: {
+                        array: (string | number)[];
+                    };
+                })[];
+            };
+        }[];
+        types: {
+            name: string;
+            type: {
+                kind: string;
+                variants: {
+                    name: string;
                 }[];
             };
         }[];
         errors: {
             code: number;
             name: string;
+            msg: string;
         }[];
     };
 };

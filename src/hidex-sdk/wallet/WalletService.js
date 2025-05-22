@@ -252,17 +252,18 @@ class WalletService {
         const items = [];
         for (const key of Object.keys(this.ADDRESS_PATH_TYPE)) {
             const getPath = this.getPathByChain(key, pathIndex);
-            if (key.toUpperCase() === 'SOLANA' || key.toUpperCase() === 'ETH') {
+            if (key.toUpperCase() === 'SOLANA' || ETH_SERIES.includes(key.toUpperCase())) {
                 items.push(this.createByMnemonicAndSave(key, mnemonic, getPath.path, pathIndex, key));
             }
         }
+        console.log('createByMnemonicAndSave', items, this.ADDRESS_PATH_TYPE);
         for (const key of Object.keys(this.ADDRESS_PATH_TYPE)) {
             let item = {};
             if (key === 'SOLANA') {
                 item = items.find((v) => v.chain.toUpperCase() === 'SOLANA');
             }
             else {
-                const itemEth = items.find((v) => v.chain.toUpperCase() === 'ETH');
+                const itemEth = items.find((v) => ETH_SERIES.includes(v.chain));
                 if (itemEth) {
                     item = deepCopy(itemEth);
                     item.chain = key;
@@ -270,7 +271,7 @@ class WalletService {
             }
             account[key] = item;
             const jsonItem = JSON.parse(JSON.stringify(item));
-            if (key.toUpperCase() === 'SOLANA' || key.toUpperCase() === 'ETH') {
+            if (key.toUpperCase() === 'SOLANA' || ETH_SERIES.includes(key.toUpperCase())) {
                 this.atpkeys.push(this.setEncryptionWallet(this.password, 0, jsonItem.address, jsonItem.privateKey));
             }
             if (account[key] && account[key].privateKey) {
@@ -637,6 +638,15 @@ class WalletService {
         const wallet = hdNode.derivePath(path);
         const { address, privateKey, publicKey } = wallet;
         const block = 0;
+        console.log('---账户创建---', {
+            pathIndex,
+            path,
+            address,
+            publicKey,
+            privateKey,
+            chain: chainName,
+            block
+        });
         return {
             pathIndex,
             path,

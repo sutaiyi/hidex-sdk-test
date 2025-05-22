@@ -30,7 +30,6 @@ const tradeFun = () => {
       } catch (error) {
         alert(utils.getErrorMessage(error).code + '-' + utils.getErrorMessage(error).message);
       }
-      throw new Error('');
     },
     获取SOL转账网络费用列表: async (info: any) => {
       try {
@@ -125,7 +124,7 @@ const tradeFun = () => {
 
     获取交易网络费用列表: async (info: any) => {
       try {
-        await network.choose('ETH');
+        await network.choose('BSC');
         const feeArrayEth = await trade.getNetWorkFees(21000, 0);
         console.log(`ETH网络费用列表===>`, feeArrayEth);
 
@@ -488,7 +487,18 @@ const tradeFun = () => {
       trade.defiApi.establishingConnection();
     },
     领取佣金: async () => {
-      trade.claimCommission({ test: 1 });
+      // 领取佣金
+      const { code, message, txhash } = await trade.claimCommission({
+        chainId: 102,
+        walletAddress: 'GAtJJPYVN15Z269Duiyx6kj5EY7TapcNANShXmnbdoeJ',
+        amount: '1',
+      });
+      console.log('领取佣金==>', { code, message, txhash });
+      if (code === 200) {
+        alert('领取成功, 链上查看：' + txhash);
+        return;
+      }
+      alert(`领取失败 ${message}`);
     },
   };
 };

@@ -2,12 +2,13 @@ import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { smTokenAddress } from '../../common/config';
 import { getTokenOwner, sendSolanaTransaction, vertransactionsToBase64 } from './utils';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createTransferInstruction, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { TOKEN_2022_OWNER } from './config';
+import { simulateConfig, TOKEN_2022_OWNER } from './config';
 import { priorityFeeInstruction } from './instruction/InstructionCreator';
 import defiApi from './defiApi';
 import UtilsService from '../../utils/UtilsService';
-import { compileTransaction, getTransactionsSignature, isInstructionsSupportReset, resetInstructions } from './instruction';
+import { compileTransaction, getClainSignature, getTransactionsSignature, isInstructionsSupportReset, resetInstructions } from './instruction';
 import { NETWORK_FEE_RATES } from '../eth/config';
+import { getWithdrawSign } from '../../api/hidex';
 const utils = new UtilsService();
 export const solService = (HS) => {
     const { network, wallet } = HS;
@@ -303,9 +304,30 @@ export const solService = (HS) => {
             }
             return { status, message };
         },
-        claimCommission: async (data) => {
-            console.log('claimCommission', data);
-            return Promise.resolve({ data: data, error: null });
+        claimCommission: async (params) => {
+            try {
+                const withdrawRes = await getWithdrawSign(params);
+                console.log('withdrawRes', params, withdrawRes);
+                if (withdrawRes.code === 200 && withdrawRes.data) {
+                    const connection = network.getProviderByChain(102);
+                    const owner = HS.utils.ownerKeypair(await wallet.ownerKey(params.walletAddress));
+                    const { blockhash } = defiApi.lastBlockHash;
+                    const { signer, contents: contentsHex, signature: claimSignHex } = withdrawRes.data;
+                    const vsTransaction = await getClainSignature(signer, contentsHex.substring(2), claimSignHex.substring(2), blockhash, owner, HS);
+                    const simulateResponse = await connection.simulateTransaction(vsTransaction, simulateConfig);
+                    console.log('领取 预估结果==>', simulateResponse);
+                    if (simulateResponse?.value?.err) {
+                        return { code: 4001, message: 'Claim commission error in simulateTransaction: ' + JSON.stringify(simulateResponse?.value?.logs), data: null };
+                    }
+                    const rawTransaction = vsTransaction.serialize();
+                    const txhash = await connection.sendRawTransaction(rawTransaction, { preflightCommitment: 'confirmed' });
+                    return { code: 200, message: 'Claim commission success', data: null, txhash };
+                }
+                return withdrawRes;
+            }
+            catch (error) {
+                return { code: 4001, message: 'Claim commission error: ' + JSON.stringify(error), data: null };
+            }
         }
     };
 };

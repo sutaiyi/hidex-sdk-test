@@ -54,7 +54,7 @@ class NetworkController extends EventEmitter {
         throw new Error('chain not found');
     }
     get sysProviderRpcs() {
-        if (this._sysProviderRpcs['ETH'] === undefined || this._sysProviderRpcs['ETH'].length === 0) {
+        if (this._sysProviderRpcs['BSC'] === undefined || this._sysProviderRpcs['BSC'].length === 0) {
             for (const chain of Object.keys(this.rpcs)) {
                 this._sysProviderRpcs[chain] = this.getChainProviderFromRpcs(chain);
             }

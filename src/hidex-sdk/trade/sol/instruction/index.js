@@ -1,6 +1,6 @@
 import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount, PublicKey } from '@solana/web3.js';
-import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, TIP_MINI_IN_PRIORITY, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, HIDEX_ADDRESS_LOOK_UP, VERSION_TRANSACTION_PREFIX, PRE_PAID_EXPENSES, DEFAULD_SOLANA_GAS_LIMIT, } from '../config';
-import { checkAccountCloseInstruction, createMemoInstructionWithTxInfo, createTipTransferInstruction, deleteTransactionGasInstruction, getDexCommisionReceiverAndLamports, getInstructionAmounts, getInstructionReplaceDataHex, getTransactionGasLimitUintsInInstruction, numberToLittleEndianHex, priorityFeeInstruction, setCreateAccountBySeedInstructionLamports, setTransferInstructionLamports, versionedTra } from './InstructionCreator';
+import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, TIP_MINI_IN_PRIORITY, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, HIDEX_ADDRESS_LOOK_UP, VERSION_TRANSACTION_PREFIX, PRE_PAID_EXPENSES, DEFAULD_SOLANA_GAS_LIMIT, COMMISSION_SOLANA_GAS_LIMIT } from '../config';
+import { checkAccountCloseInstruction, createClaimInstruction, createEd25519ProgramIx, createMemoInstructionWithTxInfo, createTipTransferInstruction, deleteTransactionGasInstruction, getDexCommisionReceiverAndLamports, getInstructionAmounts, getInstructionReplaceDataHex, getTransactionGasLimitUintsInInstruction, nomalVersionedTransaction, numberToLittleEndianHex, priorityFeeInstruction, setCreateAccountBySeedInstructionLamports, setTransferInstructionLamports, versionedTra } from './InstructionCreator';
 export function resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount) {
     console.log('传入的输出代币数量', newOutputAmount);
     console.log('传入的输入代币数量', newInputAmount);
@@ -154,6 +154,13 @@ export function isInstructionsSupportReset(transactionMessage, currentSymbol) {
     }
     return false;
 }
+export async function getClainSignature(signer, contentsHex, claimSignHex, recentBlockhash, owner, HS) {
+    const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(COMMISSION_SOLANA_GAS_LIMIT, DEFAULD_SOLANA_GAS_LIMIT);
+    const ed25519ProgramIx = await createEd25519ProgramIx(signer, contentsHex, claimSignHex);
+    const claimProgramIx = await createClaimInstruction(contentsHex, claimSignHex, owner, HS.network);
+    const claimTx = await nomalVersionedTransaction([ed25519ProgramIx, addPriorityLimitIx, addPriorityPriceIx, claimProgramIx], owner, recentBlockhash);
+    return claimTx;
+}
 export async function getTransactionsSignature(transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner, HS) {
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
         const isDelete = await checkAccountCloseInstruction(currentSymbol, transactionMessage.instructions[i], owner, HS.network);
@@ -171,7 +178,7 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
     }
     let priorityFee = Number(currentSymbol.priorityFee);
     const gasLimitInIx = getTransactionGasLimitUintsInInstruction(transactionMessage.instructions);
-    console.log("gasLimitInIX", gasLimitInIx);
+    console.log('gasLimitInIX', gasLimitInIx);
     await deleteTransactionGasInstruction(transactionMessage.instructions);
     const tempInstructions = [...transactionMessage.instructions];
     const memoIx = createMemoInstructionWithTxInfo(currentSymbol);

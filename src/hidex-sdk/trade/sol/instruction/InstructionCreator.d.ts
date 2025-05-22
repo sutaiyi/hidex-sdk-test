@@ -23,6 +23,7 @@ export declare function information(currentSymbol: CurrentSymbol, owner: any, ne
 }>;
 export declare function priorityFeeInstruction(limit: number, fee: number): Promise<TransactionInstruction[]>;
 export declare function versionedTra(instructions: TransactionInstruction[], owner: any, latestBlockhash: string, addressLookupTableAccounts: AddressLookupTableAccount[]): Promise<VersionedTransaction>;
+export declare function nomalVersionedTransaction(instructions: TransactionInstruction[], owner: any, latestBlockhash: string): Promise<VersionedTransaction>;
 export declare function getTotalFee(currentSymbol: CurrentSymbol): string;
 export declare function deleteTransactionGasInstruction(instructions: TransactionInstruction[]): Promise<void>;
 export declare function getTransactionGasLimitUintsInInstruction(instructions: TransactionInstruction[]): number;
@@ -33,6 +34,8 @@ export declare function createSwapCompleteInstruction(currentSymbol: CurrentSymb
 export declare function createBuySwapPrepareInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function createBuySwapCompletedInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function createSaleSwapPrepareInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
+export declare function createClaimInstruction(contents: string, signatrue: string, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
+export declare function createEd25519ProgramIx(signer: string, contents: string, signatrue: string): Promise<anchor.web3.TransactionInstruction>;
 export declare function createSaleSwapCompletedInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function createSimpleBuySwapCompletedInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService, gasFee: number): Promise<anchor.web3.TransactionInstruction>;
 export declare function createSimpleSaleSwapCompletedInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService, gasFee: number): Promise<anchor.web3.TransactionInstruction>;

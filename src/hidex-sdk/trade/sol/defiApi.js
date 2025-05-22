@@ -265,8 +265,11 @@ class DefiApi {
         try {
             const result = await connection.getSignatureStatus(hash, { searchTransactionHistory: true });
             console.log('SOL RPC状态查询 confirmation===', result);
-            if (result?.value?.confirmationStatus === 'confirmed' || result?.value?.confirmationStatus === 'finalized') {
+            if ((result?.value?.confirmationStatus === 'confirmed' || result?.value?.confirmationStatus === 'finalized') && !result?.value?.err) {
                 return 'Confirmed';
+            }
+            if (result?.value?.err) {
+                return 'Failed';
             }
             return 'Pending';
         }

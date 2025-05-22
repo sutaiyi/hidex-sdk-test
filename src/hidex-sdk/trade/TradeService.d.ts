@@ -1,4 +1,4 @@
-import { CurrentSymbol, ITradeService, NetWorkFee, ITradeFunctions, SendTransactionParams, IApproveService, IDefiApi, HashStatus, ITradeHashStatusService } from './interfaces';
+import { CurrentSymbol, ITradeService, NetWorkFee, ITradeFunctions, SendTransactionParams, IApproveService, IDefiApi, HashStatus, ITradeHashStatusService, WithdrawSign } from './interfaces';
 import { ChainItem, OptionsCommon } from '../main/interfaces';
 import EventEmitter from '../common/eventEmitter';
 import { AddressLookupTableAccount, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
@@ -48,10 +48,11 @@ declare class TradeService extends EventEmitter implements ITradeService {
         error: boolean | string | null;
         result: any;
     }>;
-    claimCommission: (data: any) => Promise<{
-        data: any;
-        error: any;
-    }>;
+    claimCommission: (params: {
+        chainId: number;
+        walletAddress: string;
+        amount: string;
+    }) => Promise<WithdrawSign>;
     getHashStatus(hash: string, chain: string | number, bundles?: Array<string>): Promise<{
         status: HashStatus;
         message?: any;

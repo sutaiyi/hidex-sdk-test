@@ -14,6 +14,7 @@ export declare const simulateConfig: SimulateTransactionConfig;
 export declare const SEED_SWAP = "chill_swap";
 export declare const SEED_DATA = "chill_data";
 export declare const SEED_TRADE = "trade_config_data";
+export declare const SEED_NONCE = "nonce_data";
 export declare const WSOL_MINT: PublicKey;
 export declare const SUPPORT_CHANGE_PROGRAM_IDS: Map<string, number>;
 export declare const NEED_CHANGE_SLIPPAGE_PROGRAM_IDS: string[];
