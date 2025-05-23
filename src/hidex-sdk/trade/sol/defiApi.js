@@ -213,7 +213,7 @@ class DefiApi {
             if (response.status === 200 && response.data?.code === 0) {
                 const { data } = response.data;
                 if (data.expired) {
-                    return 'Expired';
+                    return Promise.reject('Pending');
                 }
                 if (data.success && !data.err) {
                     return 'Confirmed';
@@ -221,12 +221,12 @@ class DefiApi {
                 if (data.failed) {
                     return 'Failed';
                 }
-                return 'Pending';
+                return Promise.reject('Pending');
             }
             throw new Error('Get Transaction Status Error');
         }
         catch (error) {
-            return 'Pending';
+            return Promise.reject('Pending');
         }
     }
     async bundlesStatuses(bundles) {
@@ -271,10 +271,10 @@ class DefiApi {
             if (result?.value?.err) {
                 return 'Failed';
             }
-            return 'Pending';
+            return Promise.reject('Pending');
         }
         catch (error) {
-            return 'Pending';
+            return Promise.reject('Pending');
         }
     }
     establishingConnection() {

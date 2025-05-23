@@ -280,31 +280,31 @@ export const solService = (HS) => {
             };
         },
         hashStatus: async (hash, chainId) => {
-            const connection = network.getProviderByChain(chainId || 102);
-            const gmgnStatusPro = defiApi.getSwapStatus(hash);
-            const rpcStatusPro = defiApi.rpcSwapStatus(hash, connection);
-            const statusArr = await Promise.all([gmgnStatusPro, rpcStatusPro]);
-            console.log('SOL状态查询===》', ['GMGN', 'RPC'], statusArr);
-            let status = statusArr.includes('Confirmed') ? 'Confirmed' : 'Pending';
-            let message = 'HashStatus...';
-            if (statusArr.filter((v) => v === 'Failed').length === statusArr.length) {
-                status = 'Failed';
-                message = 'HashStatus Error';
-            }
-            if (status === 'Failed') {
-                const hashStatus = await connection.getParsedTransaction(hash, {
-                    commitment: 'confirmed',
-                    maxSupportedTransactionVersion: 0
-                });
-                console.log('SOL 链上状态查询 confirmation===', hashStatus);
-                if (hashStatus) {
-                    const { meta } = hashStatus || {};
-                    if (meta && meta?.err) {
-                        message = meta.logMessages?.toString() || 'Unknown error';
+            try {
+                const connection = network.getProviderByChain(chainId || 102);
+                const gmgnStatusPro = defiApi.getSwapStatus(hash);
+                const rpcStatusPro = defiApi.rpcSwapStatus(hash, connection);
+                const status = await Promise.any([gmgnStatusPro, rpcStatusPro]);
+                console.log('SOL状态查询===》', ['GMGN', 'RPC'], status);
+                let message = 'HashStatus...';
+                if (status === 'Failed') {
+                    const hashStatus = await connection.getParsedTransaction(hash, {
+                        commitment: 'confirmed',
+                        maxSupportedTransactionVersion: 0
+                    });
+                    console.log('SOL 链上状态查询 confirmation===', hashStatus);
+                    if (hashStatus) {
+                        const { meta } = hashStatus || {};
+                        if (meta && meta?.err) {
+                            message = meta.logMessages?.toString() || 'Unknown error';
+                        }
                     }
                 }
+                return { status, message };
             }
-            return { status, message };
+            catch (error) {
+                return { status: 'Pending', message: 'HashStatus Pending' };
+            }
         },
         claimCommission: async (params) => {
             try {

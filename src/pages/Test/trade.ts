@@ -487,10 +487,12 @@ const tradeFun = () => {
       trade.defiApi.establishingConnection();
     },
     领取佣金: async () => {
+      const chainName = 'SOLANA';
+      const { accountItem } = await wallet.getCurrentWallet();
       // 领取佣金
       const { code, message, txhash } = await trade.claimCommission({
         chainId: 102,
-        walletAddress: 'GAtJJPYVN15Z269Duiyx6kj5EY7TapcNANShXmnbdoeJ',
+        walletAddress: accountItem[chainName]?.address,
         amount: '1',
       });
       console.log('领取佣金==>', { code, message, txhash });
