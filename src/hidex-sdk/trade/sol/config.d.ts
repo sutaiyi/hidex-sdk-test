@@ -27,6 +27,7 @@ export declare const JUPITER_PROGRAM_ID: PublicKey;
 export declare const PUMP_AMM_PROGRAM_ID: PublicKey;
 export declare const PUMP_AMM_PROGRAM_ID2: PublicKey;
 export declare const GMGN_PRIORITY_FEE_Collect_ID: PublicKey;
+export declare const GMGN_FEES_VAULT: PublicKey;
 export declare const PUEM_INSTRUCTION_PREFIX = "66063d1201daebea";
 export declare const SOLANA_SYSTEM_PROGRAM_TRANSFER_ID = 2;
 export declare const SOLANA_CREATE_ACCOUNT_WITH_SEED_ID = 3;

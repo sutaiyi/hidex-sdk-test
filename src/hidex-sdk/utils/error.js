@@ -5,7 +5,7 @@ export default (error) => {
         console.info('AggregateError', error, error.errors.toString());
         strMessage = error.errors.toString();
     }
-    if (strMessage?.toLowerCase()?.includes('incorrect password')) {
+    if (strMessage?.toLowerCase()?.includes('incorrect password') || strMessage?.toLowerCase()?.includes('decryption password')) {
         return { code: 13001, message: errorInfo['13001'] };
     }
     if (strMessage?.toLowerCase()?.includes('failed get s3 store')) {
@@ -55,6 +55,26 @@ export default (error) => {
     }
     if (strMessage?.toLowerCase()?.includes('not support transaction')) {
         const code = 14011;
+        return { code, message: errorInfo[code] };
+    }
+    if (strMessage?.toLowerCase()?.includes('signaturehasexpired')) {
+        const code = 14012;
+        return { code, message: errorInfo[code] };
+    }
+    if (strMessage?.toLowerCase()?.includes('repeatedrequests')) {
+        const code = 14013;
+        return { code, message: errorInfo[code] };
+    }
+    if (strMessage?.toLowerCase()?.includes('invalidsignature')) {
+        const code = 14014;
+        return { code, message: errorInfo[code] };
+    }
+    if (strMessage?.toLowerCase()?.includes('jupiter has no route')) {
+        const code = 14015;
+        return { code, message: errorInfo[code] };
+    }
+    if (strMessage?.toLowerCase()?.includes('network')) {
+        const code = 14016;
         return { code, message: errorInfo[code] };
     }
     return { code: 13000, message: errorInfo['13000'] + strMessage };

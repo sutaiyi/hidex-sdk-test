@@ -1,6 +1,7 @@
 import { HidexSDK } from '@/hidexService';
 
 import { getBeforeTradeData, getCurrentSymbolTest, setBeforeTradeData } from './solTrade';
+import axios from 'axios';
 
 const tradeFun = () => {
   const { trade, network, wallet, dexFee, utils } = HidexSDK;
@@ -226,6 +227,7 @@ const tradeFun = () => {
         if (!info) {
           alert('请选择代币');
         }
+        utils.setStatistics({ timerKey: 'tradeFull', isBegin: true });
         console.time('tradeFullTimer');
         console.time('tradeTimer');
         const { chainName, account, token, balance, balanceStr, tokenBalanceStr, priceUSD, cryptoPriceUSD } = info;
@@ -234,23 +236,33 @@ const tradeFun = () => {
         const currentNetwork = await network.choose(chainName);
         const { currentSymbol } = await getCurrentSymbolTest(info, { isBuy, isPump: false, currentNetwork });
         // 实际买入金额
-        const buyAmount = (0.0001 * Math.pow(10, currentNetwork.tokens[1].decimals)).toString();
+        const inputAmount = (0.0001 * Math.pow(10, currentNetwork.tokens[1].decimals)).toString();
         currentSymbol.chain = currentNetwork.chain;
         currentSymbol.slipPersent = 0.05; // 滑点5%
         const { compile, preAmountIn, preAmountOut } = getBeforeTradeData(isBuy, chainName, token.address);
         currentSymbol.compile = compile;
         currentSymbol.preAmountIn = preAmountIn;
         currentSymbol.preAmountOut = preAmountOut;
-        // 交易手续费用
-        currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount(currentSymbol, buyAmount);
-
-        // 实际购买金额
-        currentSymbol.amountIn = (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
-
         // 当前代币时时价格
         currentSymbol.currentPrice = priceUSD;
         // 当前母币时时价格
         currentSymbol.cryptoPriceUSD = cryptoPriceUSD;
+
+        const commissionDataStr = localStorage.getItem('commissionData');
+        let commissionData = commissionDataStr ? JSON.parse(commissionDataStr) : {};
+
+        Object.assign(currentSymbol, {
+          inviter: currentSymbol.inviter ? currentSymbol.inviter : commissionData.inviterAddress || '',
+          feeRate: commissionData.feeRate || 0,
+          commissionRate: commissionData.commissionRate || 0,
+          contents: commissionData.contents || '',
+          signature: commissionData.signature || '',
+        });
+
+        // 交易手续费用
+        currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount(currentSymbol, inputAmount);
+        // 实际购买金额
+        currentSymbol.amountIn = (BigInt(inputAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
 
         console.time('swapPathTimer');
         const swapPath = await trade.getSwapPath(currentSymbol);
@@ -267,17 +279,6 @@ const tradeFun = () => {
           console.log('Swapp Approved');
           console.timeEnd('approveTimer');
         }
-
-        const commissionDataStr = localStorage.getItem('commissionData');
-        let commissionData = commissionDataStr ? JSON.parse(commissionDataStr) : {};
-
-        Object.assign(currentSymbol, {
-          inviter: currentSymbol.inviter ? currentSymbol.inviter : commissionData.inviterAddress || '',
-          feeRate: commissionData.feeRate || 0,
-          commissionRate: commissionData.commissionRate || 0,
-          contents: commissionData.contents || '',
-          signature: commissionData.signature || '',
-        });
 
         console.time('getSwapEstimateGasTimer');
         const estimateResult = await trade.getSwapEstimateGas(currentSymbol, swapPath, address);
@@ -307,6 +308,7 @@ const tradeFun = () => {
           // 更新交易预请求数据
           setBeforeTradeData(info, { isBuy, isPump: currentSymbol.isPump, currentNetwork });
         }
+
         console.log('交易HASH：', result);
       } catch (error) {
         console.log(utils.getErrorMessage(error).message);
@@ -328,29 +330,32 @@ const tradeFun = () => {
         currentSymbol.chain = currentNetwork.chain;
         currentSymbol.slipPersent = 0.05; // 滑点5%
         // 实际卖出金额
-        const buyAmount = utils.common.formatNumberWithPrecision(Number(tokenBalanceStr) * 0.2, 0);
-        console.log('实际卖出金额：', buyAmount, tokenBalanceStr);
+        const inputAmount = utils.common.formatNumberWithPrecision(Number(tokenBalanceStr) * 0.2, 0);
+        console.log('实际卖出金额：', inputAmount, tokenBalanceStr);
         const { compile, preAmountIn, preAmountOut } = getBeforeTradeData(isBuy, chainName, token.address);
         currentSymbol.compile = compile;
         currentSymbol.preAmountIn = preAmountIn;
         currentSymbol.preAmountOut = preAmountOut;
+
+        const commissionDataStr = localStorage.getItem('commissionData');
+        let commissionData = commissionDataStr ? JSON.parse(commissionDataStr) : {};
+
+        // 当前代币时时价格
+        currentSymbol.currentPrice = priceUSD;
+        // 当前母币时时价格
+        currentSymbol.cryptoPriceUSD = cryptoPriceUSD;
+
+        Object.assign(currentSymbol, {
+          inviter: currentSymbol.inviter ? currentSymbol.inviter : commissionData.inviterAddress || '',
+          feeRate: commissionData.feeRate || 0,
+          commissionRate: commissionData.commissionRate || 0,
+          contents: commissionData.contents || '',
+          signature: commissionData.signature || '',
+        });
         // 交易手续费用
-        currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount(currentSymbol, buyAmount);
+        currentSymbol.dexFeeAmount = await dexFee.getDexFeeAmount(currentSymbol, inputAmount);
         // 实际卖出金额
-        currentSymbol.amountIn = buyAmount; // tokenBalanceStr// (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
-
-        // 当前代币时时价格
-        currentSymbol.currentPrice = priceUSD;
-        // 当前母币时时价格
-        currentSymbol.cryptoPriceUSD = cryptoPriceUSD;
-
-        // 实际卖出金额
-        currentSymbol.amountIn = (BigInt(buyAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
-
-        // 当前代币时时价格
-        currentSymbol.currentPrice = priceUSD;
-        // 当前母币时时价格
-        currentSymbol.cryptoPriceUSD = cryptoPriceUSD;
+        currentSymbol.amountIn = (BigInt(inputAmount) - BigInt(currentSymbol.dexFeeAmount)).toString();
 
         console.time('swapPathTimer');
         const swapPath = await trade.getSwapPath(currentSymbol);
@@ -367,17 +372,6 @@ const tradeFun = () => {
           console.log('Swapp Approved');
           console.timeEnd('approveTimer');
         }
-
-        const commissionDataStr = localStorage.getItem('commissionData');
-        let commissionData = commissionDataStr ? JSON.parse(commissionDataStr) : {};
-
-        Object.assign(currentSymbol, {
-          inviter: currentSymbol.inviter ? currentSymbol.inviter : commissionData.inviterAddress || '',
-          feeRate: commissionData.feeRate || 0,
-          commissionRate: commissionData.commissionRate || 0,
-          contents: commissionData.contents || '',
-          signature: commissionData.signature || '',
-        });
 
         console.time('getSwapEstimateGasTimer');
         const estimateResult = await trade.getSwapEstimateGas(currentSymbol, swapPath, address);
@@ -475,6 +469,15 @@ const tradeFun = () => {
       try {
         const blockHash = await trade.defiApi.updateLatestBlockhash(network);
         console.log('blockHash==>', blockHash);
+      } catch (error) {
+        const { code, message } = utils.getErrorMessage(error);
+        alert(code + '-' + message);
+      }
+    },
+    获取普通代币的余额: async () => {
+      try {
+        const tokenBalance = await trade.getBalance('74fonSdF1PXNZ8WyucrP9eDBxgyjUigA5EjgXcPuC7rm', '3Sv7iA27rRwqkDbffDQpRATv7UsehHY3nWfbf5ENpump');
+        console.log('tokenBalance==>', tokenBalance);
       } catch (error) {
         const { code, message } = utils.getErrorMessage(error);
         alert(code + '-' + message);

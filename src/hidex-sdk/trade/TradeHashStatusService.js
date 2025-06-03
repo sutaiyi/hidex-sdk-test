@@ -1,5 +1,6 @@
 import EventEmitter from '../common/eventEmitter';
 import { isSol } from './utils';
+import { setStatistics } from '../utils/timeStatistics';
 const HashStatusMap = new Map();
 export class TradeHashStatusService extends EventEmitter {
     DEFAULTKEY = 'TradeHashes';
@@ -28,6 +29,8 @@ export class TradeHashStatusService extends EventEmitter {
     };
     action = async (hashItem) => {
         console.time('HashStatusTimer');
+        setStatistics({ timerKey: 'HashStatus', isBegin: true });
+        hashItem.fetchCount = 0;
         const checkCreate = async () => {
             const { hash, chain, tradeType, bundles } = hashItem;
             this.timeCount = 50;
@@ -40,6 +43,9 @@ export class TradeHashStatusService extends EventEmitter {
                 this.maxTime = 15000;
             }
             const { status, message } = await this.trade.getHashStatus(hash, chain);
+            if (typeof hashItem.fetchCount === 'number') {
+                hashItem.fetchCount += 1;
+            }
             console.log('hash status checkTimer: ', hashItem);
             hashItem.message = message;
             if (status !== 'Pending') {

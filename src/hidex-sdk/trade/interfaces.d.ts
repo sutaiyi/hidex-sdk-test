@@ -95,6 +95,7 @@ export type HashStatusParams = {
     tradeType: number;
     bundles?: Array<string>;
     failedType?: number;
+    fetchCount?: number;
 };
 export interface IDexFeeService {
 }
@@ -123,6 +124,7 @@ export interface IDefiApi {
     getSwapStatus(hash: string): Promise<any>;
     bundlesStatuses(bundles: Array<string>): Promise<HashStatus>;
     rpcSwapStatus(hash: string, connection: Connection): Promise<HashStatus>;
+    rpcHeliusSwapStatus(hash: string, connection: Connection): Promise<HashStatus>;
     establishingConnection(): void;
 }
 export interface IApproveService {
@@ -225,6 +227,7 @@ export type WithdrawSign = {
     code: number;
     message: string;
     txhash?: string;
+    success?: boolean;
     data: {
         amount: string;
         contents: string;
@@ -232,6 +235,7 @@ export type WithdrawSign = {
         sendTs: number;
         id: string;
         signer: string;
+        walletAddress?: string;
         nonce: number;
     } | null;
 };

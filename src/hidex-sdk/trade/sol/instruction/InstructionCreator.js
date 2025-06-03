@@ -462,7 +462,10 @@ export async function getDexCommisionReceiverAndLamports(currentSymbol) {
     console.log('currentSymbol.feeRate', currentSymbol.feeRate);
     console.log('currentSymbol.commissionRate', currentSymbol.commissionRate);
     console.log('currentSymbol.dexFeeAmount', currentSymbol.dexFeeAmount);
-    const commissionAmount = currentSymbol.isBuy ? Math.floor(Number(currentSymbol.amountIn) / 100) : Math.floor(Number(currentSymbol.amountOutMin) / 100);
+    const realAmountIn = Number(currentSymbol.amountIn) * 10000 / (10000 - currentSymbol.feeRate);
+    console.log("amountIn", currentSymbol.amountIn);
+    console.log("realAmountIn", realAmountIn);
+    const commissionAmount = currentSymbol.isBuy ? Math.floor(realAmountIn * currentSymbol.feeRate / 10000) : Math.floor(Number(currentSymbol.amountOutMin) * currentSymbol.feeRate / 10000);
     console.log('commissionAmount', commissionAmount);
     return { swap_pda, commissionAmount };
 }

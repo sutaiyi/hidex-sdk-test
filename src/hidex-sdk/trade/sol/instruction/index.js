@@ -1,6 +1,7 @@
 import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount, PublicKey } from '@solana/web3.js';
-import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, TIP_MINI_IN_PRIORITY, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, VERSION_TRANSACTION_PREFIX, PRE_PAID_EXPENSES, DEFAULD_SOLANA_GAS_LIMIT, COMMISSION_SOLANA_GAS_LIMIT } from '../config';
+import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, VERSION_TRANSACTION_PREFIX, PRE_PAID_EXPENSES, DEFAULD_SOLANA_GAS_LIMIT, COMMISSION_SOLANA_GAS_LIMIT, HIDEX_ADDRESS_LOOK_UP, } from '../config';
 import { checkAccountCloseInstruction, createClaimInstruction, createEd25519ProgramIx, createMemoInstructionWithTxInfo, createTipTransferInstruction, deleteTransactionGasInstruction, getDexCommisionReceiverAndLamports, getInstructionAmounts, getInstructionReplaceDataHex, getTransactionGasLimitUintsInInstruction, nomalVersionedTransaction, numberToLittleEndianHex, priorityFeeInstruction, setCreateAccountBySeedInstructionLamports, setTransferInstructionLamports, versionedTra } from './InstructionCreator';
+import { createMemoInstruction } from '@solana/spl-memo';
 export function resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount) {
     console.log('传入的输出代币数量', newOutputAmount);
     console.log('传入的输入代币数量', newInputAmount);
@@ -12,7 +13,7 @@ export function resetInstructions(currentSymbol, transactionMessage, newInputAmo
         if (tempInstruction.data.length == 0)
             continue;
         const instructionId = tempInstruction.data.readUint8();
-        if (tempInstruction.programId.toBase58() == SOLANA_SYSTEM_PROGRAM_ID.toBase58() && currentSymbol.isBuy && i != transactionMessage.instructions.length - 1) {
+        if (tempInstruction.programId.toBase58() == SOLANA_SYSTEM_PROGRAM_ID.toBase58() && currentSymbol.isBuy && i != transactionMessage.instructions.length - 1 && i != transactionMessage.instructions.length - 2) {
             hasChange = setTransferInstructionLamports(tempInstruction, dataHex, newInputAmount);
             if (hasChange) {
                 transferInstructionIndex = i;
@@ -102,11 +103,17 @@ export async function compileTransaction(swapBase64Str, HS) {
         return value.accountKey;
     });
     console.log('addressLookupTableAccounts1', addressTables.length);
+    addressTables.push(HIDEX_ADDRESS_LOOK_UP);
     const connection = HS.network.getProviderByChain(102);
     const mutiAccountInfo = await connection.getMultipleAccountsInfo(addressTables);
     const addressLookupTableAccounts = new Array(addressTables.length);
     for (let i = 0; i < mutiAccountInfo.length; i++) {
         const state = AddressLookupTableAccount.deserialize(mutiAccountInfo[i].data);
+        for (let i = 0; i < state.addresses.length; i++) {
+            if (JITO_FEE_ACCOUNT.indexOf(state.addresses[i].toBase58()) !== -1) {
+                state.addresses[i] = new PublicKey("So11111111111111111111111111111111111111112");
+            }
+        }
         const lookUp = new AddressLookupTableAccount({
             key: addressTables[i],
             state: state
@@ -155,10 +162,14 @@ export function isInstructionsSupportReset(transactionMessage, currentSymbol) {
     return false;
 }
 export async function getClainSignature(signer, contentsHex, claimSignHex, recentBlockhash, owner, HS) {
+    const id = contentsHex.substring(contentsHex.length - 64);
+    const idStr = Buffer.from(id, 'hex').toString();
+    let memoStr = idStr + owner.publicKey.toBase58();
+    const memoInstruction = await createMemoInstruction(memoStr);
     const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(COMMISSION_SOLANA_GAS_LIMIT, DEFAULD_SOLANA_GAS_LIMIT);
     const ed25519ProgramIx = await createEd25519ProgramIx(signer, contentsHex, claimSignHex);
     const claimProgramIx = await createClaimInstruction(contentsHex, claimSignHex, owner, HS.network);
-    const claimTx = await nomalVersionedTransaction([ed25519ProgramIx, addPriorityLimitIx, addPriorityPriceIx, claimProgramIx], owner, recentBlockhash);
+    const claimTx = await nomalVersionedTransaction([ed25519ProgramIx, addPriorityLimitIx, addPriorityPriceIx, claimProgramIx, memoInstruction], owner, recentBlockhash);
     return claimTx;
 }
 export async function getTransactionsSignature(transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner, HS) {
@@ -169,11 +180,14 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
             break;
         }
     }
-    const lastInstruction = transactionMessage.instructions[transactionMessage.instructions.length - 1];
-    if (lastInstruction.programId.toBase58() == SOLANA_SYSTEM_PROGRAM_ID.toBase58()) {
-        const instructionId = lastInstruction.data.readUInt32LE(0);
-        if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
-            transactionMessage.instructions.splice(transactionMessage.instructions.length - 1);
+    for (let i = transactionMessage.instructions.length - 1; i > transactionMessage.instructions.length - 3; i--) {
+        const lastInstruction = transactionMessage.instructions[i];
+        if (lastInstruction.programId.toBase58() == SOLANA_SYSTEM_PROGRAM_ID.toBase58()) {
+            const instructionId = lastInstruction.data.readUInt32LE(0);
+            if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
+                console.log("SOLANA_SYSTEM_PROGRAM_TRANSFER_ID");
+                transactionMessage.instructions.splice(transactionMessage.instructions.length - 1);
+            }
         }
     }
     let priorityFee = Number(currentSymbol.priorityFee);
@@ -184,6 +198,8 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
     const memoIx = createMemoInstructionWithTxInfo(currentSymbol);
     transactionMessage.instructions.push(memoIx);
     const { swap_pda, commissionAmount } = await getDexCommisionReceiverAndLamports(currentSymbol);
+    console.log("swap_pda", swap_pda.toBase58());
+    console.log("commissionAmount", commissionAmount);
     const commissionTransferIx = await createTipTransferInstruction(owner.publicKey, swap_pda, BigInt(commissionAmount));
     transactionMessage.instructions.push(commissionTransferIx);
     const randomIndex = Math.floor(Math.random() * JITO_FEE_ACCOUNT.length);
@@ -194,11 +210,9 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
         priorityFee = priorityFee * 0.5;
     }
     else {
-        if (priorityFee >= TIP_MINI_IN_PRIORITY) {
-            const gmgnTipIx = await createTipTransferInstruction(owner.publicKey, GMGN_PRIORITY_FEE_Collect_ID, BigInt(priorityFee * 0.5));
-            transactionMessage.instructions.push(gmgnTipIx);
-            priorityFee = priorityFee * 0.5;
-        }
+        const gmgnTipIx = await createTipTransferInstruction(owner.publicKey, GMGN_PRIORITY_FEE_Collect_ID, BigInt((priorityFee * 0.5).toFixed(0)));
+        transactionMessage.instructions.push(gmgnTipIx);
+        priorityFee = priorityFee * 0.5;
     }
     const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(gasLimitInIx * 1.5, priorityFee);
     transactionMessage.instructions.splice(0, 0, addPriorityLimitIx);
@@ -217,7 +231,7 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
         const swapTx = await versionedTra(tempInstructions, owner, recentBlockhash, addressLookupTableAccounts);
         const commissionTx = await versionedTra([commissionTransferIx, memoIx], owner, recentBlockhash, addressLookupTableAccounts);
         const tipIx = await createTipTransferInstruction(owner.publicKey, new PublicKey(JITO_FEE_ACCOUNT[randomIndex]), BigInt(currentSymbol.priorityFee));
-        const tipTx = await versionedTra([tipIx], owner, recentBlockhash, addressLookupTableAccounts);
+        const tipTx = await versionedTra([tipIx], owner, recentBlockhash, []);
         return [gasFeeTx, swapTx, commissionTx, tipTx];
     }
 }

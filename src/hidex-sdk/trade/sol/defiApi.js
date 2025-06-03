@@ -1,7 +1,9 @@
 import axios from 'axios';
 import bs58 from 'bs58';
+import { Connection } from '@solana/web3.js';
 import { JITO_SEND_URL, QUIKNODE_SEND_URL } from './config';
 import { urlPattern } from './utils';
+import { axiosErrorMessage } from '../../common/utils';
 class DefiApi {
     clearTimer;
     maxBlockHashCount;
@@ -71,7 +73,7 @@ class DefiApi {
         const outputToken = currentSymbol.out.address;
         let slippage = currentSymbol.slipPersent * 100;
         const fee = 0.0001;
-        const url = `/gmgn/defi/router/v1/sol/tx/get_swap_route?token_in_address=${inputToken}&token_out_address=${outputToken}&in_amount=${amountIn}&from_address=${fromAddress}&slippage=${slippage}&fee=${fee}`;
+        const url = `/gmgn/defi/router/v1/sol/tx/get_swap_route?token_in_address=${inputToken}&token_out_address=${outputToken}&in_amount=${amountIn}&from_address=${fromAddress}&slippage=${slippage}&fee=${fee}&is_anti_mev=false`;
         const response = await axios.get(url);
         if (response.status === 200 && response.data?.code === 0) {
             const { quote, raw_tx } = response.data.data;
@@ -91,14 +93,19 @@ class DefiApi {
         try {
             const signedTx = Buffer.from(transaction.serialize()).toString('base64');
             const signatureBase58 = transaction.signatures.map((sig) => bs58.encode(sig));
-            const response = await axios.post('/gmgn/defi/router/v1/sol/tx/submit_signed_transaction', {
-                signed_tx: signedTx
+            const response = await axios.post('/gmgn/txproxy/v1/send_transaction', {
+                chain: 'sol',
+                signedTx: signedTx,
+                isAntiMev: false
             });
             if (response.status === 200 && response.data?.code === 0) {
                 return {
                     success: true,
                     hash: signatureBase58[0],
-                    currentSymbol
+                    currentSymbol,
+                    data: {
+                        errorMessage: ''
+                    }
                 };
             }
             if (response.status === 200 && response.data?.code !== 0) {
@@ -107,13 +114,63 @@ class DefiApi {
             throw new Error('Error API submit_signed_transaction');
         }
         catch (error) {
-            throw new Error(JSON.stringify(error));
+            console.log('submitSwap error', error);
+            return {
+                success: false,
+                hash: '',
+                currentSymbol,
+                data: {
+                    errorMessage: `极速模式交易发送失败，Error url: /txproxy/v1/send_transaction；` + error + axiosErrorMessage(error)
+                }
+            };
+        }
+    }
+    async submitSwapFastByBlox(currentSymbol, transaction) {
+        try {
+            const signedTx = Buffer.from(transaction.serialize()).toString('base64');
+            const signatureBase58 = transaction.signatures.map((sig) => bs58.encode(sig));
+            const response = await axios.post('/blox_api/api/v2/submit', {
+                transaction: {
+                    content: signedTx
+                },
+                skipPreFlight: true,
+                frontRunningProtection: false,
+                fastBestEffort: false,
+                useStakedRPCs: true
+            });
+            console.log('submitSwapFastByBlox', response);
+            if (response.status === 200 && response.data?.code === 0) {
+                return {
+                    success: true,
+                    hash: signatureBase58[0],
+                    currentSymbol,
+                    data: {
+                        errorMessage: ''
+                    }
+                };
+            }
+            if (response.status === 200 && response.data?.code !== 0) {
+                throw new Error(response.data.msg);
+            }
+            throw new Error('Error API submit_signed_transaction');
+        }
+        catch (error) {
+            console.log('submitSwap error', error);
+            return {
+                success: false,
+                hash: '',
+                currentSymbol,
+                data: {
+                    errorMessage: `极速模式交易发送失败，Error url: /blox_api/api/v2/submit；` + error + axiosErrorMessage(error)
+                }
+            };
         }
     }
     async submitByQuiknode() {
     }
     async submitSwapByJito(transactions) {
-        const jitoPostTime = new Date().getTime();
+        const submitPostTime = new Date().getTime();
+        let postPath = '';
         try {
             const endpoints = [...QUIKNODE_SEND_URL, ...JITO_SEND_URL];
             const signedTx = Buffer.from(transactions[0].serialize()).toString('base64');
@@ -122,7 +179,7 @@ class DefiApi {
             const serializedTransactions = [];
             if (transactions.length >= 4) {
                 for (const transaction of transactions) {
-                    serializedTransactions.push(bs58.encode(transaction.serialize()));
+                    serializedTransactions.push(Buffer.from(transaction.serialize()).toString('base64'));
                 }
                 signatureBase58_swap = transactions[1].signatures.map((sig) => bs58.encode(sig));
                 signatureBase58 = transactions[2].signatures.map((sig) => bs58.encode(sig));
@@ -139,23 +196,27 @@ class DefiApi {
                 }
                 : {
                     method: 'sendBundle',
-                    params: [serializedTransactions]
+                    params: [
+                        serializedTransactions,
+                        {
+                            encoding: 'base64'
+                        }
+                    ]
                 };
             const params = {
                 jsonrpc: '2.0',
                 id: 1,
                 ...paramsData
             };
-            const postPath = transactions.length === 1 ? 'transactions' : 'bundles';
+            postPath = transactions.length === 1 ? 'transactions' : 'bundles';
             const requests = endpoints.map((url) => axios
-                .post(`${url}/${url.includes('quiknode') ? '' : postPath}`, params, {
-                timeout: 3000
-            })
+                .post(`${url}/${url.includes('quiknode') ? '' : postPath}`, params)
                 .then((res) => {
                 Promise.resolve(res);
                 return res;
             })
                 .catch((error) => {
+                console.log('submitSwapByJito error', error);
                 return Promise.reject(error);
             }));
             const results = await Promise.any(requests);
@@ -165,30 +226,142 @@ class DefiApi {
                     success: true,
                     hash: signatureBase58[0],
                     data: {
+                        errorMessage: null,
                         swapHash: signatureBase58_swap[0],
                         jitoBundle: [results?.data?.result],
-                        jitoPostTime
+                        submitPostTime,
+                        lastBlockHash: this.lastBlockHash
                     }
                 };
             }
             return {
                 success: false,
-                hash: ''
+                hash: '',
+                data: {
+                    errorMessage: 'Error API submitSwapByJito',
+                    lastBlockHash: this.lastBlockHash
+                }
             };
         }
         catch (error) {
-            console.log('sendBundle error', error);
+            console.log('SendBundle error', error);
             if (error instanceof AggregateError) {
                 if (error?.errors?.length) {
-                    const errRes = error.errors[1];
-                    if (errRes?.response?.data?.error?.message) {
-                        throw new Error(errRes.response.data.error.message);
+                    const errRes = error.errors[0];
+                    if (errRes?.response?.data) {
+                        return {
+                            success: false,
+                            hash: '',
+                            data: {
+                                errorMessage: `防夹模式交易发送失败，Error url: ${postPath};` + JSON.stringify(errRes.response?.data),
+                                lastBlockHash: this.lastBlockHash
+                            }
+                        };
                     }
                 }
             }
             return {
                 success: false,
-                hash: ''
+                hash: '',
+                data: {
+                    errorMessage: `防夹模式交易发送失败，Error url: ${postPath}; error：${error}, ${axiosErrorMessage(error)}`,
+                    lastBlockHash: this.lastBlockHash
+                }
+            };
+        }
+    }
+    async submitSwapByBlox(transactions) {
+        const submitPostTime = new Date().getTime();
+        let postPath = '';
+        try {
+            const endpoints = ['/blox_api/api/v2/'];
+            const signedTx = Buffer.from(transactions[0].serialize()).toString('base64');
+            let signatureBase58 = transactions[0].signatures.map((sig) => bs58.encode(sig));
+            let signatureBase58_swap = signatureBase58;
+            const serializedTransactions = [];
+            if (transactions.length >= 4) {
+                for (const transaction of transactions) {
+                    serializedTransactions.push({
+                        transaction: {
+                            content: Buffer.from(transaction.serialize()).toString('base64')
+                        }
+                    });
+                }
+                signatureBase58_swap = transactions[1].signatures.map((sig) => bs58.encode(sig));
+                signatureBase58 = transactions[2].signatures.map((sig) => bs58.encode(sig));
+            }
+            const paramsData = transactions.length === 1
+                ? {
+                    transaction: {
+                        content: signedTx
+                    },
+                    frontRunningProtection: true,
+                    fastBestEffort: true,
+                    skipPreFlight: true
+                }
+                : {
+                    entries: serializedTransactions,
+                    useBundle: true
+                };
+            postPath = transactions.length === 1 ? 'submit' : 'submi-batch';
+            const requests = endpoints.map((url) => axios
+                .post(url + postPath, paramsData)
+                .then((res) => {
+                Promise.resolve(res);
+                return res;
+            })
+                .catch((error) => {
+                console.log('submitSwapByBlox error', error);
+                return Promise.reject(error);
+            }));
+            const results = await Promise.any(requests);
+            console.log('submitSwapByBlox results', results);
+            if (results.status === 200 && results?.data?.result) {
+                return {
+                    success: true,
+                    hash: signatureBase58[0],
+                    data: {
+                        errorMessage: null,
+                        swapHash: signatureBase58_swap[0],
+                        jitoBundle: [results?.data?.result],
+                        submitPostTime,
+                        lastBlockHash: this.lastBlockHash
+                    }
+                };
+            }
+            return {
+                success: false,
+                hash: '',
+                data: {
+                    errorMessage: 'Error API submitSwapByBlox',
+                    lastBlockHash: this.lastBlockHash
+                }
+            };
+        }
+        catch (error) {
+            console.log('Blox Error', error);
+            if (error instanceof AggregateError) {
+                if (error?.errors?.length) {
+                    const errRes = error.errors[0];
+                    if (errRes?.response?.data) {
+                        return {
+                            success: false,
+                            hash: '',
+                            data: {
+                                errorMessage: `防夹模式交易发送失败，Error url: ${postPath};` + JSON.stringify(errRes.response?.data),
+                                lastBlockHash: this.lastBlockHash
+                            }
+                        };
+                    }
+                }
+            }
+            return {
+                success: false,
+                hash: '',
+                data: {
+                    errorMessage: `防夹模式交易发送失败，Error url: ${postPath}; error：${error}, ${axiosErrorMessage(error)}`,
+                    lastBlockHash: this.lastBlockHash
+                }
             };
         }
     }
@@ -262,6 +435,25 @@ class DefiApi {
         }
     }
     async rpcSwapStatus(hash, connection) {
+        try {
+            const result = await connection.getSignatureStatus(hash, { searchTransactionHistory: true });
+            console.log('SOL RPC状态查询 confirmation===', result);
+            if ((result?.value?.confirmationStatus === 'confirmed' || result?.value?.confirmationStatus === 'finalized') && !result?.value?.err) {
+                return 'Confirmed';
+            }
+            if (result?.value?.err) {
+                return 'Failed';
+            }
+            return Promise.reject('Pending');
+        }
+        catch (error) {
+            return Promise.reject('Pending');
+        }
+    }
+    async rpcHeliusSwapStatus(hash) {
+        const connection = new Connection('https://mainnet.helius-rpc.com/?api-key=e1f7e962-4c6b-40c2-9852-f35189c3ccd7', {
+            commitment: 'confirmed'
+        });
         try {
             const result = await connection.getSignatureStatus(hash, { searchTransactionHistory: true });
             console.log('SOL RPC状态查询 confirmation===', result);

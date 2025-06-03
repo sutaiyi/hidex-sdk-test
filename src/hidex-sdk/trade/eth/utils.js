@@ -2,16 +2,14 @@ import { ethers } from 'ethers';
 export async function getBaseFeePerGas(network) {
     try {
         const currentNetWork = network.get();
-        const profun = network.sysProviderRpcs[currentNetWork.chain].map((v) => {
-            return v
-                .getBlock('latest')
-                .then((res) => {
-                return res;
-            })
-                .catch((error) => {
-                return Promise.reject(error);
-            });
-        });
+        const profun = network.sysProviderRpcs[currentNetWork.chain].map((v) => v
+            .getBlock('latest')
+            .then((res) => {
+            return res;
+        })
+            .catch((error) => {
+            return Promise.reject(error);
+        }));
         const latestBlock = await Promise.any(profun);
         const { baseFeePerGas } = latestBlock;
         if (baseFeePerGas) {
@@ -41,6 +39,6 @@ export const getUseGasPrice = async (network, gasLimit) => {
     return {
         gasFeeETH,
         gasFeeWei: gasFeeWei.toString(),
-        gasPriceWei: gasPriceWei.toString(),
+        gasPriceWei: gasPriceWei.toString()
     };
 };

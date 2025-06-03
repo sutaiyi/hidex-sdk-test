@@ -35,4 +35,5 @@ export declare const isValidJSON: (str: string) => boolean;
 export declare function strToNumberByDecimals(str: string, decimals: number): number;
 export declare function formatNumberWithPrecision(numValue: number, precision: number): string;
 export declare function getUseToken(): string;
+export declare function axiosErrorMessage(error: any): string;
 //# sourceMappingURL=utils.d.ts.map

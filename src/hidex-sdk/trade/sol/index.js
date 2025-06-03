@@ -9,6 +9,7 @@ import UtilsService from '../../utils/UtilsService';
 import { compileTransaction, getClainSignature, getTransactionsSignature, isInstructionsSupportReset, resetInstructions } from './instruction';
 import { NETWORK_FEE_RATES } from '../eth/config';
 import { getWithdrawSign } from '../../api/hidex';
+import { setStatistics } from '../../utils/timeStatistics';
 const utils = new UtilsService();
 export const solService = (HS) => {
     const { network, wallet } = HS;
@@ -17,16 +18,14 @@ export const solService = (HS) => {
         try {
             if ((tokenAddress && tokenAddress === smTokenAddress) || !tokenAddress || isAta) {
                 const pk = !isAta ? new PublicKey(accountAddress) : new PublicKey(tokenAddress);
-                const balanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
-                    return v
-                        .getBalance(pk)
-                        .then((res) => {
-                        return res;
-                    })
-                        .catch((error) => {
-                        return Promise.reject(error);
-                    });
-                });
+                const balanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => v
+                    .getBalance(pk)
+                    .then((res) => {
+                    return res;
+                })
+                    .catch((error) => {
+                    return Promise.reject(error);
+                }));
                 const balance = await Promise.any(balanceProm);
                 if (balance.error) {
                     return isAta ? '-1' : '0';
@@ -35,22 +34,20 @@ export const solService = (HS) => {
             }
             const apk = new PublicKey(accountAddress);
             const tpk = new PublicKey(tokenAddress);
-            const connection = await network.getFastestProviderByChain(102);
+            const connection = await network.getProviderByChain(102);
             const tokenOwnerAddress = await getTokenOwner(tokenAddress, connection);
             let userAta = await getAssociatedTokenAddress(tpk, apk, false);
             if (tokenOwnerAddress === TOKEN_2022_OWNER) {
                 userAta = await getAssociatedTokenAddress(tpk, apk, false, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
             }
-            const tokenBalanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
-                return v
-                    .getTokenAccountBalance(userAta)
-                    .then((res) => {
-                    return res;
-                })
-                    .catch((error) => {
-                    return Promise.reject(error);
-                });
-            });
+            const tokenBalanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => v
+                .getTokenAccountBalance(userAta)
+                .then((res) => {
+                return res;
+            })
+                .catch((error) => {
+                return Promise.reject(error);
+            }));
             const tokenBalance = await Promise.any(tokenBalanceProm);
             if (tokenBalance.error) {
                 return isAta ? '-1' : '0';
@@ -69,16 +66,14 @@ export const solService = (HS) => {
                 ? new PublicKey(accountAddress)
                 : getAssociatedTokenAddress(new PublicKey(token), new PublicKey(accountAddress), false, TOKEN_PROGRAM_ID));
             const tokensAta_p = await Promise.all(tokensAta);
-            const resultProm = network.sysProviderRpcs[chain].map((v) => {
-                return v
-                    .getMultipleAccountsInfo(tokensAta_p)
-                    .then((res) => {
-                    return res;
-                })
-                    .catch((error) => {
-                    return Promise.reject(error);
-                });
-            });
+            const resultProm = network.sysProviderRpcs[chain].map((v) => v
+                .getMultipleAccountsInfo(tokensAta_p)
+                .then((res) => {
+                return res;
+            })
+                .catch((error) => {
+                return Promise.reject(error);
+            }));
             const result = await Promise.any(resultProm);
             const balances = [];
             result.forEach((v) => {
@@ -204,6 +199,7 @@ export const solService = (HS) => {
             console.time('getOwnerKeyTimer');
             const owner = HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress));
             console.timeEnd('getOwnerKeyTimer');
+            console.log('------------isCompileUseTimer------------------', !!compileUse);
             if (compileUse) {
                 const isSupport = isInstructionsSupportReset(compileUse['message'], currentSymbol);
                 console.log('------------isSupportTimer------------------', isSupport);
@@ -215,16 +211,15 @@ export const solService = (HS) => {
                 }
             }
             if (txArray.length === 0) {
-                console.time('NoSupportTimer');
-                console.time('GmgnRouterTimer');
+                console.time('AgainRouterTimer');
+                setStatistics({ timerKey: 'SwapRoute', isBegin: true });
                 const { success, swapTransaction, data } = await defiApi.swapRoute(currentSymbol, accountAddress);
-                console.timeEnd('GmgnRouterTimer');
+                setStatistics({ timerKey: 'SwapRoute', isBegin: false });
                 if (!success) {
                     throw new Error('Failed to swap' + path);
                 }
-                console.time('compileTransactionTimer');
+                setStatistics({ timerKey: 'CompileTransaction', isBegin: true });
                 compileUse = await compileTransaction(swapTransaction, HS);
-                console.timeEnd('compileTransactionTimer');
                 currentSymbol.preAmountIn = data.inAmount;
                 currentSymbol.preAmountOut = data.otherAmountThreshold;
                 let isSupport = false;
@@ -237,10 +232,9 @@ export const solService = (HS) => {
                 else {
                     resetResult = compileUse['message'];
                 }
-                console.time('getTransactionsSignatureTimer');
                 txArray = await getTransactionsSignature(resetResult, compileUse['addressesLookup'], defiApi.lastBlockHash.blockhash, currentSymbol, owner, HS);
-                console.timeEnd('getTransactionsSignatureTimer');
-                console.timeEnd('NoSupportTimer');
+                setStatistics({ timerKey: 'CompileTransaction', isBegin: false });
+                console.timeEnd('AgainRouterTimer');
             }
             if (txArray.length === 0) {
                 throw new Error('Failed to swap txArray is empty');
@@ -263,17 +257,16 @@ export const solService = (HS) => {
             return netFee + dexFee + mitToken + accountSave + priorityFee;
         },
         swap: async (currentSymbol, transaction, accountAddress) => {
+            setStatistics({ timerKey: 'SubmitSwap', isBegin: true });
             const { vertransactions } = transaction?.data;
             let submitResult = null;
             if (currentSymbol.tradeType === 3 && vertransactions.length === 1) {
-                submitResult = await defiApi.submitSwap(currentSymbol, vertransactions[0]);
+                submitResult = await defiApi.submitSwapFastByBlox(currentSymbol, vertransactions[0]);
             }
             else {
-                submitResult = await defiApi.submitSwapByJito(vertransactions);
+                submitResult = await defiApi.submitSwapByBlox(vertransactions);
             }
-            if (!submitResult.hash) {
-                throw new Error('axioserror: request failed');
-            }
+            setStatistics({ timerKey: 'SubmitSwap', isBegin: false });
             return {
                 error: !submitResult.success,
                 result: { hash: submitResult.hash, data: { vertransactions: vertransactionsToBase64(vertransactions), accountAddress, currentSymbol, ...submitResult } }
@@ -282,9 +275,10 @@ export const solService = (HS) => {
         hashStatus: async (hash, chainId) => {
             try {
                 const connection = network.getProviderByChain(chainId || 102);
-                const gmgnStatusPro = defiApi.getSwapStatus(hash);
-                const rpcStatusPro = defiApi.rpcSwapStatus(hash, connection);
-                const status = await Promise.any([gmgnStatusPro, rpcStatusPro]);
+                const gmgnStatusPro = () => defiApi.getSwapStatus(hash);
+                const rpcHeliuPro = () => defiApi.rpcHeliusSwapStatus(hash);
+                const rpcStatusPro = () => defiApi.rpcSwapStatus(hash, connection);
+                const status = await Promise.any([gmgnStatusPro(), rpcStatusPro(), rpcHeliuPro()]);
                 console.log('SOL状态查询===》', ['GMGN', 'RPC'], status);
                 let message = 'HashStatus...';
                 if (status === 'Failed') {
@@ -319,7 +313,11 @@ export const solService = (HS) => {
                     const simulateResponse = await connection.simulateTransaction(vsTransaction, simulateConfig);
                     console.log('领取 预估结果==>', simulateResponse);
                     if (simulateResponse?.value?.err) {
-                        return { code: 4001, message: 'Claim commission error in simulateTransaction: ' + JSON.stringify(simulateResponse?.value?.logs), data: null };
+                        return {
+                            code: 4001,
+                            message: 'Claim commission error in simulateTransaction: ' + JSON.stringify(simulateResponse?.value?.logs + JSON.stringify(simulateResponse?.value?.err)),
+                            data: null
+                        };
                     }
                     const rawTransaction = vsTransaction.serialize();
                     const txhash = await connection.sendRawTransaction(rawTransaction, { preflightCommitment: 'confirmed' });

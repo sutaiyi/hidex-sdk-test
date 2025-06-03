@@ -21,9 +21,21 @@ declare class DefiApi implements IDefiApi {
         success: boolean;
         hash: string;
         currentSymbol: CurrentSymbol;
+        data: any;
+    }>;
+    submitSwapFastByBlox(currentSymbol: CurrentSymbol, transaction: VersionedTransaction): Promise<{
+        success: boolean;
+        hash: string;
+        currentSymbol: CurrentSymbol;
+        data: any;
     }>;
     submitByQuiknode(): Promise<void>;
     submitSwapByJito(transactions: Array<Transaction>): Promise<{
+        success: boolean;
+        hash: string;
+        data?: any;
+    }>;
+    submitSwapByBlox(transactions: Array<Transaction>): Promise<{
         success: boolean;
         hash: string;
         data?: any;
@@ -32,6 +44,7 @@ declare class DefiApi implements IDefiApi {
     getSwapStatus(hash: string): Promise<HashStatus>;
     bundlesStatuses(bundles: Array<string>): Promise<HashStatus>;
     rpcSwapStatus(hash: string, connection: Connection): Promise<HashStatus>;
+    rpcHeliusSwapStatus(hash: string): Promise<HashStatus>;
     establishingConnection(): void;
 }
 declare const _default: DefiApi;

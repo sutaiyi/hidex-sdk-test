@@ -11,6 +11,7 @@ const walletTest = () => {
         await wallet.setUnLockedExpires(7);
         await wallet.walletInit();
         console.log('密码创建成功', password);
+        alert('密码创建成功');
       } catch (error) {
         console.error(error);
         alert(error);
@@ -26,6 +27,7 @@ const walletTest = () => {
         await wallet.resetPassword(oldPassword, newPassword);
         console.log('密码修改成功 ' + newPassword);
         await wallet.walletInit();
+        alert(`密码修改成功${newPassword}`);
       } catch (error) {
         console.error(error);
         alert(error);
@@ -56,7 +58,7 @@ const walletTest = () => {
     },
     设置密码到期时间: async () => {
       try {
-        const number = 7;
+        const number = 7; // 1秒
         await wallet.setUnLockedExpires(number);
         alert(`设置成功到期时间为${number}天`);
       } catch (error) {
@@ -270,9 +272,10 @@ const walletTest = () => {
         alert(error);
       }
     },
-    清空钱包: async () => {
+    清空云端钱包: async () => {
       if (window.confirm('确定要清空钱包吗？')) {
         try {
+          await wallet.clearLocalWallet();
           await wallet.clearWallet();
           alert('清空成功');
         } catch (error) {

@@ -228,3 +228,12 @@ export function formatNumberWithPrecision(numValue, precision) {
 export function getUseToken() {
     return localStorage.getItem('access_token') || '';
 }
+export function axiosErrorMessage(error) {
+    console.log(typeof error);
+    if (typeof error === 'object') {
+        if (error.response) {
+            return JSON.stringify(error.response.data || error);
+        }
+    }
+    return JSON.stringify(error || { message: 'axios error' });
+}

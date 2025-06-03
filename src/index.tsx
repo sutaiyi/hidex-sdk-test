@@ -22,6 +22,8 @@ const Rend = () => {
       try {
         await HidexSDK.init();
         trade.checkHash.on('HashStatusEvent', (data) => {
+          console.log('----tradeFullTimer----', utils.setStatistics({ timerKey: 'tradeFull', isBegin: false }));
+          console.log('----HashStatusTimer----', utils.setStatistics({ timerKey: 'HashStatus', isBegin: false }));
           console.log('HashStatusEvent', data);
           console.timeEnd('tradeFullTimer');
           console.timeEnd('HashStatusTimer');

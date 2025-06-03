@@ -95,13 +95,7 @@ class NetworkController extends EventEmitter {
                 if (rpc === '/solana_new') {
                     rpc = `${getSolRpcOrigin(this.HS.env, this.HS.apparatus)}/solana_new`;
                 }
-                this.provider = new Connection(rpc, {
-                    commitment: 'confirmed',
-                    httpHeaders: {
-                        'Content-Type': 'application/json',
-                        ...getSolanaRpcHeard()
-                    }
-                });
+                this.provider = this.solanaConnect(rpc, 'confirmed');
                 this.myProviders[this.network.chain.toLowerCase()] = this.provider;
                 return this.provider;
             }
@@ -211,19 +205,17 @@ class NetworkController extends EventEmitter {
                 throw new Error(error.message || 'Network error');
             }
         };
-        const promises = rpcs.map((rpc) => {
-            return testRpcSpeed(rpc)
-                .then((res) => {
-                if (res.status === 200 && res.data.id && !res.data.error) {
-                    Promise.resolve(rpc);
-                    return rpc;
-                }
-                throw new Error('Network error');
-            })
-                .catch((error) => {
-                return Promise.reject(error);
-            });
-        });
+        const promises = rpcs.map((rpc) => testRpcSpeed(rpc)
+            .then((res) => {
+            if (res.status === 200 && res.data.id && !res.data.error) {
+                Promise.resolve(rpc);
+                return rpc;
+            }
+            throw new Error('Network error');
+        })
+            .catch((error) => {
+            return Promise.reject(error);
+        }));
         const fasteRpc = await Promise.any(promises);
         return fasteRpc;
     }
@@ -260,7 +252,8 @@ class NetworkController extends EventEmitter {
             httpHeaders: {
                 'Content-Type': 'application/json',
                 ...getSolanaRpcHeard()
-            }
+            },
+            confirmTransactionInitialTimeout: 15000
         });
         return currentProvider;
     }

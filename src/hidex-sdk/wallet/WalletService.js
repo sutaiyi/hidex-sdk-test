@@ -819,8 +819,7 @@ class WalletService {
         return data.hasWallet;
     }
     async getWalletStatus() {
-        const bootpro = this.getCloudBootedOss(this.HS);
-        const [isUnlocked, { pathIndex, walletStatus, passwordStatus }] = await Promise.all([this.isUnlocked(), bootpro]);
+        const [isUnlocked, { pathIndex, walletStatus, passwordStatus }] = await Promise.all([this.isUnlocked(), this.getCloudBootedOss(this.HS)]);
         return {
             isUnlocked,
             isSetPassword: passwordStatus,

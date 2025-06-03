@@ -10,16 +10,14 @@ export const ethService = (HS) => {
         getBalance: async (accountAddress, tokenAddress = '') => {
             const currentNetwork = network.get();
             if (!tokenAddress || tokenAddress.toLowerCase() === mTokenAddress.toLowerCase()) {
-                const balanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
-                    return v
-                        .getBalance(accountAddress)
-                        .then((res) => {
-                        return res;
-                    })
-                        .catch((error) => {
-                        return Promise.reject(error);
-                    });
-                });
+                const balanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => v
+                    .getBalance(accountAddress)
+                    .then((res) => {
+                    return res;
+                })
+                    .catch((error) => {
+                    return Promise.reject(error);
+                }));
                 const balance = await Promise.any(balanceProm);
                 if (balance.error) {
                     return '0';
@@ -29,7 +27,7 @@ export const ethService = (HS) => {
             if (tokenAddress) {
                 const balanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => {
                     const tokenContract = new ethers.Contract(tokenAddress, abis.tokenABI, v);
-                    return tokenContract
+                    return () => tokenContract
                         .balanceOf(accountAddress)
                         .then((res) => {
                         return res;
@@ -38,7 +36,7 @@ export const ethService = (HS) => {
                         return Promise.reject(error);
                     });
                 });
-                const balance = await Promise.any(balanceProm);
+                const balance = await Promise.any(balanceProm.map((v) => v()));
                 if (balance.error) {
                     return '0';
                 }
@@ -58,7 +56,7 @@ export const ethService = (HS) => {
                 else {
                     const profun = network.sysProviderRpcs[chain].map((v) => {
                         const chillSwapContract = new ethers.Contract(currentNetWork.deTrade, abis.chillSwapABI, v);
-                        return chillSwapContract.callStatic
+                        return () => chillSwapContract.callStatic
                             .getTokensBalance(accountAddress, tokens)
                             .then((res) => {
                             if (res.length > 0) {
@@ -73,7 +71,7 @@ export const ethService = (HS) => {
                             return Promise.reject(error);
                         });
                     });
-                    const balanceAll = await Promise.any(profun);
+                    const balanceAll = await Promise.any(profun.map((v) => v()));
                     if (balanceAll.error) {
                         throw new Error(balanceAll.error);
                     }
@@ -158,7 +156,7 @@ export const ethService = (HS) => {
             const currentNetWork = network.get();
             const profun = network.sysProviderRpcs[currentNetWork.chain].map((v) => {
                 const Brc20TokenContract = new ethers.Contract(tokenAddress, abis.tokenABI, v);
-                return Brc20TokenContract.allowance(accountAddress, authorizedAddress)
+                return () => Brc20TokenContract.allowance(accountAddress, authorizedAddress)
                     .then((res) => {
                     return res;
                 })
@@ -166,7 +164,7 @@ export const ethService = (HS) => {
                     return Promise.reject(err);
                 });
             });
-            const allowance = await Promise.any(profun);
+            const allowance = await Promise.any(profun.map((v) => v()));
             if (allowance.error) {
                 throw new Error(allowance.error);
             }
@@ -181,7 +179,7 @@ export const ethService = (HS) => {
                     const Brc20TokenContract = new ethers.Contract(tokenAddress, abis.tokenABI, v);
                     const walletProvider = new ethers.Wallet(ownerKey, v);
                     const tokenWithSigner = Brc20TokenContract.connect(walletProvider);
-                    return tokenWithSigner
+                    return () => tokenWithSigner
                         .approve(authorizedAddress, amount)
                         .then((res) => {
                         return res;
@@ -190,7 +188,7 @@ export const ethService = (HS) => {
                         return Promise.reject(error);
                     });
                 });
-                const tx = await Promise.any(profun);
+                const tx = await Promise.any(profun.map((v) => v()));
                 console.log('Approve tx:', tx);
                 if (tx.error) {
                     throw new Error(tx.error);
@@ -218,7 +216,7 @@ export const ethService = (HS) => {
                         data: txData,
                         from
                     };
-                    return v
+                    return () => v
                         .estimateGas(transaction)
                         .then((res) => {
                         return res;
@@ -227,7 +225,7 @@ export const ethService = (HS) => {
                         return Promise.reject(error);
                     });
                 });
-                const gasEstimate = await Promise.any(profun);
+                const gasEstimate = await Promise.any(profun.map((v) => v()));
                 if (gasEstimate.error) {
                     throw new Error(gasEstimate.error);
                 }
@@ -309,7 +307,7 @@ export const ethService = (HS) => {
             }
             const profun = network.sysProviderRpcs[currentNetWork.chain].map((v) => {
                 const chillSwapContract = new ethers.Contract(currentNetWork.deTrade, abis.chillSwapABI, v);
-                return chillSwapContract.callStatic
+                return () => chillSwapContract.callStatic
                     .getOptimalPath(inAddress, currentSymbol.amountIn, outAddress)
                     .then((res) => {
                     return res;
@@ -318,7 +316,7 @@ export const ethService = (HS) => {
                     return Promise.reject(error);
                 });
             });
-            const path = await Promise.any(profun);
+            const path = await Promise.any(profun.map((v) => v()));
             if (path.error) {
                 throw new Error(path.error);
             }
@@ -353,7 +351,7 @@ export const ethService = (HS) => {
             const params = defaultParams;
             const profunGetLimit = network.sysProviderRpcs[currentNetWork.chain].map((v) => {
                 const walletProvider = new ethers.Wallet(ownerKey, v);
-                return walletProvider
+                return () => walletProvider
                     .estimateGas(params)
                     .then((res) => {
                     return res;
@@ -362,7 +360,7 @@ export const ethService = (HS) => {
                     return Promise.reject(error);
                 });
             });
-            const getLimit = await Promise.any(profunGetLimit);
+            const getLimit = await Promise.any(profunGetLimit.map((v) => v()));
             if (getLimit.error) {
                 throw new Error(getLimit.error);
             }
@@ -432,19 +430,17 @@ export const ethService = (HS) => {
             if (typeof chain === 'number') {
                 chainName = network.getChainNameByChainId(chain);
             }
-            const profun = network.sysProviderRpcs[chainName].map((v) => {
-                return v
-                    .getTransaction(hash)
-                    .then((res) => {
-                    if (res && res.hash) {
-                        return res;
-                    }
-                    return Promise.reject('error hash');
-                })
-                    .catch((error) => {
-                    return Promise.reject(error);
-                });
-            });
+            const profun = network.sysProviderRpcs[chainName].map((v) => v
+                .getTransaction(hash)
+                .then((res) => {
+                if (res && res.hash) {
+                    return res;
+                }
+                return Promise.reject('error hash');
+            })
+                .catch((error) => {
+                return Promise.reject(error);
+            }));
             const statusResult = await Promise.any(profun);
             console.log('statusResult===>', statusResult);
             if (statusResult?.confirmations >= 2) {
