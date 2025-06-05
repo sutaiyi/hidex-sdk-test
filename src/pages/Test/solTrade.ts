@@ -36,7 +36,7 @@ const getCurrentSymbolTest = async (
     slipPersent: 0, // 兑换滑点(预请求时候使用)
     amountOutMin: '0', // 最少得到数量
     dexFeeAmount: '0', // 交易手续费
-    priorityFee: (0.001 * Math.pow(10, 9)).toString(), // 优先费
+    priorityFee: (0.0013 * Math.pow(10, 9)).toString(), // 优先费
     inviter, // 邀请地址
     isBuy,
     networkFee: {

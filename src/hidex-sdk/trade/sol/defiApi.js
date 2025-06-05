@@ -4,6 +4,7 @@ import { Connection } from '@solana/web3.js';
 import { JITO_SEND_URL, QUIKNODE_SEND_URL } from './config';
 import { urlPattern } from './utils';
 import { axiosErrorMessage } from '../../common/utils';
+import { getSolanaRpcHeard } from '../../network/utils';
 class DefiApi {
     clearTimer;
     maxBlockHashCount;
@@ -129,7 +130,7 @@ class DefiApi {
         try {
             const signedTx = Buffer.from(transaction.serialize()).toString('base64');
             const signatureBase58 = transaction.signatures.map((sig) => bs58.encode(sig));
-            const response = await axios.post('/blox_api/api/v2/submit', {
+            const response = await axios.post('/bloxApi3/api/v2/submit', {
                 transaction: {
                     content: signedTx
                 },
@@ -137,9 +138,13 @@ class DefiApi {
                 frontRunningProtection: false,
                 fastBestEffort: false,
                 useStakedRPCs: true
+            }, {
+                headers: {
+                    ...getSolanaRpcHeard()
+                }
             });
             console.log('submitSwapFastByBlox', response);
-            if (response.status === 200 && response.data?.code === 0) {
+            if (response.status === 200 && response.data?.signature) {
                 return {
                     success: true,
                     hash: signatureBase58[0],
@@ -161,7 +166,7 @@ class DefiApi {
                 hash: '',
                 currentSymbol,
                 data: {
-                    errorMessage: `极速模式交易发送失败，Error url: /blox_api/api/v2/submit；` + error + axiosErrorMessage(error)
+                    errorMessage: `极速模式交易发送失败，Error url: /bloxApi3/api/v2/submit；` + error + axiosErrorMessage(error)
                 }
             };
         }
@@ -274,7 +279,7 @@ class DefiApi {
         const submitPostTime = new Date().getTime();
         let postPath = '';
         try {
-            const endpoints = ['/blox_api/api/v2/'];
+            const endpoints = ['/bloxApi3/api/v2/'];
             const signedTx = Buffer.from(transactions[0].serialize()).toString('base64');
             let signatureBase58 = transactions[0].signatures.map((sig) => bs58.encode(sig));
             let signatureBase58_swap = signatureBase58;
@@ -303,9 +308,13 @@ class DefiApi {
                     entries: serializedTransactions,
                     useBundle: true
                 };
-            postPath = transactions.length === 1 ? 'submit' : 'submi-batch';
+            postPath = transactions.length === 1 ? 'submit' : 'submit-batch';
             const requests = endpoints.map((url) => axios
-                .post(url + postPath, paramsData)
+                .post(url + postPath, paramsData, {
+                headers: {
+                    ...getSolanaRpcHeard()
+                }
+            })
                 .then((res) => {
                 Promise.resolve(res);
                 return res;
@@ -316,14 +325,14 @@ class DefiApi {
             }));
             const results = await Promise.any(requests);
             console.log('submitSwapByBlox results', results);
-            if (results.status === 200 && results?.data?.result) {
+            if (results.status === 200 && (results?.data?.signature || results?.data?.transactions)) {
                 return {
                     success: true,
                     hash: signatureBase58[0],
                     data: {
                         errorMessage: null,
                         swapHash: signatureBase58_swap[0],
-                        jitoBundle: [results?.data?.result],
+                        jitoBundle: [],
                         submitPostTime,
                         lastBlockHash: this.lastBlockHash
                     }

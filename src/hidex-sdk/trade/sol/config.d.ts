@@ -20,6 +20,7 @@ export declare const SUPPORT_CHANGE_PROGRAM_IDS: Map<string, number>;
 export declare const NEED_CHANGE_SLIPPAGE_PROGRAM_IDS: string[];
 export declare const TOKEN_PROGRAM_OWNS: string[];
 export declare const JITO_FEE_ACCOUNT: string[];
+export declare const BLOXROUTE: PublicKey;
 export declare const HIDEX_ADDRESS_LOOK_UP: PublicKey;
 export declare const SOLANA_SYSTEM_PROGRAM_ID: PublicKey;
 export declare const PUMP_PROGRAM_ID: PublicKey;

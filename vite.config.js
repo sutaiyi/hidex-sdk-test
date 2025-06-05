@@ -45,7 +45,7 @@ export default defineConfig({
         target: 'https://test.hidex.pro',
         changeOrigin: true,
       },
-      '/blox_api': {
+      '/bloxApi3': {
         target: 'https://test.hidex.pro',
         changeOrigin: true,
       },

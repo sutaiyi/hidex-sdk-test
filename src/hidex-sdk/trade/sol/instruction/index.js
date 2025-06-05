@@ -1,5 +1,5 @@
 import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount, PublicKey } from '@solana/web3.js';
-import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, GMGN_PRIORITY_FEE_Collect_ID, JITO_FEE_ACCOUNT, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, VERSION_TRANSACTION_PREFIX, PRE_PAID_EXPENSES, DEFAULD_SOLANA_GAS_LIMIT, COMMISSION_SOLANA_GAS_LIMIT, HIDEX_ADDRESS_LOOK_UP, } from '../config';
+import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, JITO_FEE_ACCOUNT, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, VERSION_TRANSACTION_PREFIX, PRE_PAID_EXPENSES, DEFAULD_SOLANA_GAS_LIMIT, COMMISSION_SOLANA_GAS_LIMIT, HIDEX_ADDRESS_LOOK_UP, BLOXROUTE, } from '../config';
 import { checkAccountCloseInstruction, createClaimInstruction, createEd25519ProgramIx, createMemoInstructionWithTxInfo, createTipTransferInstruction, deleteTransactionGasInstruction, getDexCommisionReceiverAndLamports, getInstructionAmounts, getInstructionReplaceDataHex, getTransactionGasLimitUintsInInstruction, nomalVersionedTransaction, numberToLittleEndianHex, priorityFeeInstruction, setCreateAccountBySeedInstructionLamports, setTransferInstructionLamports, versionedTra } from './InstructionCreator';
 import { createMemoInstruction } from '@solana/spl-memo';
 export function resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount) {
@@ -202,18 +202,9 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
     console.log("commissionAmount", commissionAmount);
     const commissionTransferIx = await createTipTransferInstruction(owner.publicKey, swap_pda, BigInt(commissionAmount));
     transactionMessage.instructions.push(commissionTransferIx);
-    const randomIndex = Math.floor(Math.random() * JITO_FEE_ACCOUNT.length);
-    console.log('选中的jito tip地址', new PublicKey(JITO_FEE_ACCOUNT[randomIndex]).toBase58());
-    if (currentSymbol.tradeType == 0) {
-        const tipIx = await createTipTransferInstruction(owner.publicKey, new PublicKey(JITO_FEE_ACCOUNT[randomIndex]), BigInt(priorityFee * 0.5));
-        transactionMessage.instructions.push(tipIx);
-        priorityFee = priorityFee * 0.5;
-    }
-    else {
-        const gmgnTipIx = await createTipTransferInstruction(owner.publicKey, GMGN_PRIORITY_FEE_Collect_ID, BigInt((priorityFee * 0.5).toFixed(0)));
-        transactionMessage.instructions.push(gmgnTipIx);
-        priorityFee = priorityFee * 0.5;
-    }
+    const tipIx = await createTipTransferInstruction(owner.publicKey, BLOXROUTE, BigInt(priorityFee * 0.5));
+    transactionMessage.instructions.push(tipIx);
+    priorityFee = priorityFee * 0.5;
     const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(gasLimitInIx * 1.5, priorityFee);
     transactionMessage.instructions.splice(0, 0, addPriorityLimitIx);
     transactionMessage.instructions.splice(0, 0, addPriorityPriceIx);
@@ -223,6 +214,7 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
     const swapTxBytesSize = swapTxSer.length;
     console.log('交易串字节长度 = ' + swapTxBytesSize);
     if (swapTxBytesSize < SOLANA_MAX_TX_SERIALIZE_SIGN) {
+        console.log("swapTx", Buffer.from(swapTx.serialize()).toString("base64"));
         return [swapTx];
     }
     else {
@@ -230,7 +222,7 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
         const gasFeeTx = await versionedTra([addPriorityLimitIx, addPriorityPriceIx], owner, recentBlockhash, addressLookupTableAccounts);
         const swapTx = await versionedTra(tempInstructions, owner, recentBlockhash, addressLookupTableAccounts);
         const commissionTx = await versionedTra([commissionTransferIx, memoIx], owner, recentBlockhash, addressLookupTableAccounts);
-        const tipIx = await createTipTransferInstruction(owner.publicKey, new PublicKey(JITO_FEE_ACCOUNT[randomIndex]), BigInt(currentSymbol.priorityFee));
+        const tipIx = await createTipTransferInstruction(owner.publicKey, new PublicKey(BLOXROUTE), BigInt(currentSymbol.priorityFee));
         const tipTx = await versionedTra([tipIx], owner, recentBlockhash, []);
         return [gasFeeTx, swapTx, commissionTx, tipTx];
     }

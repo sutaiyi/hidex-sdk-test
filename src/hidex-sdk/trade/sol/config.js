@@ -41,8 +41,12 @@ export const NEED_CHANGE_SLIPPAGE_PROGRAM_IDS = [
 ];
 export const TOKEN_PROGRAM_OWNS = ['TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb', 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'];
 export const JITO_FEE_ACCOUNT = [
-    'HWEoBxYs7ssKuudEjzjmpfJVX7Dvi7wescFsVx2L5yoY'
+    'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+    'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+    'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+    'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh'
 ];
+export const BLOXROUTE = new PublicKey('HWEoBxYs7ssKuudEjzjmpfJVX7Dvi7wescFsVx2L5yoY');
 export const HIDEX_ADDRESS_LOOK_UP = new PublicKey('5ZF8nmsRMPB24j5UDU7ztjvxVBJ7pprZJvzbujZ5nKpQ');
 export const SOLANA_SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111');
 export const PUMP_PROGRAM_ID = new PublicKey('6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P');
@@ -50,7 +54,7 @@ export const JUPITER_PROGRAM_ID = new PublicKey('JUP6LkbZbjS1jKKwapdHNy74zcZ3tLU
 export const PUMP_AMM_PROGRAM_ID = new PublicKey('pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA');
 export const PUMP_AMM_PROGRAM_ID2 = new PublicKey('GMGNEaLkcH1QFd5buhBH4511bX9D2NHWeYcMFASNY9qC');
 export const GMGN_PRIORITY_FEE_Collect_ID = new PublicKey('BB5dnY55FXS1e1NXqZDwCzgdYJdMCj3B92PU6Q5Fb6DT');
-export const GMGN_FEES_VAULT = new PublicKey("BB5dnY55FXS1e1NXqZDwCzgdYJdMCj3B92PU6Q5Fb6DT");
+export const GMGN_FEES_VAULT = new PublicKey('BB5dnY55FXS1e1NXqZDwCzgdYJdMCj3B92PU6Q5Fb6DT');
 export const PUEM_INSTRUCTION_PREFIX = '66063d1201daebea';
 export const SOLANA_SYSTEM_PROGRAM_TRANSFER_ID = 2;
 export const SOLANA_CREATE_ACCOUNT_WITH_SEED_ID = 3;
