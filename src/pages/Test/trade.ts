@@ -230,7 +230,7 @@ const tradeFun = () => {
         utils.setStatistics({ timerKey: 'tradeFull', isBegin: true });
         console.time('tradeFullTimer');
         console.time('tradeTimer');
-        const { chainName, account, token, balance, balanceStr, tokenBalanceStr, priceUSD, cryptoPriceUSD } = info;
+        const { chainName, account, token, balance, balanceStr, tokenBalanceStr, priceUSD, cryptoPriceUSD, tradeNoce } = info;
         const isBuy = true; // 买入
         const { address } = account;
         const currentNetwork = await network.choose(chainName);
@@ -241,6 +241,7 @@ const tradeFun = () => {
         currentSymbol.slipPersent = 0.05; // 滑点5%
         const { compile, preAmountIn, preAmountOut } = getBeforeTradeData(isBuy, chainName, token.address);
         currentSymbol.compile = compile;
+        currentSymbol.tradeNonce = tradeNoce;
         currentSymbol.preAmountIn = preAmountIn;
         currentSymbol.preAmountOut = preAmountOut;
         // 当前代币时时价格
@@ -298,13 +299,14 @@ const tradeFun = () => {
           console.log('交易已提交：', result);
           const hashItem = {
             chain: currentNetwork.chain,
-            hash: result.hash,
+            hash: '',
+            hashs: result.hashs,
             createTime: new Date().getTime(),
             data: result.data,
             tradeType: currentSymbol.tradeType,
             bundles: result?.data?.data?.jitoBundle,
           };
-          trade.checkHash.action(hashItem);
+          trade.checkHash.hashsAction(hashItem);
           // 更新交易预请求数据
           setBeforeTradeData(info, { isBuy, isPump: currentSymbol.isPump, currentNetwork });
         }
@@ -322,7 +324,7 @@ const tradeFun = () => {
         }
         console.time('tradeFullTimer');
         console.time('tradeTimer');
-        const { chainName, account, token, balance, priceUSD, cryptoPriceUSD, balanceStr, tokenBalanceStr } = info;
+        const { chainName, account, token, balance, priceUSD, cryptoPriceUSD, balanceStr, tokenBalanceStr, tradeNoce } = info;
         const isBuy = false; // 卖出
         const { address } = account;
         const currentNetwork = await network.choose(chainName);
@@ -336,6 +338,7 @@ const tradeFun = () => {
         currentSymbol.compile = compile;
         currentSymbol.preAmountIn = preAmountIn;
         currentSymbol.preAmountOut = preAmountOut;
+        currentSymbol.tradeNonce = tradeNoce;
 
         const commissionDataStr = localStorage.getItem('commissionData');
         let commissionData = commissionDataStr ? JSON.parse(commissionDataStr) : {};
@@ -390,12 +393,13 @@ const tradeFun = () => {
           console.log('交易已提交：', result);
           const hashItem = {
             chain: currentNetwork.chain,
-            hash: result.hash,
+            hash: '',
+            hashs: result.hashs,
             createTime: new Date().getTime(),
             data: result.data,
             tradeType: currentSymbol.tradeType,
           };
-          trade.checkHash.action(hashItem);
+          trade.checkHash.hashsAction(hashItem);
           // 更新交易预请求数据
           setBeforeTradeData(info, { isBuy, isPump: currentSymbol.isPump, currentNetwork });
         }
@@ -432,10 +436,57 @@ const tradeFun = () => {
     },
     单次Hash状态查询: async () => {
       try {
-        const hashArr = ['SOLANA', '5MomLq6AtJJ14s1pN4P5QhWV4AjgEYbDeZXaPsy4JfR6RtM4Awt6FCe6DHUdGpaKYkAaxriAzn6GCHadjuJZrueC']; // SOLANA
-        // const hashArr = ['BASE', '0x78c2a5f7e7f8e40fc96492575e6794dc3976b81e21c7ed4e060b82ef9c7f3903'] // BASE
-        const result = await trade.getHashStatus(hashArr[1], hashArr[0]);
-        console.log('Hash状态查询结果==>', result);
+        const hashItem = {
+          chain: 'SOLANA',
+          hash: '66i89GGFjdKFwPxjwTEjeiyASuAZwgbozPc8kYxb5G4meCe9bupDNVbJG6yA6i2EwkHaHeGkLNiXfcBVQbrs7t66',
+          createTime: new Date().getTime(),
+          data: {},
+          tradeType: 3,
+        };
+        trade.checkHash.action(hashItem);
+
+        // const hashArr = ['SOLANA', '66i89GGFjdKFwPxjwTEjeiyASuAZwgbozPc8kYxb5G4meCe9bupDNVbJG6yA6i2EwkHaHeGkLNiXfcBVQbrs7t66']; // SOLANA
+        // // const hashArr = ['BASE', '0x78c2a5f7e7f8e40fc96492575e6794dc3976b81e21c7ed4e060b82ef9c7f3903'] // BASE
+        // const result = await trade.getHashStatus(hashArr[1], hashArr[0]);
+        // console.log('Hash状态查询结果==>', result);
+      } catch (error) {
+        const { code, message } = utils.getErrorMessage(error);
+        alert(code + '-' + message);
+      }
+    },
+
+    多个平台查询多个Hash状态: async () => {
+      // 异常hash:uT4rEbMYUFJZUFKUeenFBvfZ4FL8L2pShmZGGm95y8uZSxf3LEq32kn3UiVh4y1YJgcvWBBKo2M9mB4ZE8gm3ft
+      // 正常hahs: 3MukACy28fh5vQ56jzJcRaMyDPwVsFuRzFEVYRv8ierwTSUvMZ3bYK6CH75EcuRaahth69fYEZjF2EA4mhTqhtV7
+      // pending: 5MukACy28fh5vQ56jzJcRaMyDPwVsFuRzFEVYRv8ierwTSUvMZ3bYK6CH75EcuRaahth69fYEZjF2EA4mhTqhtV7
+      try {
+        const hashItem = {
+          chain: 'SOLANA',
+          hash: '',
+          createTime: new Date().getTime(),
+          data: {},
+          tradeType: 3,
+          hashs: [
+            [
+              '3MukACy28fh5vQ56jzJcRaMyDPwVsFuRzFEVYRv8ierwTSUvMZ3bYK6CH75EcuRaahth69fYEZjF2EA4mhTqhtV7',
+              '3MukACy28fh5vQ56jzJcRaMyDPwVsFuRzFEVYRv8ierwTSUvMZ3bYK6CH75EcuRaahth69fYEZjF2EA4mhTqhtV7',
+            ],
+            [
+              '3MukACy28fh5vQ56jzJcRaMyDPwVsFuRzFEVYRv8ierwTSUvMZ3bYK6CH75EcuRaahth69fYEZjF2EA4mhTqhtV7',
+              '3MukACy28fh5vQ56jzJcRaMyDPwVsFuRzFEVYRv8ierwTSUvMZ3bYK6CH75EcuRaahth69fYEZjF2EA4mhTqhtV7',
+            ],
+            // [
+            //   '3MukACy28fh5vQ56jzJcRaMyDPwVsFuRzFEVYRv8ierwTSUvMZ3bYK6CH75EcuRaahth69fYEZjF2EA4mhTqhtV7',
+            //   '3MukACy28fh5vQ56jzJcRaMyDPwVsFuRzFEVYRv8ierwTSUvMZ3bYK6CH75EcuRaahth69fYEZjF2EA4mhTqhtV7',
+            // ],
+          ],
+        };
+        trade.checkHash.hashsAction(hashItem);
+
+        // const hashArr = ['SOLANA', '66i89GGFjdKFwPxjwTEjeiyASuAZwgbozPc8kYxb5G4meCe9bupDNVbJG6yA6i2EwkHaHeGkLNiXfcBVQbrs7t66']; // SOLANA
+        // // const hashArr = ['BASE', '0x78c2a5f7e7f8e40fc96492575e6794dc3976b81e21c7ed4e060b82ef9c7f3903'] // BASE
+        // const result = await trade.getHashStatus(hashArr[1], hashArr[0]);
+        // console.log('Hash状态查询结果==>', result);
       } catch (error) {
         const { code, message } = utils.getErrorMessage(error);
         alert(code + '-' + message);

@@ -447,6 +447,9 @@ export const ethService = (HS) => {
                 return { status: 'Confirmed' };
             }
             return { status: 'Pending' };
+        },
+        hashsStatus: async () => {
+            return await Promise.reject({ status: 'Pending' });
         }
     };
 };

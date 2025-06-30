@@ -9,6 +9,7 @@ export default class UtilsService implements IUtilsService {
         message: string;
     };
     ownerKeypair(key: string): Keypair;
+    environmental: typeof commonUtils.environmental;
     trade: typeof tradeUtils;
     common: typeof commonUtils;
     getStatistics: (timerKey: string) => number;

@@ -7,6 +7,8 @@ declare class TradeService extends EventEmitter implements ITradeService {
     chainId: number;
     errorCode: number;
     private HS;
+    private solService;
+    private ethService;
     approve: IApproveService;
     defiApi: IDefiApi;
     checkHash: ITradeHashStatusService;
@@ -17,6 +19,10 @@ declare class TradeService extends EventEmitter implements ITradeService {
         message: TransactionMessage;
         addressesLookup: AddressLookupTableAccount[];
     }>;
+    getAddressLookup: (swapBase64Str: string) => Promise<{
+        addressesLookup: AddressLookupTableAccount[];
+    }>;
+    getOwnerTradeNonce: (accountAddress: string) => Promise<number>;
     isInstructionsSupportReset: (transactionMessage: TransactionMessage, currentSymbol: CurrentSymbol) => boolean;
     changeTradeService: (currentNetwork: ChainItem) => void;
     getBalance: (accountAddress: string, tokenAddress?: string, isAta?: boolean) => Promise<string>;
@@ -54,6 +60,10 @@ declare class TradeService extends EventEmitter implements ITradeService {
         amount: string;
     }) => Promise<WithdrawSign>;
     getHashStatus(hash: string, chain: string | number, bundles?: Array<string>): Promise<{
+        status: HashStatus;
+        message?: any;
+    }>;
+    getHashsStatus(hashs: Array<string[]>, chain: string | number, bundles?: Array<string>): Promise<{
         status: HashStatus;
         message?: any;
     }>;

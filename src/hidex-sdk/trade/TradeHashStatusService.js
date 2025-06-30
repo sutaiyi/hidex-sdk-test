@@ -28,6 +28,7 @@ export class TradeHashStatusService extends EventEmitter {
         return await catcher.setItem(this.DEFAULTKEY, hashItem);
     };
     action = async (hashItem) => {
+        HashStatusMap.clear();
         console.time('HashStatusTimer');
         setStatistics({ timerKey: 'HashStatus', isBegin: true });
         hashItem.fetchCount = 0;
@@ -43,6 +44,53 @@ export class TradeHashStatusService extends EventEmitter {
                 this.maxTime = 15000;
             }
             const { status, message } = await this.trade.getHashStatus(hash, chain);
+            if (typeof hashItem.fetchCount === 'number') {
+                hashItem.fetchCount += 1;
+            }
+            console.log('hash status checkTimer: ', hashItem);
+            hashItem.message = message;
+            if (status !== 'Pending') {
+                hashItem.status = status;
+                this.emit('HashStatusEvent', hashItem);
+                hashItem.timer && global.clearTimeout(hashItem.timer);
+                return;
+            }
+            if (new Date().getTime() - hashItem.createTime >= this.maxTime) {
+                if (tradeType === 0 && bundles?.length) {
+                    hashItem.status = 'Failed';
+                }
+                else {
+                    hashItem.status = 'Failed';
+                }
+                if (hashItem.status === 'Failed') {
+                    hashItem.failedType = 1;
+                }
+                this.emit('HashStatusEvent', hashItem);
+                hashItem.timer && global.clearTimeout(hashItem.timer);
+                return;
+            }
+            hashItem.timer && global.clearTimeout(hashItem.timer);
+            hashItem.timer = global.setTimeout(checkCreate, this.timeCount);
+        };
+        HashStatusMap.set(hashItem.hash, checkCreate());
+    };
+    hashsAction = async (hashItem) => {
+        HashStatusMap.clear();
+        console.time('HashStatusTimer');
+        setStatistics({ timerKey: 'HashStatus', isBegin: true });
+        hashItem.fetchCount = 0;
+        const checkCreate = async () => {
+            const { hashs, chain, tradeType, bundles } = hashItem;
+            this.timeCount = 50;
+            if (isSol(chain)) {
+                this.timeCount = 50;
+                this.maxTime = 15000;
+            }
+            else {
+                this.timeCount = 1000;
+                this.maxTime = 15000;
+            }
+            const { status, message } = await this.trade.getHashsStatus(hashs || [], chain);
             if (typeof hashItem.fetchCount === 'number') {
                 hashItem.fetchCount += 1;
             }

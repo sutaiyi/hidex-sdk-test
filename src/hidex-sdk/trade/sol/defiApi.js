@@ -81,14 +81,15 @@ class DefiApi {
             return {
                 success: true,
                 swapTransaction: raw_tx.swapTransaction,
+                recentBlockhash: raw_tx.recentBlockhash,
                 outAmount: quote.outAmount,
                 data: { ...quote }
             };
         }
         if (response.status === 200 && response.data?.code !== 0) {
-            throw new Error(response.data.msg);
+            throw new Error(JSON.stringify(response.data));
         }
-        throw new Error('Error API get_swap_route');
+        throw new Error('Error API get_swap_route' + JSON.stringify(response || {}));
     }
     async submitSwap(currentSymbol, transaction) {
         try {
@@ -112,7 +113,7 @@ class DefiApi {
             if (response.status === 200 && response.data?.code !== 0) {
                 throw new Error(response.data.msg);
             }
-            throw new Error('Error API submit_signed_transaction');
+            throw new Error('Error API submit_signed_transaction' + JSON.stringify(response));
         }
         catch (error) {
             console.log('submitSwap error', error);
@@ -154,10 +155,7 @@ class DefiApi {
                     }
                 };
             }
-            if (response.status === 200 && response.data?.code !== 0) {
-                throw new Error(response.data.msg);
-            }
-            throw new Error('Error API submit_signed_transaction');
+            throw new Error('Error API bloxApi3' + JSON.stringify(response));
         }
         catch (error) {
             console.log('submitSwap error', error);
@@ -170,6 +168,15 @@ class DefiApi {
                 }
             };
         }
+    }
+    async submitSwapFastByFlashblock(currentSymbol, transaction) {
+        const { success, hash, data } = await this.submitSwapByFlashblockCommon([transaction], false);
+        return {
+            success,
+            hash,
+            currentSymbol,
+            data
+        };
     }
     async submitByQuiknode() {
     }
@@ -243,7 +250,7 @@ class DefiApi {
                 success: false,
                 hash: '',
                 data: {
-                    errorMessage: 'Error API submitSwapByJito',
+                    errorMessage: 'Error API submitSwapByJito' + JSON.stringify(results),
                     lastBlockHash: this.lastBlockHash
                 }
             };
@@ -342,7 +349,7 @@ class DefiApi {
                 success: false,
                 hash: '',
                 data: {
-                    errorMessage: 'Error API submitSwapByBlox',
+                    errorMessage: 'Error API submitSwapByBlox' + JSON.stringify(results),
                     lastBlockHash: this.lastBlockHash
                 }
             };
@@ -374,6 +381,138 @@ class DefiApi {
             };
         }
     }
+    async submitSwapByFlashblock(transactions) {
+        return await this.submitSwapByFlashblockCommon(transactions, true);
+    }
+    async submitSwapByFlashblockCommon(transactions, mev = true) {
+        const submitPostTime = new Date().getTime();
+        let postPath = '';
+        const url = '/flashblockApi/api/v2/submit-batch';
+        try {
+            const endpoints = [url];
+            const signedTx = Buffer.from(transactions[0].serialize()).toString('base64');
+            let signatureBase58 = transactions[0].signatures.map((sig) => bs58.encode(sig));
+            let signatureBase58_swap = signatureBase58;
+            const serializedTransactions = [];
+            if (transactions.length >= 4) {
+                for (const transaction of transactions) {
+                    serializedTransactions.push(Buffer.from(transaction.serialize()).toString('base64'));
+                }
+                signatureBase58_swap = transactions[1].signatures.map((sig) => bs58.encode(sig));
+                signatureBase58 = transactions[2].signatures.map((sig) => bs58.encode(sig));
+            }
+            const requests = endpoints.map((url) => axios
+                .post(url, { transactions: serializedTransactions.length > 0 ? serializedTransactions : [signedTx], mev }, {
+                headers: {
+                    Authorization: 'ce2f86fc590c4fca',
+                    ...getSolanaRpcHeard()
+                }
+            })
+                .then((res) => {
+                Promise.resolve(res);
+                return res;
+            })
+                .catch((error) => {
+                console.log('submitSwapByFlashblock error', error);
+                return Promise.reject(error);
+            }));
+            const results = await Promise.any(requests);
+            console.log('submitSwapByFlashblock results', results);
+            if (results.status === 200 && results?.data?.code === 200) {
+                return {
+                    success: true,
+                    hash: signatureBase58[0],
+                    data: {
+                        errorMessage: null,
+                        swapHash: signatureBase58_swap[0],
+                        jitoBundle: [],
+                        submitPostTime,
+                        lastBlockHash: this.lastBlockHash,
+                        mev
+                    }
+                };
+            }
+            return {
+                success: false,
+                hash: '',
+                data: {
+                    errorMessage: 'Error API submitSwapByFlashblock' + JSON.stringify(results),
+                    lastBlockHash: this.lastBlockHash,
+                    mev
+                }
+            };
+        }
+        catch (error) {
+            console.log('submitSwapByFlashblock Error', error);
+            if (error instanceof AggregateError) {
+                if (error?.errors?.length) {
+                    const errRes = error.errors[0];
+                    if (errRes?.response?.data) {
+                        return {
+                            success: false,
+                            hash: '',
+                            data: {
+                                errorMessage: `submitSwapByFlashblock url: ${postPath};` + JSON.stringify(errRes.response?.data),
+                                lastBlockHash: this.lastBlockHash,
+                                mev
+                            }
+                        };
+                    }
+                }
+            }
+            return {
+                success: false,
+                hash: '',
+                data: {
+                    errorMessage: `submitSwapByFlashblock url: ${postPath}; error：${error}, ${axiosErrorMessage(error)}`,
+                    lastBlockHash: this.lastBlockHash,
+                    mev
+                }
+            };
+        }
+    }
+    async submitSwapByAllPlatforms(currentSymbol, transactions) {
+        const hashs = [];
+        const submitPro = [];
+        transactions.forEach((trans, transIndex) => {
+            const itemHashs = [];
+            if (transIndex === 0) {
+                if (trans.length === 1) {
+                    itemHashs.push(bs58.encode(trans[0].signatures[0]));
+                    submitPro.push(this.submitSwapFastByBlox(currentSymbol, trans[0]));
+                }
+                else {
+                    itemHashs.push(bs58.encode(trans[1].signatures[0]));
+                    itemHashs.push(bs58.encode(trans[2].signatures[0]));
+                    submitPro.push(this.submitSwapByBlox(trans));
+                }
+            }
+            else if (transIndex === 1) {
+                if (trans.length === 1) {
+                    itemHashs.push(bs58.encode(trans[0].signatures[0]));
+                    submitPro.push(this.submitSwapFastByFlashblock(currentSymbol, trans[0]));
+                }
+                else {
+                    itemHashs.push(bs58.encode(trans[1].signatures[0]));
+                    itemHashs.push(bs58.encode(trans[2].signatures[0]));
+                    submitPro.push(this.submitSwapByFlashblock(trans));
+                }
+            }
+            hashs.push(itemHashs);
+        });
+        return Promise.any(submitPro)
+            .then((submitResult) => {
+            console.log('submitResult', submitResult);
+            if (submitResult.success) {
+                return { success: true, hashs, data: submitResult.data };
+            }
+            return { success: false, hashs: [], data: submitResult.data };
+        })
+            .catch((error) => {
+            console.log('submitSwapByAllPlatforms error', error);
+            return { success: false, hashs: [], data: error?.data || error };
+        });
+    }
     async handlerJitoPost(endpoints, params) {
         for (const url of endpoints) {
             try {
@@ -394,21 +533,18 @@ class DefiApi {
             });
             if (response.status === 200 && response.data?.code === 0) {
                 const { data } = response.data;
-                if (data.expired) {
-                    return Promise.reject('Pending');
-                }
                 if (data.success && !data.err) {
                     return 'Confirmed';
                 }
-                if (data.failed) {
+                if (data.failed || data.expired) {
                     return 'Failed';
                 }
-                return Promise.reject('Pending');
+                return 'Pending';
             }
             throw new Error('Get Transaction Status Error');
         }
         catch (error) {
-            return Promise.reject('Pending');
+            return 'Pending';
         }
     }
     async bundlesStatuses(bundles) {
@@ -436,27 +572,26 @@ class DefiApi {
                 }
                 return 'Pending';
             }
-            return 'Failed';
+            return 'Pending';
         }
         catch (error) {
             console.log('bundlesStatuses --error', error);
-            return 'Failed';
+            return 'Pending';
         }
     }
     async rpcSwapStatus(hash, connection) {
         try {
             const result = await connection.getSignatureStatus(hash, { searchTransactionHistory: true });
-            console.log('SOL RPC状态查询 confirmation===', result);
             if ((result?.value?.confirmationStatus === 'confirmed' || result?.value?.confirmationStatus === 'finalized') && !result?.value?.err) {
                 return 'Confirmed';
             }
             if (result?.value?.err) {
                 return 'Failed';
             }
-            return Promise.reject('Pending');
+            return 'Pending';
         }
         catch (error) {
-            return Promise.reject('Pending');
+            return 'Pending';
         }
     }
     async rpcHeliusSwapStatus(hash) {
@@ -465,17 +600,16 @@ class DefiApi {
         });
         try {
             const result = await connection.getSignatureStatus(hash, { searchTransactionHistory: true });
-            console.log('SOL RPC状态查询 confirmation===', result);
             if ((result?.value?.confirmationStatus === 'confirmed' || result?.value?.confirmationStatus === 'finalized') && !result?.value?.err) {
                 return 'Confirmed';
             }
             if (result?.value?.err) {
                 return 'Failed';
             }
-            return Promise.reject('Pending');
+            return 'Pending';
         }
         catch (error) {
-            return Promise.reject('Pending');
+            return 'Pending';
         }
     }
     establishingConnection() {

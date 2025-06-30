@@ -1,4 +1,4 @@
-import { Apparatus, Env } from "../main/interfaces";
+import { Apparatus, Env } from '../main/interfaces';
 export declare function randoxHex(length?: number): string;
 export declare function shiftEncrypt(input: string, shiftAmount: number): string;
 export declare function toHex(num: number): string;

@@ -1,12 +1,12 @@
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { smTokenAddress } from '../../common/config';
-import { getTokenOwner, sendSolanaTransaction, vertransactionsToBase64 } from './utils';
+import { getTokenOwner, hashFailedMessage, sendSolanaTransaction } from './utils';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createTransferInstruction, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { simulateConfig, TOKEN_2022_OWNER } from './config';
 import { priorityFeeInstruction } from './instruction/InstructionCreator';
 import defiApi from './defiApi';
 import UtilsService from '../../utils/UtilsService';
-import { compileTransaction, getClainSignature, getTransactionsSignature, isInstructionsSupportReset, resetInstructions } from './instruction';
+import { compileTransaction, compileTransactionByAddressLookup, getClainSignature, getOwnerTradeNonce, getTransactionsSignatureArray, isInstructionsSupportReset, resetInstructions } from './instruction';
 import { NETWORK_FEE_RATES } from '../eth/config';
 import { getWithdrawSign } from '../../api/hidex';
 import { setStatistics } from '../../utils/timeStatistics';
@@ -134,9 +134,8 @@ export const solService = (HS) => {
         sendTransaction: async (sendParams) => {
             const { from, to, amount, tokenAddress, currentNetWorkFee } = sendParams;
             try {
-                const ownerKey = await wallet.ownerKey(from);
-                const senderKeypair = utils.ownerKeypair(ownerKey);
-                const senderPublicKey = senderKeypair.publicKey;
+                let ownerKey = await wallet.ownerKey(from);
+                const senderPublicKey = utils.ownerKeypair(ownerKey).publicKey;
                 const receiverPublicKey = new PublicKey(to);
                 const instructions = [];
                 const connection = await network.getFastestProviderByChain(102);
@@ -162,8 +161,9 @@ export const solService = (HS) => {
                 const insPriority = await priorityFeeInstruction(200000, currentNetWorkFee.value);
                 instructions.unshift(...insPriority);
                 const { blockhash } = await connection.getLatestBlockhash();
-                const result = await sendSolanaTransaction(connection, senderKeypair, instructions, blockhash);
+                const result = await sendSolanaTransaction(connection, utils.ownerKeypair(ownerKey), instructions, blockhash);
                 console.timeEnd('sendTransaction');
+                ownerKey = '';
                 return { error: null, result: { hash: result, message: 'SUCCESS' } };
             }
             catch (error) {
@@ -192,52 +192,48 @@ export const solService = (HS) => {
             };
         },
         getSwapEstimateGas: async (currentSymbol, path, accountAddress) => {
-            const { compile, amountOutMin, amountIn } = currentSymbol;
+            const { compile, amountIn, tradeNonce } = currentSymbol;
             let compileUse = compile;
             let resetResult = null;
             let txArray = [];
-            console.time('getOwnerKeyTimer');
-            const owner = HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress));
-            console.timeEnd('getOwnerKeyTimer');
-            console.log('------------isCompileUseTimer------------------', !!compileUse);
-            if (compileUse) {
-                const isSupport = isInstructionsSupportReset(compileUse['message'], currentSymbol);
-                console.log('------------isSupportTimer------------------', isSupport);
-                if (isSupport) {
-                    console.time('SupportTrueTimer');
-                    resetResult = resetInstructions(currentSymbol, compileUse['message'], BigInt(amountIn), BigInt(amountOutMin));
-                    txArray = await getTransactionsSignature(resetResult, compileUse['addressesLookup'], defiApi.lastBlockHash.blockhash, currentSymbol, owner, HS);
-                    console.timeEnd('SupportTrueTimer');
-                }
+            console.log('------------isGetAddressLookup------------------', !!compileUse?.addressesLookup);
+            setStatistics({ timerKey: 'SwapRoute', isBegin: true });
+            const { success, swapTransaction, data, outAmount, recentBlockhash } = await defiApi.swapRoute(currentSymbol, accountAddress);
+            currentSymbol.amountOutMin = outAmount;
+            setStatistics({ timerKey: 'SwapRoute', isBegin: false });
+            if (!success) {
+                throw new Error('Failed to swap_get_router' + JSON.stringify(currentSymbol) + path);
             }
+            if (compileUse?.addressesLookup && swapTransaction) {
+                const { message, addressesLookup } = await compileTransactionByAddressLookup(swapTransaction, compileUse?.addressesLookup, HS);
+                txArray = await getTransactionsSignatureArray(message, addressesLookup, recentBlockhash, tradeNonce, currentSymbol, HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress)), HS);
+            }
+            console.log('txArray', txArray);
             if (txArray.length === 0) {
-                console.time('AgainRouterTimer');
-                setStatistics({ timerKey: 'SwapRoute', isBegin: true });
-                const { success, swapTransaction, data } = await defiApi.swapRoute(currentSymbol, accountAddress);
-                setStatistics({ timerKey: 'SwapRoute', isBegin: false });
-                if (!success) {
-                    throw new Error('Failed to swap' + path);
-                }
                 setStatistics({ timerKey: 'CompileTransaction', isBegin: true });
                 compileUse = await compileTransaction(swapTransaction, HS);
                 currentSymbol.preAmountIn = data.inAmount;
                 currentSymbol.preAmountOut = data.otherAmountThreshold;
+                let tradeNonceRet = tradeNonce;
+                if (tradeNonce === -1 || tradeNonce === undefined) {
+                    tradeNonceRet = await getOwnerTradeNonce(HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress)), HS);
+                }
                 let isSupport = false;
                 if (!currentSymbol.compile) {
                     isSupport = isInstructionsSupportReset(compileUse['message'], currentSymbol);
                 }
                 if (isSupport) {
-                    resetResult = resetInstructions(currentSymbol, compileUse['message'], BigInt(amountIn), BigInt(amountOutMin));
+                    resetResult = resetInstructions(currentSymbol, compileUse['message'], BigInt(amountIn), BigInt(outAmount));
                 }
                 else {
                     resetResult = compileUse['message'];
                 }
-                txArray = await getTransactionsSignature(resetResult, compileUse['addressesLookup'], defiApi.lastBlockHash.blockhash, currentSymbol, owner, HS);
+                txArray = await getTransactionsSignatureArray(resetResult, compileUse['addressesLookup'], recentBlockhash, tradeNonceRet, currentSymbol, HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress)), HS);
                 setStatistics({ timerKey: 'CompileTransaction', isBegin: false });
                 console.timeEnd('AgainRouterTimer');
             }
             if (txArray.length === 0) {
-                throw new Error('Failed to swap txArray is empty');
+                throw new Error('Failed to swap txArray is empty' + JSON.stringify(currentSymbol));
             }
             console.log('txArray: ===>', txArray);
             return {
@@ -259,17 +255,11 @@ export const solService = (HS) => {
         swap: async (currentSymbol, transaction, accountAddress) => {
             setStatistics({ timerKey: 'SubmitSwap', isBegin: true });
             const { vertransactions } = transaction?.data;
-            let submitResult = null;
-            if (currentSymbol.tradeType === 3 && vertransactions.length === 1) {
-                submitResult = await defiApi.submitSwapFastByBlox(currentSymbol, vertransactions[0]);
-            }
-            else {
-                submitResult = await defiApi.submitSwapByBlox(vertransactions);
-            }
+            const submitResult = await defiApi.submitSwapByAllPlatforms(currentSymbol, vertransactions);
             setStatistics({ timerKey: 'SubmitSwap', isBegin: false });
             return {
                 error: !submitResult.success,
-                result: { hash: submitResult.hash, data: { vertransactions: vertransactionsToBase64(vertransactions), accountAddress, currentSymbol, ...submitResult } }
+                result: { hashs: submitResult.hashs, data: { vertransactions: [], accountAddress, currentSymbol, ...submitResult } }
             };
         },
         hashStatus: async (hash, chainId) => {
@@ -282,19 +272,51 @@ export const solService = (HS) => {
                 console.log('SOL状态查询===》', ['GMGN', 'RPC'], status);
                 let message = 'HashStatus...';
                 if (status === 'Failed') {
-                    const hashStatus = await connection.getParsedTransaction(hash, {
-                        commitment: 'confirmed',
-                        maxSupportedTransactionVersion: 0
-                    });
-                    console.log('SOL 链上状态查询 confirmation===', hashStatus);
-                    if (hashStatus) {
-                        const { meta } = hashStatus || {};
-                        if (meta && meta?.err) {
-                            message = meta.logMessages?.toString() || 'Unknown error';
-                        }
-                    }
+                    message = await hashFailedMessage(connection, hash);
                 }
                 return { status, message };
+            }
+            catch (error) {
+                return { status: 'Pending', message: 'HashStatus Pending' };
+            }
+        },
+        hashsStatus: async (hashs, chainId) => {
+            try {
+                const connection = network.getProviderByChain(chainId || 102);
+                const queryHashStatus = async (hash) => {
+                    const results = await Promise.allSettled([defiApi.getSwapStatus(hash), defiApi.rpcSwapStatus(hash, connection)]);
+                    const statuses = results
+                        .filter((r) => r.status === 'fulfilled')
+                        .map((r) => {
+                        const v = r.value;
+                        return typeof v === 'string' ? v : v?.status;
+                    });
+                    if (statuses.includes('Confirmed'))
+                        return 'Confirmed';
+                    if (statuses.includes('Failed'))
+                        return 'Failed';
+                    return 'Pending';
+                };
+                const groupStatusPromises = hashs.map(async (hashGroup) => {
+                    for (const hash of hashGroup) {
+                        const status = await queryHashStatus(hash);
+                        if (status === 'Confirmed')
+                            return 'Confirmed';
+                        if (status === 'Failed')
+                            return 'Failed';
+                    }
+                    return 'Pending';
+                });
+                const groupResults = await Promise.all(groupStatusPromises);
+                if (groupResults.includes('Confirmed')) {
+                    return { status: 'Confirmed', message: 'At least one hash group confirmed' };
+                }
+                const failedCount = groupResults.filter((s) => s === 'Failed').length;
+                if (failedCount >= 2) {
+                    const message = await hashFailedMessage(connection, hashs[0][0]);
+                    return { status: 'Failed', message };
+                }
+                return { status: 'Pending', message: 'Some hash groups pending' };
             }
             catch (error) {
                 return { status: 'Pending', message: 'HashStatus Pending' };
@@ -306,10 +328,9 @@ export const solService = (HS) => {
                 console.log('withdrawRes', params, withdrawRes);
                 if (withdrawRes.code === 200 && withdrawRes.data) {
                     const connection = network.getProviderByChain(102);
-                    const owner = HS.utils.ownerKeypair(await wallet.ownerKey(params.walletAddress));
                     const { blockhash } = defiApi.lastBlockHash;
                     const { signer, contents: contentsHex, signature: claimSignHex } = withdrawRes.data;
-                    const vsTransaction = await getClainSignature(signer, contentsHex.substring(2), claimSignHex.substring(2), blockhash, owner, HS);
+                    const vsTransaction = await getClainSignature(signer, contentsHex.substring(2), claimSignHex.substring(2), blockhash, HS.utils.ownerKeypair(await wallet.ownerKey(params.walletAddress)), HS);
                     const simulateResponse = await connection.simulateTransaction(vsTransaction, simulateConfig);
                     console.log('领取 预估结果==>', simulateResponse);
                     if (simulateResponse?.value?.err) {

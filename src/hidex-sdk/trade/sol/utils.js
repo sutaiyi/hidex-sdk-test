@@ -47,4 +47,18 @@ export function vertransactionsToBase64(transactions) {
         console.log('vertransactionsToBase64 error==>', error);
     }
 }
+export async function hashFailedMessage(connection, hash) {
+    const hashStatus = await connection.getParsedTransaction(hash, {
+        commitment: 'confirmed',
+        maxSupportedTransactionVersion: 0
+    });
+    console.log('链上hash状态异常，再次查询异常错误信息', hashStatus);
+    if (hashStatus) {
+        const { meta } = hashStatus || {};
+        if (meta && meta?.err) {
+            return meta.logMessages?.toString() || 'Unknown error';
+        }
+    }
+    return 'Hash Error, Unknown error message';
+}
 export const urlPattern = /https?:\/\/([a-zA-Z0-9.-]+)/;

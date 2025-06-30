@@ -20,6 +20,7 @@ export const SEED_SWAP = 'chill_swap';
 export const SEED_DATA = 'chill_data';
 export const SEED_TRADE = 'trade_config_data';
 export const SEED_NONCE = 'nonce_data';
+export const SEED_TRADE_NONCE = 'trade_nonce_data';
 export const WSOL_MINT = new PublicKey('So11111111111111111111111111111111111111112');
 export const SUPPORT_CHANGE_PROGRAM_IDS = new Map([
     ['675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', 2],
@@ -46,7 +47,12 @@ export const JITO_FEE_ACCOUNT = [
     'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
     'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh'
 ];
+export const Trading_Service_Providers = [
+    new PublicKey('HWEoBxYs7ssKuudEjzjmpfJVX7Dvi7wescFsVx2L5yoY'),
+    new PublicKey("FLAShWTjcweNT4NSotpjpxAkwxUr2we3eXQGhpTVzRwy"),
+];
 export const BLOXROUTE = new PublicKey('HWEoBxYs7ssKuudEjzjmpfJVX7Dvi7wescFsVx2L5yoY');
+export const FLASHROUTR = new PublicKey("FLAShWTjcweNT4NSotpjpxAkwxUr2we3eXQGhpTVzRwy");
 export const HIDEX_ADDRESS_LOOK_UP = new PublicKey('5ZF8nmsRMPB24j5UDU7ztjvxVBJ7pprZJvzbujZ5nKpQ');
 export const SOLANA_SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111');
 export const PUMP_PROGRAM_ID = new PublicKey('6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P');
@@ -65,11 +71,12 @@ export const BASE_ACCOUNT_INIT_FEE = BigInt('2039280');
 export const TIP_MINI_IN_PRIORITY = BigInt('2000000');
 export const DEFAULD_SOLANA_SWAP_LIMIT = Number('500000');
 export const DEFAULD_SOLANA_GAS_LIMIT = Number('50000');
+export const DEFAULD_SOLANA_PRIORITY = Number('500000');
 export const PREPARE_SOLANA_GAS_LIMIT = Number('60000');
 export const COMMISSION_SOLANA_GAS_LIMIT = Number('120000');
 export const DEFAULD_BASE_GAS_FEE = Number('5000');
 export const VERSION_TRANSACTION_PREFIX = 'AQAAAAAAA';
-export const PRE_PAID_EXPENSES = Number('6000000');
+export const PRE_PAID_EXPENSES = Number('7000000');
 export const QUIKNODE_SEND_URL = ['https://sleek-thrilling-owl.solana-mainnet.quiknode.pro/ad3162ba7f548c9dfc2215e4614036e6e2787ecb'];
 export const JITO_SEND_URL = [
     '/jitoSend1/api/v1',

@@ -1,7 +1,8 @@
 import { TokenInfo } from '../common/interfaces';
 import { Connection } from '@solana/web3.js';
 import { providers } from 'ethers';
-export interface INetworkService {
+import EventEmitter from '../common/eventEmitter';
+export interface INetworkService extends EventEmitter {
     choose(chain: string | number): Promise<ChainItem>;
     get(chain?: string | number): ChainItem;
     getProviderByChain(chain: string | number, commitment?: string): Provider | null;

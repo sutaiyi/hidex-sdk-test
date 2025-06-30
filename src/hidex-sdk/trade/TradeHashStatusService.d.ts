@@ -15,6 +15,7 @@ export declare class TradeHashStatusService extends EventEmitter implements ITra
     getHashes: () => Promise<Array<HashStatusParams>>;
     setHash: (catcher: ICatcher, hashItem: HashStatusParams) => Promise<boolean>;
     action: (hashItem: HashStatusParams) => Promise<void>;
+    hashsAction: (hashItem: HashStatusParams) => Promise<void>;
 }
 export default TradeHashStatusService;
 //# sourceMappingURL=TradeHashStatusService.d.ts.map

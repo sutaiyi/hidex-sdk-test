@@ -1,4 +1,4 @@
-import { AddressLookupTableAccount, BlockhashWithExpiryBlockHeight, Connection, Transaction, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
+import { AddressLookupTableAccount, BlockhashWithExpiryBlockHeight, Connection, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
 import { ChainItem, INetworkService } from '../network/interfaces';
 import { ICatcher } from '../catch/interfaces';
 import EventEmitter from '../common/eventEmitter';
@@ -13,8 +13,16 @@ export interface ITradeOthersFunction {
         message: TransactionMessage;
         addressesLookup: AddressLookupTableAccount[];
     }>;
+    getAddressLookup(swapBase64Str: string): Promise<{
+        addressesLookup: AddressLookupTableAccount[];
+    }>;
+    getOwnerTradeNonce(accountAddress: string): Promise<number>;
     getTransactionsSignature(transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any, HS: OptionsCommon): Promise<Array<VersionedTransaction>>;
     getHashStatus(hash: string, chain: string | number): Promise<{
+        status: HashStatus;
+        message?: any;
+    }>;
+    getHashsStatus(hashs: Array<string[]>, chain: string | number): Promise<{
         status: HashStatus;
         message?: any;
     }>;
@@ -77,11 +85,16 @@ export interface ITradeAbout extends ITradeFunctions {
         status: HashStatus;
         message?: string;
     }>;
+    hashsStatus(hashs: Array<string[]>, chain?: string | number, bundles?: Array<string>): Promise<{
+        status: HashStatus;
+        message?: string;
+    }>;
 }
 export interface ITradeHashStatusService extends EventEmitter {
     getHashes: () => Promise<Array<HashStatusParams>>;
     setHash: (catcher: ICatcher, hashItem: HashStatusParams) => Promise<boolean>;
     action: (hashItem: HashStatusParams) => Promise<void>;
+    hashsAction: (hashItem: HashStatusParams) => Promise<void>;
 }
 export type HashStatusParams = {
     hash: string;
@@ -96,6 +109,7 @@ export type HashStatusParams = {
     bundles?: Array<string>;
     failedType?: number;
     fetchCount?: number;
+    hashs?: Array<string[]>;
 };
 export interface IDexFeeService {
 }
@@ -116,7 +130,7 @@ export interface IDefiApi {
         hash: string;
         currentSymbol: CurrentSymbol;
     }>;
-    submitSwapByJito(transactions: Array<Transaction>): Promise<{
+    submitSwapByJito(transactions: Array<VersionedTransaction>): Promise<{
         success: boolean;
         hash: string;
         data?: any;
@@ -174,6 +188,7 @@ export type CurrentSymbol = {
     tokenAtaLamports: string;
     fireworks?: boolean | undefined;
     otherTokenInfo?: any;
+    tradeNonce?: number;
 };
 export type TokenInfo = {
     symbol: string;

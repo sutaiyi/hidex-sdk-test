@@ -1,5 +1,5 @@
 import * as anchor from '@project-serum/anchor';
-import { AddressLookupTableAccount, PublicKey, TransactionInstruction, VersionedTransaction } from '@solana/web3.js';
+import { AddressLookupTableAccount, PublicKey, TransactionInstruction, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
 import { INetworkService } from '../../../network/interfaces';
 import { CurrentSymbol } from '../../interfaces';
 export declare const isBuy: (currentSymbol: CurrentSymbol) => boolean;
@@ -35,6 +35,8 @@ export declare function createBuySwapPrepareInstruction(currentSymbol: CurrentSy
 export declare function createBuySwapCompletedInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function createSaleSwapPrepareInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function createClaimInstruction(contents: string, signatrue: string, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
+export declare function createTradeNonceVerifyInstruction(tradeNonce: number | undefined, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
+export declare function getTradeNonce(owner: any, network: INetworkService): Promise<number>;
 export declare function createEd25519ProgramIx(signer: string, contents: string, signatrue: string): Promise<anchor.web3.TransactionInstruction>;
 export declare function createSaleSwapCompletedInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function createSimpleBuySwapCompletedInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService, gasFee: number): Promise<anchor.web3.TransactionInstruction>;
@@ -54,4 +56,9 @@ export declare function getDexCommisionReceiverAndLamports(currentSymbol: Curren
     swap_pda: PublicKey;
     commissionAmount: number;
 }>;
+export declare function deleteTipCurrentInInstructions(transactionMessage: TransactionMessage): Promise<void>;
+export declare function getTipAndPriorityByUserPriorityFee(priorityFee: number): {
+    tipAmount: number;
+    priorityAmount: number;
+};
 //# sourceMappingURL=InstructionCreator.d.ts.map

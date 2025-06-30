@@ -4,7 +4,7 @@ import { ComputeBudgetProgram, PublicKey, SystemProgram, TransactionMessage, Ver
 import abis from '../../../common/abis';
 import CustomWallet from '../../../wallet/custom';
 import { sTokenAddress, zero } from '../../../common/config';
-import { AssociateTokenProgram, BASE_ACCOUNT_INIT_FEE, JUPITER_PROGRAM_ID, PROGRAMID, PUEM_INSTRUCTION_PREFIX, PUMP_AMM_PROGRAM_ID, PUMP_PROGRAM_ID, SEED_DATA, SEED_NONCE, SEED_SWAP, SEED_TRADE, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SUPPORT_CHANGE_PROGRAM_IDS, TOKEN_PROGRAM_OWNS } from '../config';
+import { AssociateTokenProgram, BASE_ACCOUNT_INIT_FEE, JUPITER_PROGRAM_ID, PROGRAMID, PUEM_INSTRUCTION_PREFIX, PUMP_AMM_PROGRAM_ID, PUMP_PROGRAM_ID, SEED_DATA, SEED_NONCE, SEED_SWAP, SEED_TRADE, SEED_TRADE_NONCE, SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SUPPORT_CHANGE_PROGRAM_IDS, TOKEN_PROGRAM_OWNS } from '../config';
 import { createMemoInstruction } from '@solana/spl-memo';
 export const isBuy = (currentSymbol) => {
     return !!currentSymbol.isBuy;
@@ -242,6 +242,40 @@ export async function createClaimInstruction(contents, signatrue, owner, network
     })
         .instruction();
 }
+export async function createTradeNonceVerifyInstruction(tradeNonce = -1, owner, network) {
+    initAnchor(owner, network);
+    const programId = new PublicKey(PROGRAMID());
+    const program = new anchor.Program(abis.solanaIDL, programId);
+    const [trade_nonce_account] = await PublicKey.findProgramAddress([Buffer.from(SEED_TRADE_NONCE), owner.publicKey.toBuffer()], programId);
+    return program.methods
+        .tradeNonceVerify(tradeNonce)
+        .accounts({
+        tradeNonceAccount: trade_nonce_account,
+        signer: owner.publicKey,
+        systemProgram: SystemProgram.programId
+    })
+        .instruction();
+}
+export async function getTradeNonce(owner, network) {
+    initAnchor(owner, network);
+    const programId = new PublicKey(PROGRAMID());
+    const program = new anchor.Program(abis.solanaIDL, programId);
+    const [trade_nonce_account] = await PublicKey.findProgramAddress([Buffer.from(SEED_TRADE_NONCE), owner.publicKey.toBuffer()], programId);
+    try {
+        const tradeNonceData = await program.account.tradeNonce.fetch(trade_nonce_account);
+        console.log('tradeNonceData:', tradeNonceData);
+        if (tradeNonceData) {
+            return tradeNonceData.tradeNonce.toNumber();
+        }
+    }
+    catch (error) {
+        if (error instanceof Error && error.message.includes('Account does not exist')) {
+            console.log('账户不存在:', trade_nonce_account.toBase58());
+            return 0;
+        }
+    }
+    return -1;
+}
 export async function createEd25519ProgramIx(signer, contents, signatrue) {
     const signerPub = new PublicKey(signer);
     const contentBytes = Buffer.from(contents, 'hex');
@@ -412,9 +446,6 @@ export function setTransferInstructionLamports(instruction, dataHex, newLamports
         const buffer = Buffer.alloc(8);
         buffer.writeBigUInt64LE(newLamports + BigInt(1000), 0);
         const newInputAmountHex = buffer.toString('hex');
-        const readBigUInt64LE = instruction.data.readBigUInt64LE(4);
-        console.log('转账指令：', readBigUInt64LE);
-        console.log('转账指令修改为：', newLamports);
         const transferData = dataHex.slice(0, dataHex.length - 16) + newInputAmountHex;
         Buffer.from(transferData, 'hex');
         instruction.data = Buffer.from(transferData, 'hex');
@@ -423,18 +454,13 @@ export function setTransferInstructionLamports(instruction, dataHex, newLamports
     return false;
 }
 export function setCreateAccountBySeedInstructionLamports(preAmountIn, instruction, dataHex, newLamports) {
-    console.log('转账指令SOLANA_CREATE_ACCOUNT_WITH_SEED_ID dataHex：', dataHex);
     const totalInitFeeBefore = BASE_ACCOUNT_INIT_FEE + BigInt(preAmountIn);
-    console.log('转账指令SOLANA_CREATE_ACCOUNT_WITH_SEED_ID：', totalInitFeeBefore);
     const totalInitFeeBuffer = Buffer.alloc(8);
     totalInitFeeBuffer.writeBigUInt64LE(totalInitFeeBefore);
     const initFeeHex = totalInitFeeBuffer.toString('hex');
-    console.log('转账指令SOLANA_CREATE_ACCOUNT_WITH_SEED_ID initFeeHex：', initFeeHex);
     const feeInitIndex = dataHex.indexOf(initFeeHex);
-    console.log('feeInitIndex = ' + feeInitIndex);
     if (feeInitIndex >= 0) {
         const totalInitFeeAfter = BASE_ACCOUNT_INIT_FEE + newLamports;
-        console.log('转账指令SOLANA_CREATE_ACCOUNT_WITH_SEED_ID 修改为：', totalInitFeeAfter);
         const totalInitFeeBuffer = Buffer.alloc(8);
         totalInitFeeBuffer.writeBigUInt64LE(totalInitFeeAfter);
         const initFeeHexAfter = totalInitFeeBuffer.toString('hex');
@@ -459,13 +485,26 @@ export function createMemoInstructionWithTxInfo(currentSymbol) {
 export async function getDexCommisionReceiverAndLamports(currentSymbol) {
     const programId = new PublicKey(PROGRAMID());
     const [swap_pda] = await PublicKey.findProgramAddress([Buffer.from(SEED_SWAP)], programId);
-    console.log('currentSymbol.feeRate', currentSymbol.feeRate);
-    console.log('currentSymbol.commissionRate', currentSymbol.commissionRate);
-    console.log('currentSymbol.dexFeeAmount', currentSymbol.dexFeeAmount);
-    const realAmountIn = Number(currentSymbol.amountIn) * 10000 / (10000 - currentSymbol.feeRate);
-    console.log("amountIn", currentSymbol.amountIn);
-    console.log("realAmountIn", realAmountIn);
-    const commissionAmount = currentSymbol.isBuy ? Math.floor(realAmountIn * currentSymbol.feeRate / 10000) : Math.floor(Number(currentSymbol.amountOutMin) * currentSymbol.feeRate / 10000);
-    console.log('commissionAmount', commissionAmount);
+    const realAmountIn = (Number(currentSymbol.amountIn) * 10000) / (10000 - currentSymbol.feeRate);
+    const commissionAmount = currentSymbol.isBuy
+        ? Math.floor((realAmountIn * currentSymbol.feeRate) / 10000)
+        : Math.floor((Number(currentSymbol.amountOutMin) * currentSymbol.feeRate) / 10000);
     return { swap_pda, commissionAmount };
+}
+export async function deleteTipCurrentInInstructions(transactionMessage) {
+    for (let i = transactionMessage.instructions.length - 1; i > transactionMessage.instructions.length - 3; i--) {
+        const lastInstruction = transactionMessage.instructions[i];
+        if (lastInstruction.programId.toBase58() == SOLANA_SYSTEM_PROGRAM_ID.toBase58()) {
+            const instructionId = lastInstruction.data.readUInt32LE(0);
+            if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
+                console.log('SOLANA_SYSTEM_PROGRAM_TRANSFER_ID');
+                transactionMessage.instructions.splice(transactionMessage.instructions.length - 1);
+            }
+        }
+    }
+}
+export function getTipAndPriorityByUserPriorityFee(priorityFee) {
+    let priorityAmount = 50000;
+    let tipAmount = priorityFee - priorityAmount;
+    return { tipAmount, priorityAmount };
 }

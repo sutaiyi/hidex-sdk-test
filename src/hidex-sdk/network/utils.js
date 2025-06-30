@@ -9,7 +9,7 @@ export function randoxHex(length = 8) {
 }
 export function shiftEncrypt(input, shiftAmount) {
     const chars = input.split('');
-    const encryptedChars = chars.map(char => {
+    const encryptedChars = chars.map((char) => {
         const ascii = char.charCodeAt(0);
         if (ascii === 35) {
             return String.fromCharCode(45);
@@ -38,7 +38,10 @@ export function getServerTime() {
     const serverTsDifference = sessionStorage.getItem('serverTsDifference');
     const lt = Math.floor(Date.now() / 1000);
     if (serverTsDifference) {
-        return lt + Number(serverTsDifference);
+        const num = Number(serverTsDifference);
+        if (!isNaN(num)) {
+            return lt + num;
+        }
     }
     return lt;
 }

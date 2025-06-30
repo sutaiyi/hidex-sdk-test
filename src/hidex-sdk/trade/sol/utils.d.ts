@@ -4,5 +4,6 @@ export declare function isToken2022(tokenAddress: string, connection: Connection
 export declare function sendSolanaTransaction(connection: Connection, sender: Keypair, instructions: TransactionInstruction[], blockhash: any): Promise<string>;
 export declare function getUserTokenAtaAddress(userAddress: string, tokenAddress: string, TOKEN_2022: boolean): Promise<string>;
 export declare function vertransactionsToBase64(transactions: Array<VersionedTransaction>): string[] | undefined;
+export declare function hashFailedMessage(connection: Connection, hash: string): Promise<string>;
 export declare const urlPattern: RegExp;
 //# sourceMappingURL=utils.d.ts.map

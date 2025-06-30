@@ -183,6 +183,32 @@ export default {
                 }
             ],
             "args": []
+        },
+        {
+            "name": "tradeNonceVerify",
+            "accounts": [
+                {
+                    "name": "tradeNonceAccount",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "signer",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "nonce",
+                    "type": "u64"
+                }
+            ]
         }
     ],
     "accounts": [
@@ -255,6 +281,18 @@ export default {
                     }
                 ]
             }
+        },
+        {
+            "name": "TradeNonce",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "tradeNonce",
+                        "type": "u64"
+                    }
+                ]
+            }
         }
     ],
     "types": [
@@ -307,6 +345,9 @@ export default {
                     },
                     {
                         "name": "TooManyRequests"
+                    },
+                    {
+                        "name": "InvaildNonce"
                     }
                 ]
             }

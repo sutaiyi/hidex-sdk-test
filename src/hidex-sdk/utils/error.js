@@ -32,7 +32,13 @@ export default (error) => {
     if (strMessage?.toLowerCase()?.includes('transaction may fail or may require manual gas limit')) {
         return { code: 14002, message: errorInfo['14002'] };
     }
-    if (strMessage?.toLowerCase()?.includes('slippage') || strMessage?.toLowerCase()?.includes('minamountoutnotreached')) {
+    if (strMessage?.toLowerCase()?.includes('min tip:')) {
+        return { code: 140061, message: errorInfo['140061'] };
+    }
+    if (strMessage?.toLowerCase()?.includes('slippage') ||
+        strMessage?.toLowerCase()?.includes('minamountoutnotreached') ||
+        strMessage?.toLowerCase()?.includes('program error: 0x1771') ||
+        strMessage?.toLowerCase()?.includes('program error: 0x1772')) {
         return { code: 14003, message: errorInfo['14003'] };
     }
     if (strMessage?.toLowerCase()?.includes('swap txarray is empty')) {
@@ -40,10 +46,6 @@ export default (error) => {
     }
     if (strMessage?.toLowerCase()?.includes('toosmallinputoroutputamount')) {
         return { code: 14005, message: errorInfo['14005'] };
-    }
-    if (strMessage?.toLowerCase()?.includes('axioserror: request failed')) {
-        const code = 14006;
-        return { code, message: errorInfo[code] };
     }
     if (strMessage?.toLowerCase()?.includes('aggregateerror') || strMessage?.toLowerCase()?.includes('e.getmultipleaccountsinfo is not a function')) {
         const code = 14007;
@@ -73,8 +75,24 @@ export default (error) => {
         const code = 14015;
         return { code, message: errorInfo[code] };
     }
-    if (strMessage?.toLowerCase()?.includes('network')) {
+    if (strMessage?.toLowerCase()?.includes('network error') || strMessage?.toLowerCase()?.includes('timeout')) {
         const code = 14016;
+        return { code, message: errorInfo[code] };
+    }
+    if (strMessage?.toLowerCase()?.includes('little pool')) {
+        const code = 14017;
+        return { code, message: errorInfo[code] };
+    }
+    if (strMessage?.toLowerCase()?.includes('300001:sign expired')) {
+        const code = 14018;
+        return { code, message: errorInfo[code] };
+    }
+    if (strMessage?.toLowerCase()?.includes('program error: 0x1775')) {
+        const code = 14019;
+        return { code, message: errorInfo[code] };
+    }
+    if (strMessage?.toLowerCase()?.includes('axioserror: request failed')) {
+        const code = 14006;
         return { code, message: errorInfo[code] };
     }
     return { code: 13000, message: errorInfo['13000'] + strMessage };

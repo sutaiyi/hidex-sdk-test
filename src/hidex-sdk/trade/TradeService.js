@@ -2,7 +2,7 @@ import { ethService } from './eth/index';
 import { solService } from './sol/index';
 import { defaultChainID } from '../common/config';
 import ApproveService from './utils/approve';
-import { compileTransaction, resetInstructions, getTransactionsSignature, isInstructionsSupportReset } from './sol/instruction/index';
+import { compileTransaction, resetInstructions, getTransactionsSignature, isInstructionsSupportReset, getAddressLookup, getOwnerTradeNonce } from './sol/instruction/index';
 import EventEmitter from '../common/eventEmitter';
 import DefiApi from './sol/defiApi';
 import TradeHashStatusService from './TradeHashStatusService';
@@ -14,13 +14,17 @@ class TradeService extends EventEmitter {
     chainId;
     errorCode = 9800;
     HS;
+    solService;
+    ethService;
     approve;
     defiApi;
     checkHash;
     constructor(options) {
         super();
         this.chainId = defaultChainID;
-        this.app = defaultChainID === 102 ? solService(options) : ethService(options);
+        this.solService = solService(options);
+        this.ethService = ethService(options);
+        this.app = defaultChainID === 102 ? this.solService : this.ethService;
         this.HS = options;
         this.approve = new ApproveService({ ...options, trade: this });
         this.checkHash = new TradeHashStatusService({ ...options, trade: this });
@@ -36,6 +40,12 @@ class TradeService extends EventEmitter {
     compileTransaction = (swapBase64Str) => {
         return compileTransaction(swapBase64Str, this.HS);
     };
+    getAddressLookup = (swapBase64Str) => {
+        return getAddressLookup(swapBase64Str, this.HS);
+    };
+    getOwnerTradeNonce = async (accountAddress) => {
+        return getOwnerTradeNonce(this.HS.utils.ownerKeypair(await this.HS.wallet.ownerKey(accountAddress)), this.HS);
+    };
     isInstructionsSupportReset = (transactionMessage, currentSymbol) => {
         return isInstructionsSupportReset(transactionMessage, currentSymbol);
     };
@@ -45,10 +55,12 @@ class TradeService extends EventEmitter {
             case 1:
             case 56:
             case 8453:
-                this.app = ethService(this.HS);
+                this.ethService = ethService(this.HS);
+                this.app = this.ethService;
                 break;
             default:
-                this.app = solService(this.HS);
+                this.solService = solService(this.HS);
+                this.app = this.solService;
         }
     };
     getBalance = async (accountAddress, tokenAddress, isAta) => {
@@ -147,9 +159,15 @@ class TradeService extends EventEmitter {
     };
     getHashStatus(hash, chain, bundles = []) {
         if (isSol(chain)) {
-            return solService(this.HS).hashStatus(hash, chain, bundles);
+            return this.solService.hashStatus(hash, chain, bundles);
         }
-        return ethService(this.HS).hashStatus(hash, chain);
+        return this.ethService.hashStatus(hash, chain);
+    }
+    getHashsStatus(hashs, chain, bundles = []) {
+        if (isSol(chain)) {
+            return this.solService.hashsStatus(hashs, chain, bundles);
+        }
+        return this.ethService.hashsStatus(hashs, chain, bundles);
     }
     async wrappedExchange(chain, accountAddress, type, priorityFee, amount = '0') {
         const privateKey = await this.HS.wallet.ownerKey(accountAddress);

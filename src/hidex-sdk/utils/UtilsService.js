@@ -13,6 +13,7 @@ export default class UtilsService {
     ownerKeypair(key) {
         return Keypair.fromSecretKey(bs58.decode(key));
     }
+    environmental = commonUtils.environmental;
     trade = tradeUtils;
     common = commonUtils;
     getStatistics = timeStatisticsUtils.getStatistics;

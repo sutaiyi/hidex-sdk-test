@@ -1,5 +1,5 @@
 import { CurrentSymbol, HashStatus, IDefiApi } from '../interfaces';
-import { BlockhashWithExpiryBlockHeight, Connection, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { BlockhashWithExpiryBlockHeight, Connection, VersionedTransaction } from '@solana/web3.js';
 import { INetworkService } from '../../network/interfaces';
 declare class DefiApi implements IDefiApi {
     clearTimer: NodeJS.Timeout | null;
@@ -15,6 +15,7 @@ declare class DefiApi implements IDefiApi {
         success: boolean;
         swapTransaction: string;
         outAmount: string;
+        recentBlockhash: string;
         data: any;
     }>;
     submitSwap(currentSymbol: CurrentSymbol, transaction: VersionedTransaction): Promise<{
@@ -29,15 +30,36 @@ declare class DefiApi implements IDefiApi {
         currentSymbol: CurrentSymbol;
         data: any;
     }>;
+    submitSwapFastByFlashblock(currentSymbol: CurrentSymbol, transaction: VersionedTransaction): Promise<{
+        success: boolean;
+        hash: string;
+        currentSymbol: CurrentSymbol;
+        data: any;
+    }>;
     submitByQuiknode(): Promise<void>;
-    submitSwapByJito(transactions: Array<Transaction>): Promise<{
+    submitSwapByJito(transactions: Array<VersionedTransaction>): Promise<{
         success: boolean;
         hash: string;
         data?: any;
     }>;
-    submitSwapByBlox(transactions: Array<Transaction>): Promise<{
+    submitSwapByBlox(transactions: Array<VersionedTransaction>): Promise<{
         success: boolean;
         hash: string;
+        data?: any;
+    }>;
+    submitSwapByFlashblock(transactions: Array<VersionedTransaction>): Promise<{
+        success: boolean;
+        hash: string;
+        data?: any;
+    }>;
+    submitSwapByFlashblockCommon(transactions: Array<VersionedTransaction>, mev?: boolean): Promise<{
+        success: boolean;
+        hash: string;
+        data?: any;
+    }>;
+    submitSwapByAllPlatforms(currentSymbol: CurrentSymbol, transactions: Array<Array<VersionedTransaction>>): Promise<{
+        success: boolean;
+        hashs: Array<string[]>;
         data?: any;
     }>;
     handlerJitoPost(endpoints: Array<string>, params: any): Promise<void>;
