@@ -29,7 +29,7 @@ const getCurrentSymbolTest = async (
   const feeAccountStr = Math.floor(0.0055 * Math.pow(10, 9)).toString();
   const buyTestAmount = Math.floor((Number(balanceStr) - Number(feeAccountStr)) * 0.1).toString();
   const amountIn = isBuy ? buyTestAmount : tokenBalanceStr;
-  const tradeNoce = await trade.getOwnerTradeNonce(address);
+  // const tradeNoce = await trade.getOwnerTradeNonce(address);
   const currentSymbol = {
     in: isBuy ? inToken : outToken,
     out: isBuy ? outToken : inToken,
@@ -37,7 +37,7 @@ const getCurrentSymbolTest = async (
     slipPersent: 0, // 兑换滑点(预请求时候使用)
     amountOutMin: '0', // 最少得到数量
     dexFeeAmount: '0', // 交易手续费
-    priorityFee: (0.0001 * Math.pow(10, 9)).toString(), // 优先费
+    priorityFee: (0.0002 * Math.pow(10, 9)).toString(), // 优先费
     inviter, // 邀请地址
     isBuy,
     networkFee: {
@@ -61,7 +61,6 @@ const getCurrentSymbolTest = async (
     userwsolAtaAmount: wbalanceStr,
     userWsolAtaLamports: userWsolAtaLamportsStr,
     tokenAtaLamports: tokenAtaLamportsStr,
-    tradeNoce,
   };
   return {
     currentSymbol,

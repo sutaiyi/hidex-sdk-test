@@ -242,13 +242,13 @@ export async function createClaimInstruction(contents, signatrue, owner, network
     })
         .instruction();
 }
-export async function createTradeNonceVerifyInstruction(tradeNonce = -1, owner, network) {
+export async function createTradeNonceVerifyInstruction(timeStamp, owner, network) {
     initAnchor(owner, network);
     const programId = new PublicKey(PROGRAMID());
     const program = new anchor.Program(abis.solanaIDL, programId);
     const [trade_nonce_account] = await PublicKey.findProgramAddress([Buffer.from(SEED_TRADE_NONCE), owner.publicKey.toBuffer()], programId);
     return program.methods
-        .tradeNonceVerify(tradeNonce)
+        .tradeNonceVerify(new anchor.BN(timeStamp))
         .accounts({
         tradeNonceAccount: trade_nonce_account,
         signer: owner.publicKey,
@@ -265,6 +265,7 @@ export async function getTradeNonce(owner, network) {
         const tradeNonceData = await program.account.tradeNonce.fetch(trade_nonce_account);
         console.log('tradeNonceData:', tradeNonceData);
         if (tradeNonceData) {
+            console.log('tradeNonceData:', tradeNonceData.tradeNonce.toNumber());
             return tradeNonceData.tradeNonce.toNumber();
         }
     }

@@ -5,15 +5,15 @@ class KeyRuntimeController {
         this.dataStorage = {};
     }
     async initKeyRuntime(catcher) {
-        this.dataStorage = (await catcher.getCookie('dataStorage')) || {};
+        this.dataStorage = (await catcher.getIdbItem('dataStorage')) || {};
         return { value: this.dataStorage['KEYSING_SECRETCODE'] };
     }
-    async sendMessage(message, sendResponse, catcher, expires) {
+    async sendMessage(message, sendResponse, catcher, expiresInDays) {
         if (keysing.messageConfirm(message.type)) {
             keysing.messageProcess(message, async (key, value) => {
                 if (key === 'SET' && typeof value === 'object') {
                     Object.assign(this.dataStorage, value);
-                    await catcher.setCookie('dataStorage', this.dataStorage, { expires, path: '/', secure: true });
+                    await catcher.setIdbItem('dataStorage', this.dataStorage, expiresInDays);
                     sendResponse({ status: 'success' });
                 }
                 if (key === 'GET') {

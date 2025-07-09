@@ -1,6 +1,7 @@
 import webCatcher from './web';
 import appCatcher from './app';
 import CookieStorage from './cookie';
+import IdbService from './indexDB';
 import { isValidJSON } from '../common/utils';
 class CatcherService {
     catch;
@@ -54,8 +55,23 @@ class CatcherService {
         const { expires, path, secure } = options;
         return await CookieStorage.set(`${this.keyDefault}-${key}`, typeof value === 'string' ? value : JSON.stringify(value), expires, path, secure);
     }
-    async removeCookie(key) {
-        return await CookieStorage.remove(`${this.keyDefault}-${key}`);
+    async removeCookie(key, options) {
+        return await CookieStorage.remove(`${this.keyDefault}-${key}`, options);
+    }
+    async getIdbItem(key) {
+        try {
+            return await IdbService.getItem(`${this.keyDefault}-${key}`);
+        }
+        catch (error) {
+            console.error(error);
+            return null;
+        }
+    }
+    async setIdbItem(key, value, expiresInDays) {
+        return await IdbService.setItem(`${this.keyDefault}-${key}`, value, expiresInDays);
+    }
+    async removeIdbItem(key) {
+        return await IdbService.removeItem(`${this.keyDefault}-${key}`);
     }
 }
 export default CatcherService;

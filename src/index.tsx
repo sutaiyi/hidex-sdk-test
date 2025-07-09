@@ -28,7 +28,7 @@ const Rend = () => {
           console.timeEnd('tradeFullTimer');
           console.timeEnd('HashStatusTimer');
           if (data.status === 'Confirmed') {
-            const { accountAddress, vertransactions } = data.data;
+            const { accountAddress, vertransactions } = data?.data;
             if (vertransactions && vertransactions.length === 2) {
               // 执行第二笔交易
               console.log('执行第二笔交易');
@@ -39,6 +39,7 @@ const Rend = () => {
         });
         setLoading(false);
       } catch (error) {
+        console.log('init error', error);
         setLoading(false);
         const { code, message } = utils.getErrorMessage(error);
         if (code === 13001) {

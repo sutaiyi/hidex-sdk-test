@@ -336,14 +336,17 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
 export async function getOwnerTradeNonce(owner, HS) {
     return getTradeNonce(owner, HS.network);
 }
-export async function getTransactionsSignatureArray(transactionMessage, addressLookupTableAccounts, recentBlockhash, tradeNonce = -1, currentSymbol, owner, HS) {
+export async function getTransactionsSignatureArray(transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner, HS) {
+    const gasLimitInIx = getTransactionGasLimitUintsInInstruction(transactionMessage.instructions);
+    console.log("gasLimitInIx", gasLimitInIx);
     deleteTipCurrentInInstructions(transactionMessage);
     deleteTransactionGasInstruction(transactionMessage.instructions);
     let priorityFee = Number(currentSymbol.priorityFee);
-    const gasLimitInIx = getTransactionGasLimitUintsInInstruction(transactionMessage.instructions);
     const { tipAmount, priorityAmount } = getTipAndPriorityByUserPriorityFee(priorityFee);
     const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(gasLimitInIx * 1.2, priorityAmount);
-    const createTradeNonceVerifyIx = await createTradeNonceVerifyInstruction(tradeNonce, owner, HS.network);
+    const timestamp = Math.floor(Date.now() / 1000);
+    console.log("timestamp", timestamp);
+    const createTradeNonceVerifyIx = await createTradeNonceVerifyInstruction(timestamp, owner, HS.network);
     const memoIx = createMemoInstructionWithTxInfo(currentSymbol);
     const { swap_pda, commissionAmount } = await getDexCommisionReceiverAndLamports(currentSymbol);
     const commissionTransferIx = await createTipTransferInstruction(owner.publicKey, swap_pda, BigInt(commissionAmount));
@@ -357,14 +360,22 @@ export async function getTransactionsSignatureArray(transactionMessage, addressL
         providerInstructions.push(tipIx);
         providerInstructions.splice(0, 0, addPriorityLimitIx);
         providerInstructions.splice(0, 0, addPriorityPriceIx);
-        const swapTx = await versionedTra(providerInstructions, owner, recentBlockhash, addressLookupTableAccounts);
-        const swapTxSer = swapTx.serialize();
-        const swapTxBytesSize = swapTxSer.length;
+        console.log('准备系列化');
+        let swapTxSer;
+        let swapTxBytesSize = 0;
+        let swapTx;
+        try {
+            swapTx = await versionedTra(providerInstructions, owner, recentBlockhash, addressLookupTableAccounts);
+            swapTxSer = swapTx.serialize();
+            swapTxBytesSize = swapTxSer.length;
+        }
+        catch { }
         console.log('交易串字节长度 = ' + swapTxBytesSize);
-        if (swapTxBytesSize < SOLANA_MAX_TX_SERIALIZE_SIGN) {
+        if (swapTx && swapTxBytesSize > 0 && swapTxBytesSize < SOLANA_MAX_TX_SERIALIZE_SIGN) {
             swapTxArray.push([swapTx]);
         }
         else {
+            console.log('进入大指令');
             const bundleInstructions = [...transactionMessage.instructions];
             const gasFeeTx = await versionedTra([addPriorityLimitIx, addPriorityPriceIx], owner, recentBlockhash, addressLookupTableAccounts);
             const swapTx = await versionedTra(bundleInstructions, owner, recentBlockhash, addressLookupTableAccounts);

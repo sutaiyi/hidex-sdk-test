@@ -1,23 +1,18 @@
 import axios from 'axios';
 import { defaluBoootedOss, defalutWalletStore, HIDEXKEYWORD } from './config';
 import passworder from './browser/passworder';
+import { environmental } from './utils';
 const requireConfig = (apparatus, token) => {
     return {
         headers: {
             'Content-Type': 'application/json',
-            Authorization: apparatus ? token : token
+            Authorization: apparatus ? token : token,
+            dev: environmental('', true, true)
         }
     };
 };
 const walletMap = new Map();
 const getBootedOssItem = async (token, apparatus) => {
-    if (!token) {
-        return {
-            ...defaluBoootedOss,
-            passwordStatus: undefined,
-            walletStatus: undefined
-        };
-    }
     try {
         const result = await axios.get('/api/frontend/app/personal/getItem', requireConfig(apparatus, token));
         if (result?.status === 200 && result?.data?.code === 200) {
@@ -34,18 +29,15 @@ const getBootedOssItem = async (token, apparatus) => {
             walletMap.set('WalletBooted', defaluBoootedOss);
             return defaluBoootedOss;
         }
-        return {
-            ...defaluBoootedOss,
-            passwordStatus: undefined,
-            walletStatus: undefined
-        };
+        throw new Error(JSON.stringify(result?.data));
     }
     catch (error) {
-        console.log('s3 get error', error);
+        console.log('s3 get error', typeof error === 'string', error);
         return {
             ...defaluBoootedOss,
             passwordStatus: undefined,
-            walletStatus: undefined
+            walletStatus: undefined,
+            error: error?.toString()?.indexOf('"code":401') !== -1 ? 'failed get s3 code 401' : undefined
         };
     }
 };

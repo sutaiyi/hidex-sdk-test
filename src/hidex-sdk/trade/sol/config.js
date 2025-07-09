@@ -49,10 +49,10 @@ export const JITO_FEE_ACCOUNT = [
 ];
 export const Trading_Service_Providers = [
     new PublicKey('HWEoBxYs7ssKuudEjzjmpfJVX7Dvi7wescFsVx2L5yoY'),
-    new PublicKey("FLAShWTjcweNT4NSotpjpxAkwxUr2we3eXQGhpTVzRwy"),
+    new PublicKey('FLAShWTjcweNT4NSotpjpxAkwxUr2we3eXQGhpTVzRwy')
 ];
 export const BLOXROUTE = new PublicKey('HWEoBxYs7ssKuudEjzjmpfJVX7Dvi7wescFsVx2L5yoY');
-export const FLASHROUTR = new PublicKey("FLAShWTjcweNT4NSotpjpxAkwxUr2we3eXQGhpTVzRwy");
+export const FLASHROUTR = new PublicKey('FLAShWTjcweNT4NSotpjpxAkwxUr2we3eXQGhpTVzRwy');
 export const HIDEX_ADDRESS_LOOK_UP = new PublicKey('5ZF8nmsRMPB24j5UDU7ztjvxVBJ7pprZJvzbujZ5nKpQ');
 export const SOLANA_SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111');
 export const PUMP_PROGRAM_ID = new PublicKey('6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P');
@@ -64,7 +64,7 @@ export const GMGN_FEES_VAULT = new PublicKey('BB5dnY55FXS1e1NXqZDwCzgdYJdMCj3B92
 export const PUEM_INSTRUCTION_PREFIX = '66063d1201daebea';
 export const SOLANA_SYSTEM_PROGRAM_TRANSFER_ID = 2;
 export const SOLANA_CREATE_ACCOUNT_WITH_SEED_ID = 3;
-export const SOLANA_MAX_TX_SERIALIZE_SIGN = 1199;
+export const SOLANA_MAX_TX_SERIALIZE_SIGN = 1190;
 export const DEFAULT_SWAP_SOL_LAMPORTS = BigInt('5000000000');
 export const DEFAULT_SWAP_PUMP_LAMPORTS = BigInt('500000000');
 export const BASE_ACCOUNT_INIT_FEE = BigInt('2039280');

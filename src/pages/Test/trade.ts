@@ -299,7 +299,7 @@ const tradeFun = () => {
           console.log('交易已提交：', result);
           const hashItem = {
             chain: currentNetwork.chain,
-            hash: '',
+            hash: result.data?.data?.hash,
             hashs: result.hashs,
             createTime: new Date().getTime(),
             data: result.data,
@@ -468,12 +468,12 @@ const tradeFun = () => {
           tradeType: 3,
           hashs: [
             [
-              '3MukACy28fh5vQ56jzJcRaMyDPwVsFuRzFEVYRv8ierwTSUvMZ3bYK6CH75EcuRaahth69fYEZjF2EA4mhTqhtV7',
-              '3MukACy28fh5vQ56jzJcRaMyDPwVsFuRzFEVYRv8ierwTSUvMZ3bYK6CH75EcuRaahth69fYEZjF2EA4mhTqhtV7',
+              'uT4rEbMYUFJZUFKUeenFBvfZ4FL8L2pShmZGGm95y8uZSxf3LEq32kn3UiVh4y1YJgcvWBBKo2M9mB4ZE8gm3ft',
+              'uT4rEbMYUFJZUFKUeenFBvfZ4FL8L2pShmZGGm95y8uZSxf3LEq32kn3UiVh4y1YJgcvWBBKo2M9mB4ZE8gm3ft',
             ],
             [
-              '3MukACy28fh5vQ56jzJcRaMyDPwVsFuRzFEVYRv8ierwTSUvMZ3bYK6CH75EcuRaahth69fYEZjF2EA4mhTqhtV7',
-              '3MukACy28fh5vQ56jzJcRaMyDPwVsFuRzFEVYRv8ierwTSUvMZ3bYK6CH75EcuRaahth69fYEZjF2EA4mhTqhtV7',
+              '4iUuEMqav8Srp9gDWJpwvFYB67KZj6N2UntbCkr8FHNyVXYBwNG3tU2W5zUh1TCenHixbLRmUGnFX4wNFaPtGkws',
+              '4iUuEMqav8Srp9gDWJpwvFYB67KZj6N2UntbCkr8FHNyVXYBwNG3tU2W5zUh1TCenHixbLRmUGnFX4wNFaPtGkws',
             ],
             // [
             //   '3MukACy28fh5vQ56jzJcRaMyDPwVsFuRzFEVYRv8ierwTSUvMZ3bYK6CH75EcuRaahth69fYEZjF2EA4mhTqhtV7',

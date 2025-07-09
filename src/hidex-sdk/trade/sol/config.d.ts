@@ -35,7 +35,7 @@ export declare const GMGN_FEES_VAULT: PublicKey;
 export declare const PUEM_INSTRUCTION_PREFIX = "66063d1201daebea";
 export declare const SOLANA_SYSTEM_PROGRAM_TRANSFER_ID = 2;
 export declare const SOLANA_CREATE_ACCOUNT_WITH_SEED_ID = 3;
-export declare const SOLANA_MAX_TX_SERIALIZE_SIGN = 1199;
+export declare const SOLANA_MAX_TX_SERIALIZE_SIGN = 1190;
 export declare const DEFAULT_SWAP_SOL_LAMPORTS: bigint;
 export declare const DEFAULT_SWAP_PUMP_LAMPORTS: bigint;
 export declare const BASE_ACCOUNT_INIT_FEE: bigint;

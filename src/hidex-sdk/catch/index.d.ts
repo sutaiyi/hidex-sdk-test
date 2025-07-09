@@ -13,7 +13,14 @@ declare class CatcherService implements ICatcher {
         path?: string;
         secure?: boolean;
     }): Promise<boolean>;
-    removeCookie(key: string): Promise<boolean>;
+    removeCookie(key: string, options: {
+        expires: number;
+        path?: string;
+        secure?: boolean;
+    }): Promise<boolean>;
+    getIdbItem(key: string): Promise<any>;
+    setIdbItem(key: string, value: any, expiresInDays?: number): Promise<boolean>;
+    removeIdbItem(key: string): Promise<boolean>;
 }
 export default CatcherService;
 //# sourceMappingURL=index.d.ts.map

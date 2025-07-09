@@ -68,6 +68,7 @@ export type BootedOssStore = {
     booted: string;
     walletStatus: number | undefined;
     passwordStatus: number | undefined;
+    error?: any;
 };
 export type WalletStoreKeyOf = WalletStore | WalletStore[keyof WalletStore];
 export type WalletAccount = {

@@ -226,7 +226,7 @@ export function formatNumberWithPrecision(numValue, precision) {
     return `${intPart}.${finalDecimal}`;
 }
 export function getUseToken() {
-    return localStorage.getItem('access_token') || '';
+    return 'AccessToken';
 }
 export function axiosErrorMessage(error) {
     console.log(typeof error);

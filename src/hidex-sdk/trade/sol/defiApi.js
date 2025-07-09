@@ -151,7 +151,9 @@ class DefiApi {
                     hash: signatureBase58[0],
                     currentSymbol,
                     data: {
-                        errorMessage: ''
+                        hash: signatureBase58[0],
+                        errorMessage: '',
+                        swapHash: signatureBase58[0]
                     }
                 };
             }
@@ -338,6 +340,7 @@ class DefiApi {
                     hash: signatureBase58[0],
                     data: {
                         errorMessage: null,
+                        hash: signatureBase58[0],
                         swapHash: signatureBase58_swap[0],
                         jitoBundle: [],
                         submitPostTime,
@@ -345,14 +348,7 @@ class DefiApi {
                     }
                 };
             }
-            return {
-                success: false,
-                hash: '',
-                data: {
-                    errorMessage: 'Error API submitSwapByBlox' + JSON.stringify(results),
-                    lastBlockHash: this.lastBlockHash
-                }
-            };
+            throw new Error('submitSwapByBlox Error: ' + JSON.stringify(results));
         }
         catch (error) {
             console.log('Blox Error', error);
@@ -360,25 +356,25 @@ class DefiApi {
                 if (error?.errors?.length) {
                     const errRes = error.errors[0];
                     if (errRes?.response?.data) {
-                        return {
+                        return Promise.reject({
                             success: false,
                             hash: '',
                             data: {
-                                errorMessage: `防夹模式交易发送失败，Error url: ${postPath};` + JSON.stringify(errRes.response?.data),
+                                errorMessage: `防夹/极速模式交易发送失败，Error url: ${postPath};` + JSON.stringify(errRes.response?.data),
                                 lastBlockHash: this.lastBlockHash
                             }
-                        };
+                        });
                     }
                 }
             }
-            return {
+            return Promise.reject({
                 success: false,
                 hash: '',
                 data: {
-                    errorMessage: `防夹模式交易发送失败，Error url: ${postPath}; error：${error}, ${axiosErrorMessage(error)}`,
+                    errorMessage: `防夹/极速模式交易发送失败，Error url: ${postPath}; error：${error}, ${axiosErrorMessage(error)}`,
                     lastBlockHash: this.lastBlockHash
                 }
-            };
+            });
         }
     }
     async submitSwapByFlashblock(transactions) {
@@ -424,6 +420,7 @@ class DefiApi {
                     hash: signatureBase58[0],
                     data: {
                         errorMessage: null,
+                        hash: signatureBase58[0],
                         swapHash: signatureBase58_swap[0],
                         jitoBundle: [],
                         submitPostTime,
@@ -432,15 +429,7 @@ class DefiApi {
                     }
                 };
             }
-            return {
-                success: false,
-                hash: '',
-                data: {
-                    errorMessage: 'Error API submitSwapByFlashblock' + JSON.stringify(results),
-                    lastBlockHash: this.lastBlockHash,
-                    mev
-                }
-            };
+            throw new Error('submitSwapByFlashblock Error: ' + JSON.stringify(results));
         }
         catch (error) {
             console.log('submitSwapByFlashblock Error', error);
@@ -448,7 +437,7 @@ class DefiApi {
                 if (error?.errors?.length) {
                     const errRes = error.errors[0];
                     if (errRes?.response?.data) {
-                        return {
+                        Promise.reject({
                             success: false,
                             hash: '',
                             data: {
@@ -456,11 +445,11 @@ class DefiApi {
                                 lastBlockHash: this.lastBlockHash,
                                 mev
                             }
-                        };
+                        });
                     }
                 }
             }
-            return {
+            return Promise.reject({
                 success: false,
                 hash: '',
                 data: {
@@ -468,7 +457,7 @@ class DefiApi {
                     lastBlockHash: this.lastBlockHash,
                     mev
                 }
-            };
+            });
         }
     }
     async submitSwapByAllPlatforms(currentSymbol, transactions) {
@@ -479,7 +468,7 @@ class DefiApi {
             if (transIndex === 0) {
                 if (trans.length === 1) {
                     itemHashs.push(bs58.encode(trans[0].signatures[0]));
-                    submitPro.push(this.submitSwapFastByBlox(currentSymbol, trans[0]));
+                    submitPro.push(this.submitSwapByBlox(trans));
                 }
                 else {
                     itemHashs.push(bs58.encode(trans[1].signatures[0]));
@@ -544,7 +533,8 @@ class DefiApi {
             throw new Error('Get Transaction Status Error');
         }
         catch (error) {
-            return 'Pending';
+            console.log('getSwapStatus error', error);
+            return Promise.reject(error);
         }
     }
     async bundlesStatuses(bundles) {
@@ -576,7 +566,7 @@ class DefiApi {
         }
         catch (error) {
             console.log('bundlesStatuses --error', error);
-            return 'Pending';
+            return Promise.reject(error);
         }
     }
     async rpcSwapStatus(hash, connection) {
@@ -591,7 +581,8 @@ class DefiApi {
             return 'Pending';
         }
         catch (error) {
-            return 'Pending';
+            console.log('rpcSwapStatus error', error);
+            return Promise.reject(error);
         }
     }
     async rpcHeliusSwapStatus(hash) {
@@ -609,7 +600,7 @@ class DefiApi {
             return 'Pending';
         }
         catch (error) {
-            return 'Pending';
+            return Promise.reject(error);
         }
     }
     establishingConnection() {

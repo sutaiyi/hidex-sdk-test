@@ -1,12 +1,12 @@
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { smTokenAddress } from '../../common/config';
-import { getTokenOwner, hashFailedMessage, sendSolanaTransaction } from './utils';
+import { getTokenOwner, hashFailedMessage, sendSolanaTransaction, vertransactionsToBase64 } from './utils';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createTransferInstruction, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { simulateConfig, TOKEN_2022_OWNER } from './config';
 import { priorityFeeInstruction } from './instruction/InstructionCreator';
 import defiApi from './defiApi';
 import UtilsService from '../../utils/UtilsService';
-import { compileTransaction, compileTransactionByAddressLookup, getClainSignature, getOwnerTradeNonce, getTransactionsSignatureArray, isInstructionsSupportReset, resetInstructions } from './instruction';
+import { compileTransactionByAddressLookup, getAddressLookup, getClainSignature, getTransactionsSignatureArray } from './instruction';
 import { NETWORK_FEE_RATES } from '../eth/config';
 import { getWithdrawSign } from '../../api/hidex';
 import { setStatistics } from '../../utils/timeStatistics';
@@ -192,9 +192,8 @@ export const solService = (HS) => {
             };
         },
         getSwapEstimateGas: async (currentSymbol, path, accountAddress) => {
-            const { compile, amountIn, tradeNonce } = currentSymbol;
+            const { compile } = currentSymbol;
             let compileUse = compile;
-            let resetResult = null;
             let txArray = [];
             console.log('------------isGetAddressLookup------------------', !!compileUse?.addressesLookup);
             setStatistics({ timerKey: 'SwapRoute', isBegin: true });
@@ -206,29 +205,16 @@ export const solService = (HS) => {
             }
             if (compileUse?.addressesLookup && swapTransaction) {
                 const { message, addressesLookup } = await compileTransactionByAddressLookup(swapTransaction, compileUse?.addressesLookup, HS);
-                txArray = await getTransactionsSignatureArray(message, addressesLookup, recentBlockhash, tradeNonce, currentSymbol, HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress)), HS);
+                txArray = await getTransactionsSignatureArray(message, addressesLookup, recentBlockhash, currentSymbol, HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress)), HS);
             }
             console.log('txArray', txArray);
             if (txArray.length === 0) {
                 setStatistics({ timerKey: 'CompileTransaction', isBegin: true });
-                compileUse = await compileTransaction(swapTransaction, HS);
+                compileUse = await getAddressLookup(swapTransaction, HS);
                 currentSymbol.preAmountIn = data.inAmount;
                 currentSymbol.preAmountOut = data.otherAmountThreshold;
-                let tradeNonceRet = tradeNonce;
-                if (tradeNonce === -1 || tradeNonce === undefined) {
-                    tradeNonceRet = await getOwnerTradeNonce(HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress)), HS);
-                }
-                let isSupport = false;
-                if (!currentSymbol.compile) {
-                    isSupport = isInstructionsSupportReset(compileUse['message'], currentSymbol);
-                }
-                if (isSupport) {
-                    resetResult = resetInstructions(currentSymbol, compileUse['message'], BigInt(amountIn), BigInt(outAmount));
-                }
-                else {
-                    resetResult = compileUse['message'];
-                }
-                txArray = await getTransactionsSignatureArray(resetResult, compileUse['addressesLookup'], recentBlockhash, tradeNonceRet, currentSymbol, HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress)), HS);
+                const { message, addressesLookup } = await compileTransactionByAddressLookup(swapTransaction, compileUse?.addressesLookup, HS);
+                txArray = await getTransactionsSignatureArray(message, addressesLookup, recentBlockhash, currentSymbol, HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress)), HS);
                 setStatistics({ timerKey: 'CompileTransaction', isBegin: false });
                 console.timeEnd('AgainRouterTimer');
             }
@@ -259,7 +245,17 @@ export const solService = (HS) => {
             setStatistics({ timerKey: 'SubmitSwap', isBegin: false });
             return {
                 error: !submitResult.success,
-                result: { hashs: submitResult.hashs, data: { vertransactions: [], accountAddress, currentSymbol, ...submitResult } }
+                result: {
+                    hashs: submitResult.hashs,
+                    data: {
+                        blox_vertransactions: vertransactionsToBase64(vertransactions[0]),
+                        vertransactions: vertransactionsToBase64(vertransactions[0]),
+                        flash_vertransactions: vertransactionsToBase64(vertransactions[1]),
+                        accountAddress,
+                        currentSymbol,
+                        ...submitResult
+                    }
+                }
             };
         },
         hashStatus: async (hash, chainId) => {
@@ -283,7 +279,7 @@ export const solService = (HS) => {
         hashsStatus: async (hashs, chainId) => {
             try {
                 const connection = network.getProviderByChain(chainId || 102);
-                const queryHashStatus = async (hash) => {
+                const queryHashStatus = async (hash, hashGroup) => {
                     const results = await Promise.allSettled([defiApi.getSwapStatus(hash), defiApi.rpcSwapStatus(hash, connection)]);
                     const statuses = results
                         .filter((r) => r.status === 'fulfilled')
@@ -292,26 +288,24 @@ export const solService = (HS) => {
                         return typeof v === 'string' ? v : v?.status;
                     });
                     if (statuses.includes('Confirmed'))
-                        return 'Confirmed';
+                        return { hashStatus: 'Confirmed', hashGroup };
                     if (statuses.includes('Failed'))
-                        return 'Failed';
-                    return 'Pending';
+                        return { hashStatus: 'Failed', hashGroup };
+                    return { hashStatus: 'Pending', hashGroup };
                 };
                 const groupStatusPromises = hashs.map(async (hashGroup) => {
-                    for (const hash of hashGroup) {
-                        const status = await queryHashStatus(hash);
-                        if (status === 'Confirmed')
-                            return 'Confirmed';
-                        if (status === 'Failed')
-                            return 'Failed';
-                    }
-                    return 'Pending';
+                    return await queryHashStatus(hashGroup[0], hashGroup);
                 });
                 const groupResults = await Promise.all(groupStatusPromises);
-                if (groupResults.includes('Confirmed')) {
-                    return { status: 'Confirmed', message: 'At least one hash group confirmed' };
+                if (groupResults.find((v) => v.hashStatus === 'Confirmed')) {
+                    return {
+                        status: 'Confirmed',
+                        message: {
+                            successHash: groupResults?.filter((s) => s.hashStatus === 'Confirmed')[0]?.hashGroup
+                        }
+                    };
                 }
-                const failedCount = groupResults.filter((s) => s === 'Failed').length;
+                const failedCount = groupResults.filter((s) => s.hashStatus === 'Failed').length;
                 if (failedCount >= 2) {
                     const message = await hashFailedMessage(connection, hashs[0][0]);
                     return { status: 'Failed', message };

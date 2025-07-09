@@ -33,6 +33,9 @@ class WalletService {
             const res = await ossStore.getBootedOssItem(token, apparatus);
             this.walletMap = ossStore.getWalletMap();
             this.bootedOss = res;
+            if (res.error) {
+                throw new Error(res.error);
+            }
             return res;
         }
         catch (error) {
@@ -549,7 +552,8 @@ class WalletService {
         await this.setWalletStore(defalutWalletStore);
         await this.HS.catcher.removeItem('dataStorage');
         await this.HS.catcher.removeItem('dataCache');
-        await this.HS.catcher.removeCookie('dataStorage', { secure: true });
+        await this.HS.catcher.removeIdbItem('dataStorage');
+        await this.HS.catcher.removeCookie('dataStorage', { secure: true, path: '/' });
         ossStore.clearWalletMap();
         this.walletStore = defalutWalletStore;
         this.bootedOss = defaluBoootedOss;

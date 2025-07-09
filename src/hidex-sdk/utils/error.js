@@ -8,7 +8,7 @@ export default (error) => {
     if (strMessage?.toLowerCase()?.includes('incorrect password') || strMessage?.toLowerCase()?.includes('decryption password')) {
         return { code: 13001, message: errorInfo['13001'] };
     }
-    if (strMessage?.toLowerCase()?.includes('failed get s3 store')) {
+    if (strMessage?.toLowerCase()?.includes('failed get s3 store') || strMessage?.toLowerCase()?.includes('failed get s3 code 401')) {
         return { code: 13002, message: errorInfo['13002'] };
     }
     if (strMessage?.toLowerCase()?.includes('bad secret key')) {
