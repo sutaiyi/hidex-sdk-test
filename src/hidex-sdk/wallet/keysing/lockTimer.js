@@ -1,0 +1,1 @@
+import o from"./index";class t{constructor(){}async consideration(t,e){const c=localStorage.getItem("lockTimeHistory");if(c){const a=parseFloat(c);(new Date).getTime()-a>1e3*t&&o.lock(e)}}}export default t;

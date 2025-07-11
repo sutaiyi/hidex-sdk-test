@@ -1,0 +1,1 @@
+import o from"./DeTradeSwapABI";import r from"./factoryABI_v2";import t from"./factoryABI_v3";import a from"./pairABI_V2";import m from"./pairABI_V3";import p from"./solanaIDL";import I from"./tokenABI";const f={factoryABI:{v1:[],v2:r,v3:t},pairABI:{v1:[],v2:a,v3:m},tokenABI:I,chillSwapABI:o,solanaIDL:p};export default f;

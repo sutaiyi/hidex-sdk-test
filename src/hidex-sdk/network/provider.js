@@ -1,0 +1,1 @@
+import{providers as r,utils as e}from"ethers";export default class t extends r.JsonRpcProvider{chainId;constructor(r,e){super(r),this.chainId=e}async send(r,t){if("eth_chainId"===r)return e.hexValue(this.chainId);try{return await super.send(r,t)}catch(e){throw console.error(`Error in request: ${r}`),e}}}

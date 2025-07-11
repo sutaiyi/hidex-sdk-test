@@ -1,0 +1,1 @@
+import r from"browser-passworder";class t{encryptor=r;constructor(){}encrypt=async(r,t)=>{try{return await this.encryptor.encrypt(r,t)}catch(r){throw new Error("Error Encrypting Password"+r)}};decrypt=async(r,t)=>{try{return await this.encryptor.decrypt(r,t)}catch(r){throw console.log("decrypterror",r),new Error("Error Decryption Password"+r)}}}export default new t;

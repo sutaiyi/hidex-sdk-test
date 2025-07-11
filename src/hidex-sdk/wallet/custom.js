@@ -1,0 +1,1 @@
+export default class i{keypair;constructor(i){this.keypair=i}get publicKey(){return this.keypair.publicKey}async signTransaction(i){return i.partialSign(this.keypair),i}async signAllTransactions(i){return i.forEach(i=>i.partialSign(this.keypair)),i}}

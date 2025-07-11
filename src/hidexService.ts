@@ -2,7 +2,7 @@ import { Apparatus, HidexService } from 'hidex-sdk';
 
 let HidexSDK: HidexService;
 const serviceInit = () => {
-  const ENV = process.env.NODE_ENV
+  const ENV = process.env.NODE_ENV;
   if (!HidexSDK) {
     HidexSDK = new HidexService({
       rpcList: [
@@ -19,13 +19,13 @@ const serviceInit = () => {
         {
           chainId: 56,
           chainName: 'BSC',
-          rpc: ''// https://go.getblock.io/a2d124524e2d4ffaa8b0c3dd2d1836cf,https://bsc-dataseed.bnbchain.org,https://bsc-dataseed1.defibit.io,https://bsc-dataseed1.ninicoin.io,https://bsc-rpc.publicnode.com',
+          rpc: '', // https://go.getblock.io/a2d124524e2d4ffaa8b0c3dd2d1836cf,https://bsc-dataseed.bnbchain.org,https://bsc-dataseed1.defibit.io,https://bsc-dataseed1.ninicoin.io,https://bsc-rpc.publicnode.com',
         },
         {
           chainId: 8453,
           chainName: 'BASE',
           rpc: '/api/llamarpc,/api/meowrpc,/api/offical,/api/devaccess',
-        }
+        },
       ],
       env: ENV === 'development' ? 'development' : ENV === 'test' ? 'uat' : 'production', // development、uat、production
       apparatus: Apparatus.WEB,
@@ -33,10 +33,7 @@ const serviceInit = () => {
     });
   }
   return HidexSDK;
-}
+};
 
 // eyJhbGciOiJIUzI1NiJ9.eyJsb2dpbl91c2VyX2tleSI6ImMzNGJmOGQ3YjBkNjQyNjRiYTg5NWU3Y2NiZGFlY2U3In0.FdpLK02cpFymSRAE97mW9OAxZ-4UR0iX6eWrsKHixNA
-export {
-  serviceInit,
-  HidexSDK,
-};
+export { serviceInit, HidexSDK };

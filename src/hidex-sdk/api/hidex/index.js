@@ -1,0 +1,1 @@
+import t from"axios";import{environmental as o}from"../../common/utils";export async function getWithdrawSign(r){try{const a="/api/frontend/app/withdraw/sign",n=await t.post(a,r,{headers:{"Content-Type":"application/json",dev:o("",!0,!0)}});return n?.data}catch(t){return{code:-1,message:"Network error",data:null}}}
