@@ -37,6 +37,46 @@ const Decryption = React.memo(() => {
           >
             解密
           </button>
+
+          <button
+            className="btn"
+            onClick={async () => {
+              try {
+                const password = document.getElementById('DecryptionPassword') as HTMLInputElement;
+                const text = document.getElementById('DecryptionText') as HTMLInputElement;
+                const cleanedValue = text.value.replace(/^{{(.+)}}$/, '{$1}');
+                const obj = JSON.parse(cleanedValue);
+                const passValue = await wallet.decryptionS3Data(obj.data.putBooted, password.value);
+                if (passValue) {
+                  setJsonData(passValue);
+                }
+                console.log(passValue);
+              } catch (error) {
+                alert(error);
+              }
+            }}
+          >
+            解密2
+          </button>
+          <button
+            className="btn"
+            onClick={async () => {
+              try {
+                const password = document.getElementById('DecryptionPassword') as HTMLInputElement;
+                const text = document.getElementById('DecryptionText') as HTMLInputElement;
+                console.log(text.value);
+                const passValue = await wallet.decryptionS3Data(text.value, password.value);
+                if (passValue) {
+                  setJsonData(passValue);
+                }
+                console.log(passValue);
+              } catch (error) {
+                alert(error);
+              }
+            }}
+          >
+            解密3
+          </button>
           <div>
             <ReactJson src={jsonData} theme="monokai" />
           </div>

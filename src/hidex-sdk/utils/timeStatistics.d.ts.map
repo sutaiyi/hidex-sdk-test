@@ -1,1 +1,0 @@
-{"version":3,"file":"timeStatistics.d.ts","sourceRoot":"","sources":["../../src/utils/timeStatistics.ts"],"names":[],"mappings":"AAGA,eAAO,MAAM,aAAa,GAAI,UAAU,MAAM,KAAG,MAYhD,CAAC;AAEF,eAAO,MAAM,aAAa,GAAI,uBAAuB;IAAE,QAAQ,EAAE,MAAM,CAAC;IAAC,OAAO,EAAE,OAAO,CAAA;CAAE,KAAG,MAY7F,CAAC;AAEF,eAAO,MAAM,eAAe,GAAI,WAAU,MAAc,KAAG,IAS1D,CAAC"}

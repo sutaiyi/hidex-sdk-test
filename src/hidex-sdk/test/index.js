@@ -1,1 +1,0 @@
-export { CoreService } from './CoreService';
