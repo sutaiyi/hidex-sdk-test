@@ -1,1 +1,44 @@
-import{ethers as e}from"ethers";export async function getBaseFeePerGas(e){try{const t=e.get(),r=e.sysProviderRpcs[t.chain].map(e=>e.getBlock("latest").then(e=>e).catch(e=>Promise.reject(e))),s=await Promise.any(r),{baseFeePerGas:a}=s;if(a)return a.toString();throw new Error("baseFeePerGas is null")}catch(e){return"0"}}export const getUseGasPrice=async(t,r)=>{const s=t.get(),a=t.sysProviderRpcs[s.chain].map(e=>e.getGasPrice().then(e=>e).catch(e=>Promise.reject(e))),i=await Promise.any(a),c=i.mul(r);return{gasFeeETH:e.utils.formatEther(c),gasFeeWei:c.toString(),gasPriceWei:i.toString()}};
+import { ethers } from 'ethers';
+export async function getBaseFeePerGas(network) {
+    try {
+        const currentNetWork = network.get();
+        const profun = network.sysProviderRpcs[currentNetWork.chain].map((v) => v
+            .getBlock('latest')
+            .then((res) => {
+            return res;
+        })
+            .catch((error) => {
+            return Promise.reject(error);
+        }));
+        const latestBlock = await Promise.any(profun);
+        const { baseFeePerGas } = latestBlock;
+        if (baseFeePerGas) {
+            return baseFeePerGas.toString();
+        }
+        throw new Error('baseFeePerGas is null');
+    }
+    catch (error) {
+        return '0';
+    }
+}
+export const getUseGasPrice = async (network, gasLimit) => {
+    const currentNetWork = network.get();
+    const profun = network.sysProviderRpcs[currentNetWork.chain].map((v) => {
+        return v
+            .getGasPrice()
+            .then((res) => {
+            return res;
+        })
+            .catch((error) => {
+            return Promise.reject(error);
+        });
+    });
+    const gasPriceWei = await Promise.any(profun);
+    const gasFeeWei = gasPriceWei.mul(gasLimit);
+    const gasFeeETH = ethers.utils.formatEther(gasFeeWei);
+    return {
+        gasFeeETH,
+        gasFeeWei: gasFeeWei.toString(),
+        gasPriceWei: gasPriceWei.toString()
+    };
+};

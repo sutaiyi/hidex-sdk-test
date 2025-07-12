@@ -1,1 +1,16 @@
-import o from"./index";class t{constructor(){}async consideration(t,e){const c=localStorage.getItem("lockTimeHistory");if(c){const a=parseFloat(c);(new Date).getTime()-a>1e3*t&&o.lock(e)}}}export default t;
+import keysing from './index';
+class LockTimerController {
+    constructor() {
+    }
+    async consideration(lockTime, catcher) {
+        const lockTimeHistory = localStorage.getItem('lockTimeHistory');
+        if (lockTimeHistory) {
+            const time = parseFloat(lockTimeHistory);
+            const now = new Date().getTime();
+            if (now - time > lockTime * 1000) {
+                keysing.lock(catcher);
+            }
+        }
+    }
+}
+export default LockTimerController;

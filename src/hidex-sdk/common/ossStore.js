@@ -1,1 +1,128 @@
-import t from"axios";import{defaluBoootedOss as e,defalutWalletStore as a,HIDEXKEYWORD as o}from"./config";import r from"./browser/passworder";import{environmental as s}from"./utils";const l=(t,e)=>({headers:{"Content-Type":"application/json",Authorization:e,dev:s("",!0,!0)}}),i=new Map,n=async(a,s)=>{try{const s=await t.get("/api/frontend/app/personal/getItem",l(0,a));if(200===s?.status&&200===s?.data?.code){if(s.data?.data?.putBooted){const t=await r.decrypt(o,s.data.data.putBooted),e=JSON.parse(t);return i.set("WalletBooted",e),{...e,passwordStatus:e.booted?1:0,walletStatus:Object.keys(e.walletBooted).length?1:0}}return i.set("WalletBooted",e),e}throw new Error(JSON.stringify(s?.data))}catch(t){return console.log("s3 get error","string"==typeof t,t),{...e,passwordStatus:void 0,walletStatus:void 0,error:-1!==t?.toString()?.indexOf('"code":401')?"failed get s3 code 401":void 0}}},d=async(a,s,d,p,c)=>{if(!a)return{...e,passwordStatus:void 0,walletStatus:void 0};try{let s=await n(a);if(void 0===s?.walletStatus)throw new Error("Failed get s3 store");if(s&&"all"!==d&&p&&(s[d]=p),"all"==d&&p)if(c)s=e;else{if(s.walletBooted&&!p.walletBooted)throw new Error("[Failed set s3 store] 数据比对异常");s=p}i.set("WalletBooted",s);const w=await r.encrypt(o,JSON.stringify(s)),f=await t.post("/api/frontend/app/personal/setItem",{putBooted:w},l(0,a));if(200===f?.status&&f?.data&&200===f?.data?.code)return s;throw new Error("Failed set s3 store")}catch(t){throw new Error("Failed set s3 store"+t)}},p=async(t,e)=>{const s=await t.getItem("dataCache");if(s&&"object"==typeof s){const t=await r.decrypt(o,JSON.stringify(s)),a=JSON.parse(t);return i.set("WalletStore",a),e?a[e]:a}return i.set("WalletStore",a),a},c=async(t,e,a)=>{let s=i.get("WalletStore");s||(s=await p(t)),s&&"all"!==e&&a&&(s[e]=a),"all"==e&&a&&(s=a),i.set("WalletStore",s);const l=await r.encrypt(o,JSON.stringify(s));return await t.setItem("dataCache",l)},w=()=>{i.clear()},f=()=>i;export const ossStore={getWalletStoreItem:p,setWalletStoreItem:c,getBootedOssItem:n,setBootedOssItem:d,clearWalletMap:w,getWalletMap:f};
+import axios from 'axios';
+import { defaluBoootedOss, defalutWalletStore, HIDEXKEYWORD } from './config';
+import passworder from './browser/passworder';
+import { environmental } from './utils';
+const requireConfig = (apparatus, token) => {
+    return {
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: apparatus ? token : token,
+            dev: environmental('', true, true)
+        }
+    };
+};
+const walletMap = new Map();
+const getBootedOssItem = async (token, apparatus) => {
+    try {
+        const result = await axios.get('/api/frontend/app/personal/getItem', requireConfig(apparatus, token));
+        if (result?.status === 200 && result?.data?.code === 200) {
+            if (result.data?.data?.putBooted) {
+                const encryptedWallet = await passworder.decrypt(HIDEXKEYWORD, result.data.data.putBooted);
+                const data = JSON.parse(encryptedWallet);
+                walletMap.set('WalletBooted', data);
+                return {
+                    ...data,
+                    passwordStatus: data.booted ? 1 : 0,
+                    walletStatus: Object.keys(data.walletBooted).length ? 1 : 0
+                };
+            }
+            walletMap.set('WalletBooted', defaluBoootedOss);
+            return defaluBoootedOss;
+        }
+        throw new Error(JSON.stringify(result?.data));
+    }
+    catch (error) {
+        console.log('s3 get error', typeof error === 'string', error);
+        return {
+            ...defaluBoootedOss,
+            passwordStatus: undefined,
+            walletStatus: undefined,
+            error: error?.toString()?.indexOf('"code":401') !== -1 ? 'failed get s3 code 401' : undefined
+        };
+    }
+};
+const setBootedOssItem = async (token, apparatus, key, value, isClear) => {
+    let url = '/api/frontend/app/personal/setItem';
+    if (!token) {
+        return {
+            ...defaluBoootedOss,
+            passwordStatus: undefined,
+            walletStatus: undefined
+        };
+    }
+    try {
+        let walletPutData = await getBootedOssItem(token, apparatus);
+        if (walletPutData?.walletStatus === undefined) {
+            throw new Error('Failed get s3 store');
+        }
+        if (walletPutData && key !== 'all' && value) {
+            walletPutData[key] = value;
+        }
+        if (key == 'all' && value) {
+            if (isClear) {
+                walletPutData = defaluBoootedOss;
+                url = '/frontend/app/personal/setItem?reset=y';
+            }
+            else {
+                if (walletPutData.walletBooted && !value.walletBooted) {
+                    throw new Error('[Failed set s3 store] 数据比对异常');
+                }
+                walletPutData = value;
+            }
+        }
+        walletMap.set('WalletBooted', walletPutData);
+        const putBooted = await passworder.encrypt(HIDEXKEYWORD, JSON.stringify(walletPutData));
+        const result = await axios.post(url, { putBooted }, requireConfig(apparatus, token));
+        if (result?.status === 200 && result?.data && result?.data?.code === 200) {
+            return walletPutData;
+        }
+        throw new Error('Failed set s3 store');
+    }
+    catch (error) {
+        throw new Error('Failed set s3 store' + error);
+    }
+};
+const getWalletStoreItem = async (catcher, key) => {
+    const result = await catcher.getItem('dataCache');
+    if (result && typeof result === 'object') {
+        const encryptedWallet = await passworder.decrypt(HIDEXKEYWORD, JSON.stringify(result));
+        const data = JSON.parse(encryptedWallet);
+        walletMap.set('WalletStore', data);
+        if (key) {
+            return data[key];
+        }
+        return data;
+    }
+    walletMap.set('WalletStore', defalutWalletStore);
+    return defalutWalletStore;
+};
+const setWalletStoreItem = async (catcher, key, value) => {
+    let walletPutData = walletMap.get('WalletStore');
+    if (!walletPutData) {
+        walletPutData = await getWalletStoreItem(catcher);
+    }
+    if (walletPutData && key !== 'all' && value) {
+        walletPutData[key] = value;
+    }
+    if (key == 'all' && value) {
+        walletPutData = value;
+    }
+    walletMap.set('WalletStore', walletPutData);
+    const putBooted = await passworder.encrypt(HIDEXKEYWORD, JSON.stringify(walletPutData));
+    const result = await catcher.setItem('dataCache', putBooted);
+    return result;
+};
+const clearWalletMap = () => {
+    walletMap.clear();
+};
+const getWalletMap = () => {
+    return walletMap;
+};
+export const ossStore = {
+    getWalletStoreItem,
+    setWalletStoreItem,
+    getBootedOssItem,
+    setBootedOssItem,
+    clearWalletMap,
+    getWalletMap
+};

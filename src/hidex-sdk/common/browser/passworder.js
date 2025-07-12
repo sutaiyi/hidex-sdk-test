@@ -1,1 +1,23 @@
-import r from"browser-passworder";class t{encryptor=r;constructor(){}encrypt=async(r,t)=>{try{return await this.encryptor.encrypt(r,t)}catch(r){throw new Error("Error Encrypting Password"+r)}};decrypt=async(r,t)=>{try{return await this.encryptor.decrypt(r,t)}catch(r){throw console.log("decrypterror",r),new Error("Error Decryption Password"+r)}}}export default new t;
+import Encryptor from 'browser-passworder';
+class PassworderController {
+    encryptor = Encryptor;
+    constructor() { }
+    encrypt = async (password, secrets) => {
+        try {
+            return await this.encryptor.encrypt(password, secrets);
+        }
+        catch (error) {
+            throw new Error('Error Encrypting Password' + error);
+        }
+    };
+    decrypt = async (password, encrypted) => {
+        try {
+            return await this.encryptor.decrypt(password, encrypted);
+        }
+        catch (error) {
+            console.log('decrypterror', error);
+            throw new Error('Error Decryption Password' + error);
+        }
+    };
+}
+export default new PassworderController();

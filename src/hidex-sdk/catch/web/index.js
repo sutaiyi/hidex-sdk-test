@@ -1,1 +1,34 @@
-class e{constructor(){}async setItem(e,r){try{return await global.localStorage.setItem(e,r),!0}catch(e){return console.error("web/h5 catch setItem error",e),!1}}async getItem(e){try{return await global.localStorage.getItem(e)}catch(e){return console.error("web/h5 catch getItem error",e),null}}async removeItem(e){try{return await global.localStorage.removeItem(e),!0}catch(e){return console.error("web/h5 catch removeItem error",e),!1}}}export default e;
+class webCatcher {
+    constructor() {
+    }
+    async setItem(key, value) {
+        try {
+            await global.localStorage.setItem(key, value);
+            return true;
+        }
+        catch (error) {
+            console.error('web/h5 catch setItem error', error);
+            return false;
+        }
+    }
+    async getItem(key) {
+        try {
+            return await global.localStorage.getItem(key);
+        }
+        catch (error) {
+            console.error('web/h5 catch getItem error', error);
+            return null;
+        }
+    }
+    async removeItem(key) {
+        try {
+            await global.localStorage.removeItem(key);
+            return true;
+        }
+        catch (error) {
+            console.error('web/h5 catch removeItem error', error);
+            return false;
+        }
+    }
+}
+export default webCatcher;

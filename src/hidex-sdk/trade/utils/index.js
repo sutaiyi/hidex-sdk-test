@@ -1,1 +1,27 @@
-import{PublicKey as o}from"@solana/web3.js";import{PROGRAMID as r,SEED_SWAP as e}from"../sol/config";import{zero as t}from"../../common/config";export*from"../sol/utils";export*from"../eth/utils";export const getSingleContensBytes=(o,r)=>({combinedBytes:Buffer.from(o.substring(2),"hex"),signReult:Buffer.from(r.substring(2),"hex")});export const isSol=o=>"number"==typeof o&&102===o||"string"==typeof o&&"SOLANA"===o;export const getInviterAddress=async(s,n)=>{if(n&&!s){const t=new o(r()),[s]=await o.findProgramAddress([Buffer.from(e)],t);return s}return n&&s?new o(s):s||t};
+import { PublicKey } from '@solana/web3.js';
+import { PROGRAMID, SEED_SWAP } from '../sol/config';
+import { zero } from '../../common/config';
+export * from '../sol/utils';
+export * from '../eth/utils';
+export const getSingleContensBytes = (contents, signature) => {
+    const contentsUint8Array = Buffer.from(contents.substring(2), 'hex');
+    const signatureUint8Array = Buffer.from(signature.substring(2), 'hex');
+    return {
+        combinedBytes: contentsUint8Array,
+        signReult: signatureUint8Array
+    };
+};
+export const isSol = (chain) => {
+    return (typeof chain === 'number' && chain === 102) || (typeof chain === 'string' && chain === 'SOLANA');
+};
+export const getInviterAddress = async (inviter, isSol) => {
+    if (isSol && !inviter) {
+        const programId = new PublicKey(PROGRAMID());
+        const [swap_pda] = await PublicKey.findProgramAddress([Buffer.from(SEED_SWAP)], programId);
+        return swap_pda;
+    }
+    if (isSol && inviter) {
+        return new PublicKey(inviter);
+    }
+    return inviter || zero;
+};

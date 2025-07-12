@@ -1,1 +1,511 @@
-import*as t from"@project-serum/anchor";import{ASSOCIATED_TOKEN_PROGRAM_ID as e,getAssociatedTokenAddress as o,TOKEN_2022_PROGRAM_ID as n,TOKEN_PROGRAM_ID as r}from"@solana/spl-token";import{ComputeBudgetProgram as a,PublicKey as s,SystemProgram as i,TransactionMessage as c,VersionedTransaction as u}from"@solana/web3.js";import m from"../../../common/abis";import l from"../../../wallet/custom";import{sTokenAddress as p,zero as f}from"../../../common/config";import{AssociateTokenProgram as d,BASE_ACCOUNT_INIT_FEE as g,JUPITER_PROGRAM_ID as w,PROGRAMID as B,PUEM_INSTRUCTION_PREFIX as A,PUMP_AMM_PROGRAM_ID as P,PUMP_PROGRAM_ID as y,SEED_DATA as I,SEED_NONCE as S,SEED_SWAP as h,SEED_TRADE as x,SEED_TRADE_NONCE as b,SOLANA_SYSTEM_PROGRAM_ID as N,SOLANA_SYSTEM_PROGRAM_TRANSFER_ID as L,SUPPORT_CHANGE_PROGRAM_IDS as T,TOKEN_PROGRAM_OWNS as C}from"../config";import{createMemoInstruction as k}from"@solana/spl-memo";export const isBuy=t=>!!t.isBuy;export function initAnchor(e,o){const n=o.getProviderByChain(102),r=new l(e),a=new t.AnchorProvider(n,r,t.AnchorProvider.defaultOptions());t.setProvider(a)}export async function information(e,r,a){initAnchor(r,a);const i=new s(B()),c=new t.Program(m.solanaIDL,i),[u]=await s.findProgramAddress([Buffer.from(I)],i),[l,g]=await s.findProgramAddress([Buffer.from(h)],i),[w,A]=await s.findProgramAddress([Buffer.from(x)],i),P=new s(e.in.address),y=new s(e.out.address),S=new s(d);let b=e.inviter;b=e.inviter!==f&&e.inviter?new s(e.inviter):l;const N=new t.BN(e.amountIn);let L;e.TOKEN_2022?(L=await o(e.isBuy?y:P,r.publicKey,!1,n),console.log("userAtaAccount1 = "+L)):(L=await o(e.isBuy?y:P,r.publicKey,!1),console.log("userAtaAccount2 = "+L));const T=new s(p),C=await o(T,l,!0),k=await o(T,r.publicKey,!1);console.log("userwSolAta = "+k.toBase58()),console.log("wSol = "+T.toBase58());return{program:c,dataPda:u,swapPda:l,tradePda:w,bump2:g,bump3:A,associateTokenProgram:S,tokenOutMint:y,tokenInMint:P,amount:N,userAtaAccount:L,inviterPublic:b,wSol:T,swapWsolPdaAta:C,userwSolAta:k}}export async function priorityFeeInstruction(t,e){return[a.setComputeUnitLimit({units:t}),a.setComputeUnitPrice({microLamports:Math.floor(e*Math.pow(10,6)/t)})]}export async function versionedTra(t,e,o,n){const r=new c({payerKey:e.publicKey,recentBlockhash:o,instructions:t}).compileToV0Message(n),a=new u(r);return a.sign([e]),a}export async function nomalVersionedTransaction(t,e,o){const n=new c({payerKey:e.publicKey,recentBlockhash:o,instructions:t}).compileToV0Message(),r=new u(n);return r.sign([e]),r}export function getTotalFee(t){const e=t.priorityFee||0;let o=t.bribeFee||0;const n=Math.floor(Number(e)+Number(o));if(3===t.tradeType){const t=n,e=BigInt(Math.floor(t))+BigInt(5e3);return console.log("Gmgn -> totalFee",e.toString()),e.toString()}return(BigInt(Math.floor(n))+BigInt(2e4)).toString()}export async function deleteTransactionGasInstruction(t){let e=0;for(;e>=0;){e=-1;for(let o=0;o<t.length;o++){if(t[o].programId.toBase58()==a.programId.toBase58()){e=o,t.splice(o,1);break}}}}export function getTransactionGasLimitUintsInInstruction(t){console.log("指令长度",t.length);let e=0;for(let o=0;o<t.length;o++){const n=t[o];if(n.programId.toBase58()==a.programId.toBase58()&&2===n.data[0]){e=n.data.slice(1).readInt32LE(0);break}}return e}export function isParameterValid(e){const o=new t.BN(e.solLamports),n=new t.BN(e.userwsolAtaAmount),r=new t.BN(e.userWsolAtaLamports),a=new t.BN(e.tokenAtaLamports);if(console.log("lamportsBefore",e.solLamports),console.log("wsolAtaAmountBefore",e.userwsolAtaAmount),console.log("userWsolAtaLamports",e.userWsolAtaLamports),console.log("tokenAtaLamports",e.tokenAtaLamports),o<0||n<0||r<0||a<0)return!1}export async function createSwapPrepareInstruction(t,e,o){return t.isBuy?createBuySwapPrepareInstruction(t,e,o):createSaleSwapPrepareInstruction(t,e,o)}export async function createSimpleSwapCompleteInstruction(t,e,o,n){return t.isBuy?createSimpleBuySwapCompletedInstruction(t,e,o,n):createSimpleSaleSwapCompletedInstruction(t,e,o,n)}export async function createSwapCompleteInstruction(t,e,o){return t.isBuy?createBuySwapCompletedInstruction(t,e,o):createSaleSwapCompletedInstruction(t,e,o)}export async function createBuySwapPrepareInstruction(t,e,o){const{program:n,tradePda:r,userAtaAccount:a,userwSolAta:s}=await information(t,e,o);return console.log("tradePda = "+r.toBase58()),n.methods.buySwapPrepare().accounts({tradeConfigPda:r,userTokenAtaAccount:a,userWsolAtaAccount:s,user:e.publicKey}).instruction()}export async function createBuySwapCompletedInstruction(o,n,a){const{program:s,dataPda:c,swapPda:u,tradePda:m,userAtaAccount:l,userwSolAta:p,inviterPublic:f}=await information(o,n,a),d=new t.BN(o.isPump?2:1),g=new t.BN(o.feeRate),w=new t.BN(1e4*(o.commissionRate||0)),B=new t.BN(o.tradeType>0?0:1);return s.methods.buySwapCompleted(B,d,g,w).accounts({swapPda:u,configPda:c,tradeConfigPda:m,user:n.publicKey,userAtaAccount:l,userWsolAtaAccount:p,inviter:f,associateTokenProgram:e,tokenProgram:r,systemProgram:i.programId}).instruction()}export async function createSaleSwapPrepareInstruction(t,e,o){const{program:n,tradePda:r,userAtaAccount:a,userwSolAta:s}=await information(t,e,o);return n.methods.saleSwapPrepare().accounts({tradeConfigPda:r,userWsolAtaAccount:s,user:e.publicKey,userAtaAccount:a}).instruction()}export async function createClaimInstruction(e,o,n,r){initAnchor(n,r);const a=new s(B()),c=new t.Program(m.solanaIDL,a),[u]=await s.findProgramAddress([Buffer.from(I)],a),[l,p]=await s.findProgramAddress([Buffer.from(h)],a),[f]=await s.findProgramAddress([Buffer.from(S)],a),d=Buffer.from(e,"hex"),g=Buffer.from(o,"hex");return c.methods.claimCommission(p,d,Array.from(g)).accounts({swapPda:l,configPda:u,noncePda:f,user:n.publicKey,ixSysvar:t.web3.SYSVAR_INSTRUCTIONS_PUBKEY,systemProgram:i.programId}).instruction()}export async function createTradeNonceVerifyInstruction(e,o,n){initAnchor(o,n);const r=new s(B()),a=new t.Program(m.solanaIDL,r),[c]=await s.findProgramAddress([Buffer.from(b),o.publicKey.toBuffer()],r);return a.methods.tradeNonceVerify(new t.BN(e)).accounts({tradeNonceAccount:c,signer:o.publicKey,systemProgram:i.programId}).instruction()}export async function getTradeNonce(e,o){initAnchor(e,o);const n=new s(B()),r=new t.Program(m.solanaIDL,n),[a]=await s.findProgramAddress([Buffer.from(b),e.publicKey.toBuffer()],n);try{const t=await r.account.tradeNonce.fetch(a);if(console.log("tradeNonceData:",t),t)return console.log("tradeNonceData:",t.tradeNonce.toNumber()),t.tradeNonce.toNumber()}catch(t){if(t instanceof Error&&t.message.includes("Account does not exist"))return console.log("账户不存在:",a.toBase58()),0}return-1}export async function createEd25519ProgramIx(e,o,n){const r=new s(e),a=Buffer.from(o,"hex"),i=Buffer.from(n,"hex");return t.web3.Ed25519Program.createInstructionWithPublicKey({publicKey:r.toBytes(),message:a,signature:i})}export async function createSaleSwapCompletedInstruction(o,n,a){const{program:s,dataPda:c,swapPda:u,tradePda:m,bump3:l,amount:p,userAtaAccount:f,swapWsolPdaAta:d,wSol:g,userwSolAta:w,inviterPublic:B}=await information(o,n,a),A=new t.BN(o.isPump?2:1),P=new t.BN(o.feeRate),y=new t.BN(1e4*(o.commissionRate||0)),I=new t.BN(o.tradeType>0?0:1);return s.methods.saleSwapCompleted(l,p,I,A,P,y).accounts({swapPda:u,configPda:c,tradeConfigPda:m,wsolMint:g,userWsolAtaAccount:w,swapPdaWsolAtaAccount:d,user:n.publicKey,userAtaAccount:f,inviter:B,associateTokenProgram:e,tokenProgram:r,systemProgram:i.programId}).instruction()}export async function createSimpleBuySwapCompletedInstruction(o,n,a,s){const{program:c,dataPda:u,swapPda:m,tradePda:l,userAtaAccount:p,userwSolAta:f,inviterPublic:d}=await information(o,n,a),g=new t.BN(o.isPump?2:1),w=new t.BN(o.feeRate),B=new t.BN(1e4*(o.commissionRate||0)),A=new t.BN(o.tradeType>0?0:1),P=new t.BN(o.tokenBalance),y=new t.BN(o.solLamports),I=new t.BN(o.userWsolAtaLamports),S=new t.BN(o.tokenAtaLamports),h=new t.BN(s);return c.methods.buySwapCompletedSimple(A,g,w,B,y,I,P,S,h).accounts({swapPda:m,configPda:u,tradeConfigPda:l,user:n.publicKey,userAtaAccount:p,userWsolAtaAccount:f,inviter:d,associateTokenProgram:e,tokenProgram:r,systemProgram:i.programId}).instruction()}export async function createSimpleSaleSwapCompletedInstruction(o,n,a,s){const{program:c,tokenInMint:u,dataPda:m,swapPda:l,tradePda:p,bump3:f,amount:d,userAtaAccount:g,swapWsolPdaAta:w,wSol:B,userwSolAta:A,inviterPublic:P}=await information(o,n,a),y=new t.BN(o.isPump?2:1),I=new t.BN(o.feeRate),S=new t.BN(1e4*(o.commissionRate||0)),h=new t.BN(o.tradeType>0?0:1),x=new t.BN(o.solLamports),b=new t.BN(o.userwsolAtaAmount),N=new t.BN(o.userWsolAtaLamports);console.log("userWsolAtaLamports = "+N);const L=new t.BN(o.tokenAtaLamports),T=new t.BN(s);return c.methods.saleSwapCompletedSimple(f,d,h,y,I,S,x,b,N,L,u.toBase58(),T).accounts({swapPda:l,configPda:m,tradeConfigPda:p,wsolMint:B,userWsolAtaAccount:A,swapPdaWsolAtaAccount:w,user:n.publicKey,userAtaAccount:g,inviter:P,associateTokenProgram:e,tokenProgram:r,systemProgram:i.programId}).instruction()}export async function createTipTransferInstruction(t,e,o){return i.transfer({fromPubkey:t,toPubkey:e,lamports:o})}export function numberToLittleEndianHex(t,e){if(t<0||t>16777215)throw new Error("Number must be between 0 and 16777215 for 3 bytes");const o=new ArrayBuffer(4);new DataView(o).setUint32(0,t,!0);const n=new Uint8Array(o).slice(0,e);return Array.from(n).map(t=>t.toString(16).padStart(2,"0")).join("")}export async function checkAccountCloseInstruction(t,e,o,n){if(t.isBuy)return!1;if(C.indexOf(e.programId.toBase58())<0)return!1;if(BigInt(t.tokenBalance||"0")==BigInt(t.amountIn))return!1;const{userAtaAccount:r}=await information(t,o,n),a=e.keys[0].pubkey.toBase58();return r.toBase58()==a&&(console.log("deleteAta被删除"),!0)}export function getInstructionAmounts(t,e){const o=e.data.toString("hex"),n=e.programId.toBase58();let r="",a="";const s=T.get(n)??0;n!=P.toBase58()&&n!=y.toBase58()||!t.isBuy?n==w.toBase58()?(r=o.substring(o.length-s,o.length-s+16),a=o.substring(o.length-s+16,o.length-s+32)):(r=o.substring(s,s+16),a=o.substring(s+16,s+32)):(r=o.substring(s+16,s+32),a=o.substring(s,s+16));const i=r.match(/.{2}/g)?.reverse().join("")||"",c=BigInt("0x"+i),u=a.match(/.{2}/g)?.reverse().join("")||"";return{input:c,output:BigInt("0x"+u)}}export function getInstructionReplaceDataHex(t,e,o,n,r){let a=n.concat(r);(e==y.toBase58()||e==P.toBase58())&&o.startsWith(A)&&t.isBuy&&(a=r.concat(n));const s=T.get(e)??0;let i;return i=e==w.toBase58()?o.slice(0,o.length-s)+a+o.slice(o.length-s+32):o.slice(0,s)+a+o.slice(s+32),i}export function setTransferInstructionLamports(t,e,o){if(t.data.readUInt32LE(0)===L){const n=Buffer.alloc(8);n.writeBigUInt64LE(o+BigInt(1e3),0);const r=n.toString("hex"),a=e.slice(0,e.length-16)+r;return Buffer.from(a,"hex"),t.data=Buffer.from(a,"hex"),!0}return!1}export function setCreateAccountBySeedInstructionLamports(t,e,o,n){const r=g+BigInt(t),a=Buffer.alloc(8);a.writeBigUInt64LE(r);const s=a.toString("hex"),i=o.indexOf(s);if(i>=0){const t=g+n,r=Buffer.alloc(8);r.writeBigUInt64LE(t);const a=r.toString("hex"),s=o.slice(0,i)+a+o.slice(i+16);return e.data=Buffer.from(s,"hex"),!0}return!1}export function createMemoInstructionWithTxInfo(t){let e=`0x${(t.isBuy?1:2).toString(16).padStart(2,"0").toUpperCase()}`;const o=Buffer.alloc(8);o.writeBigUInt64LE(BigInt(t.amountIn));const n=o.toString("hex");o.writeBigUInt64LE(BigInt(t.amountOutMin));const r=o.toString("hex"),a=t.isBuy?t.out.address:t.in.address;return k(e+n+r+a)}export async function getDexCommisionReceiverAndLamports(t){const e=new s(B()),[o]=await s.findProgramAddress([Buffer.from(h)],e),n=1e4*Number(t.amountIn)/(1e4-t.feeRate);return{swap_pda:o,commissionAmount:t.isBuy?Math.floor(n*t.feeRate/1e4):Math.floor(Number(t.amountOutMin)*t.feeRate/1e4)}}export async function deleteTipCurrentInInstructions(t){for(let e=t.instructions.length-1;e>t.instructions.length-3;e--){const o=t.instructions[e];if(o.programId.toBase58()==N.toBase58()){o.data.readUInt32LE(0)===L&&(console.log("SOLANA_SYSTEM_PROGRAM_TRANSFER_ID"),t.instructions.splice(t.instructions.length-1))}}}export function getTipAndPriorityByUserPriorityFee(t){return{tipAmount:t-5e4,priorityAmount:5e4}}
+import * as anchor from '@project-serum/anchor';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { ComputeBudgetProgram, PublicKey, SystemProgram, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
+import abis from '../../../common/abis';
+import CustomWallet from '../../../wallet/custom';
+import { sTokenAddress, zero } from '../../../common/config';
+import { AssociateTokenProgram, BASE_ACCOUNT_INIT_FEE, JUPITER_PROGRAM_ID, PROGRAMID, PUEM_INSTRUCTION_PREFIX, PUMP_AMM_PROGRAM_ID, PUMP_PROGRAM_ID, SEED_DATA, SEED_NONCE, SEED_SWAP, SEED_TRADE, SEED_TRADE_NONCE, SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SUPPORT_CHANGE_PROGRAM_IDS, TOKEN_PROGRAM_OWNS } from '../config';
+import { createMemoInstruction } from '@solana/spl-memo';
+export const isBuy = (currentSymbol) => {
+    return !!currentSymbol.isBuy;
+};
+export function initAnchor(owner, network) {
+    const connection = network.getProviderByChain(102);
+    const wallet = new CustomWallet(owner);
+    const provider = new anchor.AnchorProvider(connection, wallet, anchor.AnchorProvider.defaultOptions());
+    anchor.setProvider(provider);
+}
+export async function information(currentSymbol, owner, network) {
+    initAnchor(owner, network);
+    const programId = new PublicKey(PROGRAMID());
+    const program = new anchor.Program(abis.solanaIDL, programId);
+    const [data_pda] = await PublicKey.findProgramAddress([Buffer.from(SEED_DATA)], programId);
+    const [swap_pda, bump2] = await PublicKey.findProgramAddress([Buffer.from(SEED_SWAP)], programId);
+    const [trade_config_pda, bump3] = await PublicKey.findProgramAddress([Buffer.from(SEED_TRADE)], programId);
+    const tokenInMint = new PublicKey(currentSymbol.in.address);
+    const tokenOutMint = new PublicKey(currentSymbol.out.address);
+    const associateTokenProgram = new PublicKey(AssociateTokenProgram);
+    let inviterPublic = currentSymbol.inviter;
+    if (currentSymbol.inviter === zero || !currentSymbol.inviter) {
+        inviterPublic = swap_pda;
+    }
+    else {
+        inviterPublic = new PublicKey(currentSymbol.inviter);
+    }
+    const amount = new anchor.BN(currentSymbol.amountIn);
+    let userAtaAccount;
+    if (currentSymbol.TOKEN_2022) {
+        userAtaAccount = await getAssociatedTokenAddress(currentSymbol.isBuy ? tokenOutMint : tokenInMint, owner.publicKey, false, TOKEN_2022_PROGRAM_ID);
+        console.log('userAtaAccount1 = ' + userAtaAccount);
+    }
+    else {
+        userAtaAccount = await getAssociatedTokenAddress(currentSymbol.isBuy ? tokenOutMint : tokenInMint, owner.publicKey, false);
+        console.log('userAtaAccount2 = ' + userAtaAccount);
+    }
+    const wSol = new PublicKey(sTokenAddress);
+    const swapWsolPdaAta = await getAssociatedTokenAddress(wSol, swap_pda, true);
+    const userwSolAta = await getAssociatedTokenAddress(wSol, owner.publicKey, false);
+    console.log('userwSolAta = ' + userwSolAta.toBase58());
+    console.log('wSol = ' + wSol.toBase58());
+    const info = {
+        program,
+        dataPda: data_pda,
+        swapPda: swap_pda,
+        tradePda: trade_config_pda,
+        bump2,
+        bump3,
+        associateTokenProgram,
+        tokenOutMint,
+        tokenInMint,
+        amount,
+        userAtaAccount,
+        inviterPublic,
+        wSol,
+        swapWsolPdaAta,
+        userwSolAta
+    };
+    return info;
+}
+export async function priorityFeeInstruction(limit, fee) {
+    const addPriorityLimit = ComputeBudgetProgram.setComputeUnitLimit({
+        units: limit
+    });
+    const addPriorityFee = ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: Math.floor((fee * Math.pow(10, 6)) / limit)
+    });
+    return [addPriorityLimit, addPriorityFee];
+}
+export async function versionedTra(instructions, owner, latestBlockhash, addressLookupTableAccounts) {
+    const message = new TransactionMessage({
+        payerKey: owner.publicKey,
+        recentBlockhash: latestBlockhash,
+        instructions
+    }).compileToV0Message(addressLookupTableAccounts);
+    const versionedTx = new VersionedTransaction(message);
+    versionedTx.sign([owner]);
+    return versionedTx;
+}
+export async function nomalVersionedTransaction(instructions, owner, latestBlockhash) {
+    const message = new TransactionMessage({
+        payerKey: owner.publicKey,
+        recentBlockhash: latestBlockhash,
+        instructions
+    }).compileToV0Message();
+    const versionedTx = new VersionedTransaction(message);
+    versionedTx.sign([owner]);
+    return versionedTx;
+}
+export function getTotalFee(currentSymbol) {
+    const priorityFee = currentSymbol.priorityFee || 0;
+    let bribeFee = currentSymbol.bribeFee || 0;
+    const fee = Math.floor(Number(priorityFee) + Number(bribeFee));
+    if (currentSymbol.tradeType === 3) {
+        const currentFee = fee;
+        const total = BigInt(Math.floor(currentFee)) + BigInt(5000);
+        console.log('Gmgn -> totalFee', total.toString());
+        return total.toString();
+    }
+    const total = BigInt(Math.floor(fee)) + BigInt(5000 * 4);
+    return total.toString();
+}
+export async function deleteTransactionGasInstruction(instructions) {
+    let indexToDelete = 0;
+    while (indexToDelete >= 0) {
+        indexToDelete = -1;
+        for (let i = 0; i < instructions.length; i++) {
+            const txIx = instructions[i];
+            if (txIx.programId.toBase58() == ComputeBudgetProgram.programId.toBase58()) {
+                indexToDelete = i;
+                instructions.splice(i, 1);
+                break;
+            }
+        }
+    }
+}
+export function getTransactionGasLimitUintsInInstruction(instructions) {
+    console.log('指令长度', instructions.length);
+    let gaslimit = 0;
+    for (let i = 0; i < instructions.length; i++) {
+        const txIx = instructions[i];
+        if (txIx.programId.toBase58() == ComputeBudgetProgram.programId.toBase58()) {
+            if (txIx.data[0] === 0x02) {
+                const last8Bytes = txIx.data.slice(1);
+                gaslimit = last8Bytes.readInt32LE(0);
+                break;
+            }
+        }
+    }
+    return gaslimit;
+}
+export function isParameterValid(currentSymbol) {
+    const lamportsBefore = new anchor.BN(currentSymbol.solLamports);
+    const wsolAtaAmountBefore = new anchor.BN(currentSymbol.userwsolAtaAmount);
+    const userWsolAtaLamports = new anchor.BN(currentSymbol.userWsolAtaLamports);
+    const tokenAtaLamports = new anchor.BN(currentSymbol.tokenAtaLamports);
+    console.log('lamportsBefore', currentSymbol.solLamports);
+    console.log('wsolAtaAmountBefore', currentSymbol.userwsolAtaAmount);
+    console.log('userWsolAtaLamports', currentSymbol.userWsolAtaLamports);
+    console.log('tokenAtaLamports', currentSymbol.tokenAtaLamports);
+    if (lamportsBefore < 0 || wsolAtaAmountBefore < 0 || userWsolAtaLamports < 0 || tokenAtaLamports < 0) {
+        return false;
+    }
+}
+export async function createSwapPrepareInstruction(currentSymbol, owner, network) {
+    if (currentSymbol.isBuy) {
+        return createBuySwapPrepareInstruction(currentSymbol, owner, network);
+    }
+    else {
+        return createSaleSwapPrepareInstruction(currentSymbol, owner, network);
+    }
+}
+export async function createSimpleSwapCompleteInstruction(currentSymbol, owner, network, gasFee) {
+    if (currentSymbol.isBuy) {
+        return createSimpleBuySwapCompletedInstruction(currentSymbol, owner, network, gasFee);
+    }
+    else {
+        return createSimpleSaleSwapCompletedInstruction(currentSymbol, owner, network, gasFee);
+    }
+}
+export async function createSwapCompleteInstruction(currentSymbol, owner, network) {
+    if (currentSymbol.isBuy) {
+        return createBuySwapCompletedInstruction(currentSymbol, owner, network);
+    }
+    else {
+        return createSaleSwapCompletedInstruction(currentSymbol, owner, network);
+    }
+}
+export async function createBuySwapPrepareInstruction(currentSymbol, owner, network) {
+    const { program, tradePda, userAtaAccount, userwSolAta } = await information(currentSymbol, owner, network);
+    console.log('tradePda = ' + tradePda.toBase58());
+    return program.methods
+        .buySwapPrepare()
+        .accounts({
+        tradeConfigPda: tradePda,
+        userTokenAtaAccount: userAtaAccount,
+        userWsolAtaAccount: userwSolAta,
+        user: owner.publicKey
+    })
+        .instruction();
+}
+export async function createBuySwapCompletedInstruction(currentSymbol, owner, network) {
+    const { program, dataPda, swapPda, tradePda, userAtaAccount, userwSolAta, inviterPublic } = await information(currentSymbol, owner, network);
+    const type = new anchor.BN(currentSymbol.isPump ? 2 : 1);
+    const dexCommissionRateBN = new anchor.BN(currentSymbol.feeRate);
+    const inviterCommissionRateBN = new anchor.BN((currentSymbol.commissionRate || 0) * 10000);
+    const tradeType = new anchor.BN(currentSymbol.tradeType > 0 ? 0 : 1);
+    return program.methods
+        .buySwapCompleted(tradeType, type, dexCommissionRateBN, inviterCommissionRateBN)
+        .accounts({
+        swapPda: swapPda,
+        configPda: dataPda,
+        tradeConfigPda: tradePda,
+        user: owner.publicKey,
+        userAtaAccount: userAtaAccount,
+        userWsolAtaAccount: userwSolAta,
+        inviter: inviterPublic,
+        associateTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId
+    })
+        .instruction();
+}
+export async function createSaleSwapPrepareInstruction(currentSymbol, owner, network) {
+    const { program, tradePda, userAtaAccount, userwSolAta } = await information(currentSymbol, owner, network);
+    return program.methods
+        .saleSwapPrepare()
+        .accounts({
+        tradeConfigPda: tradePda,
+        userWsolAtaAccount: userwSolAta,
+        user: owner.publicKey,
+        userAtaAccount: userAtaAccount
+    })
+        .instruction();
+}
+export async function createClaimInstruction(contents, signatrue, owner, network) {
+    initAnchor(owner, network);
+    const programId = new PublicKey(PROGRAMID());
+    const program = new anchor.Program(abis.solanaIDL, programId);
+    const [data_pda] = await PublicKey.findProgramAddress([Buffer.from(SEED_DATA)], programId);
+    const [swap_pda, bump2] = await PublicKey.findProgramAddress([Buffer.from(SEED_SWAP)], programId);
+    const [nonce_data] = await PublicKey.findProgramAddress([Buffer.from(SEED_NONCE)], programId);
+    const contentBytes = Buffer.from(contents, 'hex');
+    const signatrueBytes = Buffer.from(signatrue, 'hex');
+    return program.methods
+        .claimCommission(bump2, contentBytes, Array.from(signatrueBytes))
+        .accounts({
+        swapPda: swap_pda,
+        configPda: data_pda,
+        noncePda: nonce_data,
+        user: owner.publicKey,
+        ixSysvar: anchor.web3.SYSVAR_INSTRUCTIONS_PUBKEY,
+        systemProgram: SystemProgram.programId
+    })
+        .instruction();
+}
+export async function createTradeNonceVerifyInstruction(timeStamp, owner, network) {
+    initAnchor(owner, network);
+    const programId = new PublicKey(PROGRAMID());
+    const program = new anchor.Program(abis.solanaIDL, programId);
+    const [trade_nonce_account] = await PublicKey.findProgramAddress([Buffer.from(SEED_TRADE_NONCE), owner.publicKey.toBuffer()], programId);
+    return program.methods
+        .tradeNonceVerify(new anchor.BN(timeStamp))
+        .accounts({
+        tradeNonceAccount: trade_nonce_account,
+        signer: owner.publicKey,
+        systemProgram: SystemProgram.programId
+    })
+        .instruction();
+}
+export async function getTradeNonce(owner, network) {
+    initAnchor(owner, network);
+    const programId = new PublicKey(PROGRAMID());
+    const program = new anchor.Program(abis.solanaIDL, programId);
+    const [trade_nonce_account] = await PublicKey.findProgramAddress([Buffer.from(SEED_TRADE_NONCE), owner.publicKey.toBuffer()], programId);
+    try {
+        const tradeNonceData = await program.account.tradeNonce.fetch(trade_nonce_account);
+        console.log('tradeNonceData:', tradeNonceData);
+        if (tradeNonceData) {
+            console.log('tradeNonceData:', tradeNonceData.tradeNonce.toNumber());
+            return tradeNonceData.tradeNonce.toNumber();
+        }
+    }
+    catch (error) {
+        if (error instanceof Error && error.message.includes('Account does not exist')) {
+            console.log('账户不存在:', trade_nonce_account.toBase58());
+            return 0;
+        }
+    }
+    return -1;
+}
+export async function createEd25519ProgramIx(signer, contents, signatrue) {
+    const signerPub = new PublicKey(signer);
+    const contentBytes = Buffer.from(contents, 'hex');
+    const signatrueBytes = Buffer.from(signatrue, 'hex');
+    return anchor.web3.Ed25519Program.createInstructionWithPublicKey({
+        publicKey: signerPub.toBytes(),
+        message: contentBytes,
+        signature: signatrueBytes
+    });
+}
+export async function createSaleSwapCompletedInstruction(currentSymbol, owner, network) {
+    const { program, dataPda, swapPda, tradePda, bump3, amount, userAtaAccount, swapWsolPdaAta, wSol, userwSolAta, inviterPublic } = await information(currentSymbol, owner, network);
+    const type = new anchor.BN(currentSymbol.isPump ? 2 : 1);
+    const dexCommissionRateBN = new anchor.BN(currentSymbol.feeRate);
+    const inviterCommissionRateBN = new anchor.BN((currentSymbol.commissionRate || 0) * 10000);
+    const tradeType = new anchor.BN(currentSymbol.tradeType > 0 ? 0 : 1);
+    return program.methods
+        .saleSwapCompleted(bump3, amount, tradeType, type, dexCommissionRateBN, inviterCommissionRateBN)
+        .accounts({
+        swapPda: swapPda,
+        configPda: dataPda,
+        tradeConfigPda: tradePda,
+        wsolMint: wSol,
+        userWsolAtaAccount: userwSolAta,
+        swapPdaWsolAtaAccount: swapWsolPdaAta,
+        user: owner.publicKey,
+        userAtaAccount: userAtaAccount,
+        inviter: inviterPublic,
+        associateTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId
+    })
+        .instruction();
+}
+export async function createSimpleBuySwapCompletedInstruction(currentSymbol, owner, network, gasFee) {
+    const { program, dataPda, swapPda, tradePda, userAtaAccount, userwSolAta, inviterPublic } = await information(currentSymbol, owner, network);
+    const type = new anchor.BN(currentSymbol.isPump ? 2 : 1);
+    const dexCommissionRateBN = new anchor.BN(currentSymbol.feeRate);
+    const inviterCommissionRateBN = new anchor.BN((currentSymbol.commissionRate || 0) * 10000);
+    const tradeType = new anchor.BN(currentSymbol.tradeType > 0 ? 0 : 1);
+    const tokenBalance = new anchor.BN(currentSymbol.tokenBalance);
+    const lamportsBefore = new anchor.BN(currentSymbol.solLamports);
+    const userWsolAtaLamports = new anchor.BN(currentSymbol.userWsolAtaLamports);
+    const tokenAtaLamports = new anchor.BN(currentSymbol.tokenAtaLamports);
+    const fee = new anchor.BN(gasFee);
+    return program.methods
+        .buySwapCompletedSimple(tradeType, type, dexCommissionRateBN, inviterCommissionRateBN, lamportsBefore, userWsolAtaLamports, tokenBalance, tokenAtaLamports, fee)
+        .accounts({
+        swapPda: swapPda,
+        configPda: dataPda,
+        tradeConfigPda: tradePda,
+        user: owner.publicKey,
+        userAtaAccount: userAtaAccount,
+        userWsolAtaAccount: userwSolAta,
+        inviter: inviterPublic,
+        associateTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId
+    })
+        .instruction();
+}
+export async function createSimpleSaleSwapCompletedInstruction(currentSymbol, owner, network, gasFee) {
+    const { program, tokenInMint, dataPda, swapPda, tradePda, bump3, amount, userAtaAccount, swapWsolPdaAta, wSol, userwSolAta, inviterPublic } = await information(currentSymbol, owner, network);
+    const type = new anchor.BN(currentSymbol.isPump ? 2 : 1);
+    const dexCommissionRateBN = new anchor.BN(currentSymbol.feeRate);
+    const inviterCommissionRateBN = new anchor.BN((currentSymbol.commissionRate || 0) * 10000);
+    const tradeType = new anchor.BN(currentSymbol.tradeType > 0 ? 0 : 1);
+    const lamportsBefore = new anchor.BN(currentSymbol.solLamports);
+    const wsolAtaAmountBefore = new anchor.BN(currentSymbol.userwsolAtaAmount);
+    const userWsolAtaLamports = new anchor.BN(currentSymbol.userWsolAtaLamports);
+    console.log('userWsolAtaLamports = ' + userWsolAtaLamports);
+    const tokenAtaLamports = new anchor.BN(currentSymbol.tokenAtaLamports);
+    const fee = new anchor.BN(gasFee);
+    return program.methods
+        .saleSwapCompletedSimple(bump3, amount, tradeType, type, dexCommissionRateBN, inviterCommissionRateBN, lamportsBefore, wsolAtaAmountBefore, userWsolAtaLamports, tokenAtaLamports, tokenInMint.toBase58(), fee)
+        .accounts({
+        swapPda: swapPda,
+        configPda: dataPda,
+        tradeConfigPda: tradePda,
+        wsolMint: wSol,
+        userWsolAtaAccount: userwSolAta,
+        swapPdaWsolAtaAccount: swapWsolPdaAta,
+        user: owner.publicKey,
+        userAtaAccount: userAtaAccount,
+        inviter: inviterPublic,
+        associateTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId
+    })
+        .instruction();
+}
+export async function createTipTransferInstruction(from, to, lamports) {
+    return SystemProgram.transfer({
+        fromPubkey: from,
+        toPubkey: to,
+        lamports: lamports
+    });
+}
+export function numberToLittleEndianHex(num, byteLength) {
+    if (num < 0 || num > 0xffffff) {
+        throw new Error('Number must be between 0 and 16777215 for 3 bytes');
+    }
+    const buffer = new ArrayBuffer(4);
+    const view = new DataView(buffer);
+    view.setUint32(0, num, true);
+    const bytes = new Uint8Array(buffer).slice(0, byteLength);
+    return Array.from(bytes)
+        .map((byte) => byte.toString(16).padStart(2, '0'))
+        .join('');
+}
+export async function checkAccountCloseInstruction(currentSymbol, instruction, owner, network) {
+    if (currentSymbol.isBuy)
+        return false;
+    if (TOKEN_PROGRAM_OWNS.indexOf(instruction.programId.toBase58()) < 0)
+        return false;
+    if (BigInt(currentSymbol.tokenBalance || '0') == BigInt(currentSymbol.amountIn))
+        return false;
+    const { userAtaAccount } = await information(currentSymbol, owner, network);
+    const deleteAta = instruction.keys[0].pubkey.toBase58();
+    if (userAtaAccount.toBase58() == deleteAta) {
+        console.log('deleteAta被删除');
+        return true;
+    }
+    return false;
+}
+export function getInstructionAmounts(currentSymbol, instruction) {
+    const dataHex = instruction.data.toString('hex');
+    const programId = instruction.programId.toBase58();
+    let beforeInput = '';
+    let beforeOutput = '';
+    const indexInSupportingArr = SUPPORT_CHANGE_PROGRAM_IDS.get(programId) ?? 0;
+    if ((programId == PUMP_AMM_PROGRAM_ID.toBase58() || programId == PUMP_PROGRAM_ID.toBase58()) && currentSymbol.isBuy) {
+        beforeInput = dataHex.substring(indexInSupportingArr + 16, indexInSupportingArr + 16 * 2);
+        beforeOutput = dataHex.substring(indexInSupportingArr, indexInSupportingArr + 16);
+    }
+    else if (programId == JUPITER_PROGRAM_ID.toBase58()) {
+        beforeInput = dataHex.substring(dataHex.length - indexInSupportingArr, dataHex.length - indexInSupportingArr + 16);
+        beforeOutput = dataHex.substring(dataHex.length - indexInSupportingArr + 16, dataHex.length - indexInSupportingArr + 16 * 2);
+    }
+    else {
+        beforeInput = dataHex.substring(indexInSupportingArr, indexInSupportingArr + 16);
+        beforeOutput = dataHex.substring(indexInSupportingArr + 16, indexInSupportingArr + 16 * 2);
+    }
+    const beforeInputHex = beforeInput.match(/.{2}/g)?.reverse().join('') || '';
+    const bigIntBeforeInput = BigInt('0x' + beforeInputHex);
+    const beforeOutputHex = beforeOutput.match(/.{2}/g)?.reverse().join('') || '';
+    const bigIntBeforeOutput = BigInt('0x' + beforeOutputHex);
+    return { input: bigIntBeforeInput, output: bigIntBeforeOutput };
+}
+export function getInstructionReplaceDataHex(currentSymbol, programId, dataHex, inputHex, outputHex) {
+    let replaceHex = inputHex.concat(outputHex);
+    if ((programId == PUMP_PROGRAM_ID.toBase58() || programId == PUMP_AMM_PROGRAM_ID.toBase58()) && dataHex.startsWith(PUEM_INSTRUCTION_PREFIX) && currentSymbol.isBuy) {
+        replaceHex = outputHex.concat(inputHex);
+    }
+    const indexInSupportingArr = SUPPORT_CHANGE_PROGRAM_IDS.get(programId) ?? 0;
+    let finalData;
+    if (programId == JUPITER_PROGRAM_ID.toBase58()) {
+        finalData = dataHex.slice(0, dataHex.length - indexInSupportingArr) + replaceHex + dataHex.slice(dataHex.length - indexInSupportingArr + 16 * 2);
+    }
+    else {
+        finalData = dataHex.slice(0, indexInSupportingArr) + replaceHex + dataHex.slice(indexInSupportingArr + 16 * 2);
+    }
+    return finalData;
+}
+export function setTransferInstructionLamports(instruction, dataHex, newLamports) {
+    const instructionId = instruction.data.readUInt32LE(0);
+    if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
+        const buffer = Buffer.alloc(8);
+        buffer.writeBigUInt64LE(newLamports + BigInt(1000), 0);
+        const newInputAmountHex = buffer.toString('hex');
+        const transferData = dataHex.slice(0, dataHex.length - 16) + newInputAmountHex;
+        Buffer.from(transferData, 'hex');
+        instruction.data = Buffer.from(transferData, 'hex');
+        return true;
+    }
+    return false;
+}
+export function setCreateAccountBySeedInstructionLamports(preAmountIn, instruction, dataHex, newLamports) {
+    const totalInitFeeBefore = BASE_ACCOUNT_INIT_FEE + BigInt(preAmountIn);
+    const totalInitFeeBuffer = Buffer.alloc(8);
+    totalInitFeeBuffer.writeBigUInt64LE(totalInitFeeBefore);
+    const initFeeHex = totalInitFeeBuffer.toString('hex');
+    const feeInitIndex = dataHex.indexOf(initFeeHex);
+    if (feeInitIndex >= 0) {
+        const totalInitFeeAfter = BASE_ACCOUNT_INIT_FEE + newLamports;
+        const totalInitFeeBuffer = Buffer.alloc(8);
+        totalInitFeeBuffer.writeBigUInt64LE(totalInitFeeAfter);
+        const initFeeHexAfter = totalInitFeeBuffer.toString('hex');
+        const createAccountData = dataHex.slice(0, feeInitIndex) + initFeeHexAfter + dataHex.slice(feeInitIndex + 16);
+        instruction.data = Buffer.from(createAccountData, 'hex');
+        return true;
+    }
+    return false;
+}
+export function createMemoInstructionWithTxInfo(currentSymbol) {
+    const txType = currentSymbol.isBuy ? 1 : 2;
+    let memoHex = `0x${txType.toString(16).padStart(2, '0').toUpperCase()}`;
+    const swapInstructionBuffer = Buffer.alloc(8);
+    swapInstructionBuffer.writeBigUInt64LE(BigInt(currentSymbol.amountIn));
+    const newInputReverseHex = swapInstructionBuffer.toString('hex');
+    swapInstructionBuffer.writeBigUInt64LE(BigInt(currentSymbol.amountOutMin));
+    const newOutputReverseHex = swapInstructionBuffer.toString('hex');
+    const tokenAddr = currentSymbol.isBuy ? currentSymbol.out.address : currentSymbol.in.address;
+    const memoInstruction = createMemoInstruction(memoHex + newInputReverseHex + newOutputReverseHex + tokenAddr);
+    return memoInstruction;
+}
+export async function getDexCommisionReceiverAndLamports(currentSymbol) {
+    const programId = new PublicKey(PROGRAMID());
+    const [swap_pda] = await PublicKey.findProgramAddress([Buffer.from(SEED_SWAP)], programId);
+    const realAmountIn = (Number(currentSymbol.amountIn) * 10000) / (10000 - currentSymbol.feeRate);
+    const commissionAmount = currentSymbol.isBuy
+        ? Math.floor((realAmountIn * currentSymbol.feeRate) / 10000)
+        : Math.floor((Number(currentSymbol.amountOutMin) * currentSymbol.feeRate) / 10000);
+    return { swap_pda, commissionAmount };
+}
+export async function deleteTipCurrentInInstructions(transactionMessage) {
+    for (let i = transactionMessage.instructions.length - 1; i > transactionMessage.instructions.length - 3; i--) {
+        const lastInstruction = transactionMessage.instructions[i];
+        if (lastInstruction.programId.toBase58() == SOLANA_SYSTEM_PROGRAM_ID.toBase58()) {
+            const instructionId = lastInstruction.data.readUInt32LE(0);
+            if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
+                console.log('SOLANA_SYSTEM_PROGRAM_TRANSFER_ID');
+                transactionMessage.instructions.splice(transactionMessage.instructions.length - 1);
+            }
+        }
+    }
+}
+export function getTipAndPriorityByUserPriorityFee(priorityFee) {
+    let priorityAmount = 50000;
+    let tipAmount = priorityFee - priorityAmount;
+    return { tipAmount, priorityAmount };
+}
