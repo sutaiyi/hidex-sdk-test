@@ -1,7 +1,7 @@
 const PrivyTest = (usePrivy: any) => {
   const { login, logout, ready, authenticated, user } = usePrivy();
   console.log(user);
-  const key = authenticated ? `已登录账号${user?.wallet?.address}` : '登录';
+  const key = authenticated ? `已登录账号${user?.linkedAccounts.find((v) => v.chainType === 'solana')?.address}` : '登录';
   const key2 = '退出登录';
   const value = async () => {
     try {
