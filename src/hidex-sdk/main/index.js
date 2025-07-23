@@ -1,1 +1,1 @@
-export{HidexService}from"./HidexService";
+export { HidexService } from './HidexService';

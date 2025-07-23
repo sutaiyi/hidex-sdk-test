@@ -1,1 +1,351 @@
-import{PublicKey as t,SystemProgram as e}from"@solana/web3.js";import{smTokenAddress as a}from"../../common/config";import{getTokenOwner as s,hashFailedMessage as r,sendSolanaTransaction as o,vertransactionsToBase64 as n}from"./utils";import{AccountLayout as i,ASSOCIATED_TOKEN_PROGRAM_ID as c,createAssociatedTokenAccountInstruction as u,createTransferCheckedInstruction as l,getAssociatedTokenAddress as m,TOKEN_2022_PROGRAM_ID as h,TOKEN_PROGRAM_ID as p}from"@solana/spl-token";import{simulateConfig as g,TOKEN_2022_OWNER as d}from"./config";import{priorityFeeInstruction as w}from"./instruction/InstructionCreator";import f from"./defiApi";import y from"../../utils/UtilsService";import{compileTransactionByAddressLookup as S,getAddressLookup as P,getClainSignature as A,getTransactionsSignatureArray as v}from"./instruction";import{NETWORK_FEE_RATES as C}from"../eth/config";import{getWithdrawSign as B}from"../../api/hidex";import{setStatistics as k}from"../../utils/timeStatistics";const b=new y;export const solService=y=>{const{network:L}=y,N=async(e,r="",o=!1)=>{const n=L.get(102);try{if(r&&r===a||!r||o){const a=new t(o?r:e),s=L.sysProviderRpcs[n.chain].map(t=>t.getBalance(a).then(t=>t).catch(t=>Promise.reject(t))),i=await Promise.any(s);return i.error?o?"-1":"0":i.toString()}const i=new t(e),u=new t(r),l=await L.getProviderByChain(102),p=await s(r,l);let g=await m(u,i,!1);p===d&&(g=await m(u,i,!1,h,c));const w=L.sysProviderRpcs[n.chain].map(t=>t.getTokenAccountBalance(g).then(t=>t).catch(t=>Promise.reject(t))),f=await Promise.any(w);return f.error?o?"-1":"0":f.value.amount}catch(t){return console.error(t),o?"-1":"0"}};return{getBalance:N,getBalanceMultiple:async(e,s,r)=>{const o=r.map(e=>e.toLowerCase()===a.toLowerCase()?new t(s):m(new t(e),new t(s),!1,p)),n=await Promise.all(o),c=L.sysProviderRpcs[e].map(t=>t.getMultipleAccountsInfo(n).then(t=>t).catch(t=>Promise.reject(t))),u=await Promise.any(c),l=[];return u.forEach(t=>{if(t)if(t.data&&t.data.length){const e=i.decode(t.data);l.push(e.amount.toString())}else l.push(t.lamports.toString());else l.push("0")}),l},getNetWorkFees:async(t,e)=>{const a=[];let s=3!==e?.0055:.003,r=3!==e?C.SOLANA_JITO:C.SOLANA;10===e&&(s=1e-5,r=C.SOLANA_SEND);for(let e=0;e<r.length;e++)a.push({value:Number((s*r[e]).toFixed(5)),unit:"SOL",gasLimit:t,gasPrice:5e-6.toString(),rate:r[e]});return a},getAllowance:async()=>1e4,toApprove:async()=>!0,getSendEstimateGas:async()=>({gasLimit:1e5}),getSendFees:async(t,e,a)=>{const s=t.value,r=1e4/Math.pow(10,9);let o=0;const n=await N(e,a);0===Number(n)&&(o=2039280/Math.pow(10,9));return s+0+900880/Math.pow(10,9)+r+o},sendTransaction:async r=>{const{from:n,to:i,amount:g,tokenAddress:f,currentNetWorkFee:y,decimals:S=9}=r;try{let r=n;const P=b.ownerKeypair(r).publicKey,A=new t(i),v=[],C=await L.getFastestProviderByChain(102);if(f&&f.toLowerCase()!==a.toLowerCase()){const e=new t(f),a=await s(f,C)===d,r=await m(e,P,!1,a?h:p,c),o=await m(e,A,!1,a?h:p,c),n=await C.getAccountInfo(o);null!=n&&0!=n.data.length||v.push(u(P,o,A,e,a?h:p,c)),v.push(l(r,e,o,P,BigInt(g),S,[],a?h:p))}else v.push(e.transfer({fromPubkey:P,toPubkey:A,lamports:BigInt(g)}));const B=await w(2e5,y.value);v.unshift(...B);const{blockhash:k}=await C.getLatestBlockhash(),N=await o(C,b.ownerKeypair(r),v,k);return console.timeEnd("sendTransaction"),r="",{error:null,result:{hash:N,message:"SUCCESS"}}}catch(t){return{error:t,result:null}}},getSwapPath:async t=>{if(parseFloat(t.amountIn)<=0)throw new Error("amountIn must be greater than 0");let e=0;if(t.isBuy&&t.currentPrice){const a=Number(t.amountIn)/Math.pow(10,t.in.decimals)*t.cryptoPriceUSD;e=Math.floor(a/Number(t.currentPrice)*Math.pow(10,t.out.decimals))}return!t.isBuy&&t.currentPrice&&(e=Math.floor(Number(t.amountIn)/Math.pow(10,t.in.decimals)*t.currentPrice/t.cryptoPriceUSD*Math.pow(10,t.out.decimals))),{fullAmoutOut:BigInt(e).toString(),data:null}},getSwapEstimateGas:async(t,e,a)=>{const{compile:s}=t,r=a.address;let o=s,n=[];console.log("------------isGetAddressLookup------------------",!!o?.addressesLookup),k({timerKey:"SwapRoute",isBegin:!0});const{success:i,swapTransaction:c,data:u,outAmount:l,recentBlockhash:m}=await f.swapRoute(t,r);if(t.amountOutMin=l,k({timerKey:"SwapRoute",isBegin:!1}),!i)throw new Error("Failed to swap_get_router"+JSON.stringify(t)+e);if(o?.addressesLookup&&c){console.log("message",1);const{message:e,addressesLookup:s}=await S(c,o?.addressesLookup,y);console.log("message",e),n=await v(e,s,m,t,a,y)}if(console.log("txArray",n),0===n.length){k({timerKey:"CompileTransaction",isBegin:!0}),o=await P(c,y),t.preAmountIn=u.inAmount,t.preAmountOut=u.otherAmountThreshold;const{message:e,addressesLookup:s}=await S(c,o?.addressesLookup,y);n=await v(e,s,m,t,a,y),k({timerKey:"CompileTransaction",isBegin:!1}),console.timeEnd("AgainRouterTimer")}if(0===n.length)throw new Error("Failed to swap txArray is empty"+JSON.stringify(t));return console.log("txArray: ===>",n),{gasLimit:0,data:{vertransactions:n}}},getSwapFees:async t=>{const{networkFee:e}=t;return.00122+4278560/Math.pow(10,9)+890880/Math.pow(10,9)+(e?.value||Number(t.priorityFee)/Math.pow(10,9))},swap:async(t,e,a)=>{k({timerKey:"SubmitSwap",isBegin:!0});const{vertransactions:s}=e?.data,r=await f.submitSwapByAllPlatforms(t,s);return k({timerKey:"SubmitSwap",isBegin:!1}),{error:!r.success,result:{hashs:r.hashs,data:{blox_vertransactions:n(s[0]),vertransactions:n(s[0]),flash_vertransactions:n(s[1]),accountAddress:a,currentSymbol:t,...r}}}},hashStatus:async(t,e)=>{try{const a=L.getProviderByChain(e||102),s=()=>f.getSwapStatus(t),o=()=>f.rpcHeliusSwapStatus(t),n=()=>f.rpcSwapStatus(t,a),i=await Promise.any([s(),n(),o()]);console.log("SOL状态查询===》",["GMGN","RPC"],i);let c="HashStatus...";return"Failed"===i&&(c=await r(a,t)),{status:i,message:c}}catch(t){return{status:"Pending",message:"HashStatus Pending"}}},hashsStatus:async(t,e)=>{try{const a=L.getProviderByChain(e||102),s=async(t,e)=>{const s=(await Promise.allSettled([f.getSwapStatus(t),f.rpcSwapStatus(t,a)])).filter(t=>"fulfilled"===t.status).map(t=>{const e=t.value;return"string"==typeof e?e:e?.status});return s.includes("Confirmed")?{hashStatus:"Confirmed",hashGroup:e}:s.includes("Failed")?{hashStatus:"Failed",hashGroup:e}:{hashStatus:"Pending",hashGroup:e}},o=t.map(async t=>await s(t[0],t)),n=await Promise.all(o);if(n.find(t=>"Confirmed"===t.hashStatus))return{status:"Confirmed",message:{successHash:n?.filter(t=>"Confirmed"===t.hashStatus)[0]?.hashGroup}};if(n.filter(t=>"Failed"===t.hashStatus).length>=2){return{status:"Failed",message:await r(a,t[0][0])}}return{status:"Pending",message:"Some hash groups pending"}}catch(t){return{status:"Pending",message:"HashStatus Pending"}}},claimCommission:async t=>{try{const e=await B(t);if(console.log("withdrawRes",t,e),200===e.code&&e.data){const a=L.getProviderByChain(102),{blockhash:s}=f.lastBlockHash,{signer:r,contents:o,signature:n}=e.data,i=await A(r,o.substring(2),n.substring(2),s,t.walletAddress,y),c=await a.simulateTransaction(i,g);if(console.log("领取 预估结果==>",c),c?.value?.err)return{code:4001,message:"Claim commission error in simulateTransaction: "+JSON.stringify(c?.value?.logs+JSON.stringify(c?.value?.err)),data:null};const u=i.serialize();return{code:200,message:"Claim commission success",data:null,txhash:await a.sendRawTransaction(u,{preflightCommitment:"confirmed"})}}return e}catch(t){return{code:4001,message:"Claim commission error: "+JSON.stringify(t),data:null}}}}};
+import { PublicKey, SystemProgram } from '@solana/web3.js';
+import { smTokenAddress } from '../../common/config';
+import { getTokenOwner, hashFailedMessage, sendSolanaTransactionByPrviy, vertransactionsToBase64 } from './utils';
+import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createTransferCheckedInstruction, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { simulateConfig, TOKEN_2022_OWNER } from './config';
+import { priorityFeeInstruction } from './instruction/InstructionCreator';
+import defiApi from './defiApi';
+import UtilsService from '../../utils/UtilsService';
+import { compileTransactionByAddressLookup, getAddressLookup, getClainSignature, getTransactionsSignatureArray } from './instruction';
+import { NETWORK_FEE_RATES } from '../eth/config';
+import { getWithdrawSign } from '../../api/hidex';
+import { setStatistics } from '../../utils/timeStatistics';
+const utils = new UtilsService();
+export const solService = (HS) => {
+    const { network } = HS;
+    const getBalance = async (accountAddress, tokenAddress = '', isAta = false) => {
+        const currentNetwork = network.get(102);
+        try {
+            if ((tokenAddress && tokenAddress === smTokenAddress) || !tokenAddress || isAta) {
+                const pk = !isAta ? new PublicKey(accountAddress) : new PublicKey(tokenAddress);
+                const balanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => v
+                    .getBalance(pk)
+                    .then((res) => {
+                    return res;
+                })
+                    .catch((error) => {
+                    return Promise.reject(error);
+                }));
+                const balance = await Promise.any(balanceProm);
+                if (balance.error) {
+                    return isAta ? '-1' : '0';
+                }
+                return balance.toString();
+            }
+            const apk = new PublicKey(accountAddress);
+            const tpk = new PublicKey(tokenAddress);
+            const connection = await network.getProviderByChain(102);
+            const tokenOwnerAddress = await getTokenOwner(tokenAddress, connection);
+            let userAta = await getAssociatedTokenAddress(tpk, apk, false);
+            if (tokenOwnerAddress === TOKEN_2022_OWNER) {
+                userAta = await getAssociatedTokenAddress(tpk, apk, false, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+            }
+            const tokenBalanceProm = network.sysProviderRpcs[currentNetwork.chain].map((v) => v
+                .getTokenAccountBalance(userAta)
+                .then((res) => {
+                return res;
+            })
+                .catch((error) => {
+                return Promise.reject(error);
+            }));
+            const tokenBalance = await Promise.any(tokenBalanceProm);
+            if (tokenBalance.error) {
+                return isAta ? '-1' : '0';
+            }
+            return tokenBalance.value.amount;
+        }
+        catch (error) {
+            console.error(error);
+            return isAta ? '-1' : '0';
+        }
+    };
+    return {
+        getBalance,
+        getBalanceMultiple: async (chain, accountAddress, tokens) => {
+            const tokensAta = tokens.map((token) => token.toLowerCase() === smTokenAddress.toLowerCase()
+                ? new PublicKey(accountAddress)
+                : getAssociatedTokenAddress(new PublicKey(token), new PublicKey(accountAddress), false, TOKEN_PROGRAM_ID));
+            const tokensAta_p = await Promise.all(tokensAta);
+            const resultProm = network.sysProviderRpcs[chain].map((v) => v
+                .getMultipleAccountsInfo(tokensAta_p)
+                .then((res) => {
+                return res;
+            })
+                .catch((error) => {
+                return Promise.reject(error);
+            }));
+            const result = await Promise.any(resultProm);
+            const balances = [];
+            result.forEach((v) => {
+                if (!v) {
+                    balances.push('0');
+                }
+                else if (v.data && v.data.length) {
+                    const accountData = AccountLayout.decode(v.data);
+                    balances.push(accountData.amount.toString());
+                }
+                else {
+                    balances.push(v.lamports.toString());
+                }
+            });
+            return balances;
+        },
+        getNetWorkFees: async (gasLimit, tradeType) => {
+            const networkFees = [];
+            const gasPrice = 0.000005;
+            let netVal = tradeType !== 3 ? 0.0055 : 0.003;
+            let networkRate = tradeType !== 3 ? NETWORK_FEE_RATES['SOLANA_JITO'] : NETWORK_FEE_RATES['SOLANA'];
+            if (tradeType === 10) {
+                netVal = 0.00001;
+                networkRate = NETWORK_FEE_RATES['SOLANA_SEND'];
+            }
+            for (let i = 0; i < networkRate.length; i++) {
+                networkFees.push({
+                    value: Number((netVal * networkRate[i]).toFixed(5)),
+                    unit: 'SOL',
+                    gasLimit,
+                    gasPrice: gasPrice.toString(),
+                    rate: networkRate[i]
+                });
+            }
+            return networkFees;
+        },
+        getAllowance: async () => {
+            return 10000;
+        },
+        toApprove: async () => {
+            return true;
+        },
+        getSendEstimateGas: async () => {
+            return { gasLimit: 100000 };
+        },
+        getSendFees: async (networkFee, toAddress, tokenAddress) => {
+            const netFee = networkFee.value;
+            const dexFee = 0;
+            const priorityFee = 10000 / Math.pow(10, 9);
+            let ataCreateFee = 0;
+            const balanceWsol = await getBalance(toAddress, tokenAddress);
+            if (Number(balanceWsol) === 0) {
+                ataCreateFee = 2039280 / Math.pow(10, 9);
+            }
+            const accountSave = 900880 / Math.pow(10, 9);
+            return netFee + dexFee + accountSave + priorityFee + ataCreateFee;
+        },
+        sendTransaction: async (sendParams) => {
+            const { from, to, amount, tokenAddress, currentNetWorkFee, decimals = 9, wallet } = sendParams;
+            try {
+                let ownerKey = from;
+                const senderPublicKey = utils.ownerKeypair(ownerKey).publicKey;
+                const receiverPublicKey = new PublicKey(to);
+                const instructions = [];
+                const connection = await network.getFastestProviderByChain(102);
+                if (!tokenAddress || tokenAddress.toLowerCase() === smTokenAddress.toLowerCase()) {
+                    instructions.push(SystemProgram.transfer({
+                        fromPubkey: senderPublicKey,
+                        toPubkey: receiverPublicKey,
+                        lamports: BigInt(amount)
+                    }));
+                }
+                else {
+                    const tokenMintAddress = new PublicKey(tokenAddress);
+                    const tokenOwnerAddress = await getTokenOwner(tokenAddress, connection);
+                    const is2022 = tokenOwnerAddress === TOKEN_2022_OWNER;
+                    const fromTokenAta = await getAssociatedTokenAddress(tokenMintAddress, senderPublicKey, false, is2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+                    const toTokenAta = await getAssociatedTokenAddress(tokenMintAddress, receiverPublicKey, false, is2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+                    const toTokenAtaInfo = await connection.getAccountInfo(toTokenAta);
+                    if (toTokenAtaInfo == null || toTokenAtaInfo.data.length == 0) {
+                        instructions.push(createAssociatedTokenAccountInstruction(senderPublicKey, toTokenAta, receiverPublicKey, tokenMintAddress, is2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID));
+                    }
+                    instructions.push(createTransferCheckedInstruction(fromTokenAta, tokenMintAddress, toTokenAta, senderPublicKey, BigInt(amount), decimals, [], is2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID));
+                }
+                const insPriority = await priorityFeeInstruction(200000, currentNetWorkFee.value);
+                instructions.unshift(...insPriority);
+                const { blockhash } = await connection.getLatestBlockhash();
+                const result = await sendSolanaTransactionByPrviy(connection, wallet, instructions, blockhash);
+                console.timeEnd('sendTransaction');
+                ownerKey = '';
+                return { error: null, result: { hash: result, message: 'SUCCESS' } };
+            }
+            catch (error) {
+                return {
+                    error,
+                    result: null
+                };
+            }
+        },
+        getSwapPath: async (currentSymbol) => {
+            if (parseFloat(currentSymbol.amountIn) <= 0) {
+                throw new Error('amountIn must be greater than 0');
+            }
+            let outAmount = 0;
+            if (currentSymbol.isBuy && currentSymbol.currentPrice) {
+                const amountInUSD = (Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.in.decimals)) * currentSymbol.cryptoPriceUSD;
+                outAmount = Math.floor((amountInUSD / Number(currentSymbol.currentPrice)) * Math.pow(10, currentSymbol.out.decimals));
+            }
+            if (!currentSymbol.isBuy && currentSymbol.currentPrice) {
+                outAmount = Math.floor((((Number(currentSymbol.amountIn) / Math.pow(10, currentSymbol.in.decimals)) * currentSymbol.currentPrice) / currentSymbol.cryptoPriceUSD) *
+                    Math.pow(10, currentSymbol.out.decimals));
+            }
+            return {
+                fullAmoutOut: BigInt(outAmount).toString(),
+                data: null
+            };
+        },
+        getSwapEstimateGas: async (currentSymbol, path, wallet) => {
+            const { compile } = currentSymbol;
+            const accountAddress = wallet.address;
+            let compileUse = compile;
+            let txArray = [];
+            console.log('------------isGetAddressLookup------------------', !!compileUse?.addressesLookup);
+            setStatistics({ timerKey: 'SwapRoute', isBegin: true });
+            const { success, swapTransaction, data, outAmount, recentBlockhash } = await defiApi.swapRoute(currentSymbol, accountAddress);
+            currentSymbol.amountOutMin = outAmount;
+            setStatistics({ timerKey: 'SwapRoute', isBegin: false });
+            if (!success) {
+                throw new Error('Failed to swap_get_router' + JSON.stringify(currentSymbol) + path);
+            }
+            if (compileUse?.addressesLookup && swapTransaction) {
+                console.log('message', 1);
+                const { message, addressesLookup } = await compileTransactionByAddressLookup(swapTransaction, compileUse?.addressesLookup, HS);
+                console.log('message', message);
+                txArray = await getTransactionsSignatureArray(message, addressesLookup, recentBlockhash, currentSymbol, wallet, HS);
+            }
+            console.log('txArray', txArray);
+            if (txArray.length === 0) {
+                setStatistics({ timerKey: 'CompileTransaction', isBegin: true });
+                compileUse = await getAddressLookup(swapTransaction, HS);
+                currentSymbol.preAmountIn = data.inAmount;
+                currentSymbol.preAmountOut = data.otherAmountThreshold;
+                const { message, addressesLookup } = await compileTransactionByAddressLookup(swapTransaction, compileUse?.addressesLookup, HS);
+                txArray = await getTransactionsSignatureArray(message, addressesLookup, recentBlockhash, currentSymbol, wallet, HS);
+                setStatistics({ timerKey: 'CompileTransaction', isBegin: false });
+                console.timeEnd('AgainRouterTimer');
+            }
+            if (txArray.length === 0) {
+                throw new Error('Failed to swap txArray is empty' + JSON.stringify(currentSymbol));
+            }
+            console.log('txArray: ===>', txArray);
+            return {
+                gasLimit: 0,
+                data: {
+                    vertransactions: txArray
+                }
+            };
+        },
+        getSwapFees: async (currentSymbol) => {
+            const { networkFee } = currentSymbol;
+            const netFee = 0.00002;
+            const dexFee = 0.0012;
+            const mitToken = (2139280 * 2) / Math.pow(10, 9);
+            const accountSave = 890880 / Math.pow(10, 9);
+            const priorityFee = networkFee?.value || Number(currentSymbol.priorityFee) / Math.pow(10, 9);
+            return netFee + dexFee + mitToken + accountSave + priorityFee;
+        },
+        swap: async (currentSymbol, transaction, accountAddress) => {
+            setStatistics({ timerKey: 'SubmitSwap', isBegin: true });
+            const { vertransactions } = transaction?.data;
+            const submitResult = await defiApi.submitSwapByAllPlatforms(currentSymbol, vertransactions);
+            setStatistics({ timerKey: 'SubmitSwap', isBegin: false });
+            return {
+                error: !submitResult.success,
+                result: {
+                    hashs: submitResult.hashs,
+                    data: {
+                        blox_vertransactions: vertransactionsToBase64(vertransactions[0]),
+                        vertransactions: vertransactionsToBase64(vertransactions[0]),
+                        flash_vertransactions: vertransactionsToBase64(vertransactions[1]),
+                        accountAddress,
+                        currentSymbol,
+                        ...submitResult
+                    }
+                }
+            };
+        },
+        hashStatus: async (hash, chainId) => {
+            try {
+                const connection = network.getProviderByChain(chainId || 102);
+                const gmgnStatusPro = () => defiApi.getSwapStatus(hash);
+                const rpcHeliuPro = () => defiApi.rpcHeliusSwapStatus(hash);
+                const rpcStatusPro = () => defiApi.rpcSwapStatus(hash, connection);
+                const status = await Promise.any([gmgnStatusPro(), rpcStatusPro(), rpcHeliuPro()]);
+                console.log('SOL状态查询===》', ['GMGN', 'RPC'], status);
+                let message = 'HashStatus...';
+                if (status === 'Failed') {
+                    message = await hashFailedMessage(connection, hash);
+                }
+                return { status, message };
+            }
+            catch (error) {
+                return { status: 'Pending', message: 'HashStatus Pending' };
+            }
+        },
+        hashsStatus: async (hashs, chainId) => {
+            try {
+                const connection = network.getProviderByChain(chainId || 102);
+                const queryHashStatus = async (hash, hashGroup) => {
+                    const results = await Promise.allSettled([defiApi.getSwapStatus(hash), defiApi.rpcSwapStatus(hash, connection)]);
+                    const statuses = results
+                        .filter((r) => r.status === 'fulfilled')
+                        .map((r) => {
+                        const v = r.value;
+                        return typeof v === 'string' ? v : v?.status;
+                    });
+                    if (statuses.includes('Confirmed'))
+                        return { hashStatus: 'Confirmed', hashGroup };
+                    if (statuses.includes('Failed'))
+                        return { hashStatus: 'Failed', hashGroup };
+                    return { hashStatus: 'Pending', hashGroup };
+                };
+                const groupStatusPromises = hashs.map(async (hashGroup) => {
+                    return await queryHashStatus(hashGroup[0], hashGroup);
+                });
+                const groupResults = await Promise.all(groupStatusPromises);
+                if (groupResults.find((v) => v.hashStatus === 'Confirmed')) {
+                    return {
+                        status: 'Confirmed',
+                        message: {
+                            successHash: groupResults?.filter((s) => s.hashStatus === 'Confirmed')[0]?.hashGroup
+                        }
+                    };
+                }
+                const failedCount = groupResults.filter((s) => s.hashStatus === 'Failed').length;
+                if (failedCount >= 2) {
+                    const message = await hashFailedMessage(connection, hashs[0][0]);
+                    return { status: 'Failed', message };
+                }
+                return { status: 'Pending', message: 'Some hash groups pending' };
+            }
+            catch (error) {
+                return { status: 'Pending', message: 'HashStatus Pending' };
+            }
+        },
+        claimCommission: async (params) => {
+            try {
+                const withdrawRes = await getWithdrawSign(params);
+                console.log('withdrawRes', params, withdrawRes);
+                if (withdrawRes.code === 200 && withdrawRes.data) {
+                    const connection = network.getProviderByChain(102);
+                    const { blockhash } = defiApi.lastBlockHash;
+                    const { signer, contents: contentsHex, signature: claimSignHex } = withdrawRes.data;
+                    const vsTransaction = await getClainSignature(signer, contentsHex.substring(2), claimSignHex.substring(2), blockhash, params.walletAddress, HS);
+                    const simulateResponse = await connection.simulateTransaction(vsTransaction, simulateConfig);
+                    console.log('领取 预估结果==>', simulateResponse);
+                    if (simulateResponse?.value?.err) {
+                        return {
+                            code: 4001,
+                            message: 'Claim commission error in simulateTransaction: ' + JSON.stringify(simulateResponse?.value?.logs + JSON.stringify(simulateResponse?.value?.err)),
+                            data: null
+                        };
+                    }
+                    const rawTransaction = vsTransaction.serialize();
+                    const txhash = await connection.sendRawTransaction(rawTransaction, { preflightCommitment: 'confirmed' });
+                    return { code: 200, message: 'Claim commission success', data: null, txhash };
+                }
+                return withdrawRes;
+            }
+            catch (error) {
+                return { code: 4001, message: 'Claim commission error: ' + JSON.stringify(error), data: null };
+            }
+        }
+    };
+};

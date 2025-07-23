@@ -1,1 +1,22 @@
-import t from"./error";import r from"bs58";import{Keypair as e}from"@solana/web3.js";import*as s from"../trade/utils";import*as o from"../common/utils";import*as i from"./timeStatistics";export default class a{constructor(){}getErrorMessage(r){return console.error("Hidex SDK: "+r.message),t(r)}ownerKeypair(t){return e.fromSecretKey(r.decode(t))}environmental=o.environmental;trade=s;common=o;getStatistics=i.getStatistics;setStatistics=i.setStatistics;clearStatistics=i.clearStatistics}
+import ErrorService from './error';
+import bs58 from 'bs58';
+import { Keypair } from '@solana/web3.js';
+import * as tradeUtils from '../trade/utils';
+import * as commonUtils from '../common/utils';
+import * as timeStatisticsUtils from './timeStatistics';
+export default class UtilsService {
+    constructor() { }
+    getErrorMessage(error) {
+        console.error('Hidex SDK: ' + error.message);
+        return ErrorService(error);
+    }
+    ownerKeypair(key) {
+        return Keypair.fromSecretKey(bs58.decode(key));
+    }
+    environmental = commonUtils.environmental;
+    trade = tradeUtils;
+    common = commonUtils;
+    getStatistics = timeStatisticsUtils.getStatistics;
+    setStatistics = timeStatisticsUtils.setStatistics;
+    clearStatistics = timeStatisticsUtils.clearStatistics;
+}

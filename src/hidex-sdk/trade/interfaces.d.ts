@@ -151,6 +151,7 @@ export type SendTransactionParams = {
     amount: string;
     tokenAddress?: string;
     decimals?: number;
+    wallet: ConnectedSolanaWallet;
 };
 export type CurrentSymbol = {
     chain: string | number;

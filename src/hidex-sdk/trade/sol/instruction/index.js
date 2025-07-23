@@ -1,1 +1,392 @@
-import{TransactionMessage as t,VersionedTransaction as o,AddressLookupTableAccount as e,PublicKey as s}from"@solana/web3.js";import{SOLANA_SYSTEM_PROGRAM_ID as n,SOLANA_SYSTEM_PROGRAM_TRANSFER_ID as a,SOLANA_CREATE_ACCOUNT_WITH_SEED_ID as r,JITO_FEE_ACCOUNT as i,SOLANA_MAX_TX_SERIALIZE_SIGN as l,NEED_CHANGE_SLIPPAGE_PROGRAM_IDS as c,SUPPORT_CHANGE_PROGRAM_IDS as g,PUMP_AMM_PROGRAM_ID as u,VERSION_TRANSACTION_PREFIX as p,PRE_PAID_EXPENSES as d,DEFAULD_SOLANA_GAS_LIMIT as m,COMMISSION_SOLANA_GAS_LIMIT as f,HIDEX_ADDRESS_LOOK_UP as h,BLOXROUTE as B,Trading_Service_Providers as w,PUMP_PROGRAM_ID as I}from"../config";import{checkAccountCloseInstruction as y,createClaimInstruction as A,createEd25519ProgramIx as k,createMemoInstructionWithTxInfo as L,createTipTransferInstruction as b,createTradeNonceVerifyInstruction as S,createVersionTransaction as x,deleteTipCurrentInInstructions as T,deleteTransactionGasInstruction as E,getDexCommisionReceiverAndLamports as O,getInstructionAmounts as P,getInstructionReplaceDataHex as N,getTipAndPriorityByUserPriorityFee as _,getTradeNonce as M,getTransactionGasLimitUintsInInstruction as z,multiSignVersionedTraByPrivy as C,nomalVersionedTransaction as K,numberToLittleEndianHex as U,priorityFeeInstruction as v,setCreateAccountBySeedInstructionLamports as F,setTransferInstructionLamports as R,signVersionedTraByPrivy as D,versionedTra as W}from"./InstructionCreator";import{createMemoInstruction as j}from"@solana/spl-memo";export function resetInstructions(t,o,e,s){console.log("传入的输出代币数量",s),console.log("传入的输入代币数量",e);let i=-1;for(let l=0;l<o.instructions.length;l++){const p=o.instructions[l];let m=p.data.toString("hex"),f=!1;if(0==p.data.length)continue;const h=p.data.readUint8();p.programId.toBase58()==n.toBase58()&&t.isBuy&&l!=o.instructions.length-1&&l!=o.instructions.length-2&&(f=R(p,m,e),f&&(i=l,console.log("转账指令已修改 = "+i))),p.programId.toBase58()==n.toBase58()&&h==r&&(console.log(p.data.length),f=F(t.preAmountIn,p,m,e),f&&(i=l,console.log("CreateAccountBySeed指令已修改 = "+i)));if((g.get(p.programId.toBase58())??0)>0){const n=P(t,p);console.log("修改前输入的代币数量 = "+n.input),console.log("修改前输出的代币数量 = "+n.output);const l=BigInt(1e4);let g=BigInt(Math.round(t.slipPersent*Number(l)));if(-1==c.indexOf(p.programId.toBase58()))if(p.programId.toBase58()==u.toBase58()&&t.isBuy){const n=e;e+=e*g/l,console.log("增加滑点量后传入的输入代币数量",e);const c=BigInt(t.solLamports)-BigInt(d)-BigInt(t.priorityFee);if(console.log("当前用户余额",t.solLamports),console.log("可用于购买PUMP.amm的余额",c),e>c&&(s=s*c/e,console.log("余额不足，总量下移后购买的代币量",s),e=c,console.log("余额不足，总量下移后消耗的sol",e)),console.log("transferInstructionIndex = "+i),i>0){const t=o.instructions[i],s=t.data.toString("hex"),l=t.data.readUInt32LE(0);l===a?(console.log("转账指令重新修改为：",e),R(t,s,e)):l==r&&(console.log("SOLANA_CREATE_ACCOUNT_WITH_SEED指令重新修改为：",e),F(n.toString(),t,s,e))}if(e>BigInt(c))throw new Error("Error: pump-amm insufficient account balance "+t.solLamports+" for required input "+e)}else s-=s*g/l,console.log("newOutputAmount",s);else{console.log("滑点修改前 changeSlippageData = ",m);const t=m.slice(m.length-6).match(/.{2}/g)?.reverse().join("")||"",o=BigInt("0x"+t);console.log("修改前滑点值 = ",o);const e=U(Number(g),3);m=m.slice(0,m.length-6)+e,console.log("滑点指令后 tempInstruction = ",p.data.toString("hex"))}console.log("滑点 = "+t.slipPersent);const f=Buffer.alloc(8);f.writeBigUInt64LE(e);const h=f.toString("hex");console.log("计算滑点后输入的代币数量 = "+e),f.writeBigUInt64LE(s);const B=f.toString("hex");console.log("计算滑点后输出的代币数量 = "+s),console.log("修改前data = ",p.data.toString("hex"));let w=N(t,p.programId.toBase58(),m,h,B);console.log("finalData = "+w),p.data=Buffer.from(w,"hex"),console.log("data3 = "+p.data.toString("hex"))}}return o}export async function compileTransaction(n,a){if(!n.startsWith(p))throw new Error("This token type does not support transactions");const r=Buffer.from(n,"base64"),l=o.deserialize(r),c=l.message.addressTableLookups.map(t=>t.accountKey);console.log("addressLookupTableAccounts1",c.length),c.push(h);const g=a.network.getProviderByChain(102),u=await g.getMultipleAccountsInfo(c),d=new Array(c.length);for(let t=0;t<u.length;t++){const o=e.deserialize(u[t].data);for(let t=0;t<o.addresses.length;t++)-1!==i.indexOf(o.addresses[t].toBase58())&&(o.addresses[t]=new s("So11111111111111111111111111111111111111112"));const n=new e({key:c[t],state:o});0!=u[t].data.length&&(d[t]=n)}const m=t.decompile(l.message,{addressLookupTableAccounts:d});console.log("programId",m.instructions[0].programId.toBase58()),console.log("addressLookupTableAccounts2",d.length);const f=[],B=await g.getSlot();for(let t=0;t<d.length;t++)B<d[t].state.deactivationSlot&&f.push(d[t]);return console.log("validAddressLookupTableAccounts3",f.length),{message:m,addressesLookup:f}}export async function compileTransactionByAddressLookup(e,s,n){if(!e.startsWith(p))throw new Error("This token type does not support transactions");const a=Buffer.from(e,"base64"),r=o.deserialize(a);let i=r.message.addressTableLookups,l=!0;for(let t=0;t<i.length;t++)if(i[t].accountKey.toBase58()!=s[t].key.toBase58()){console.log("两个地址映射不一致，重新获取",i[t].accountKey.toBase58(),s[t].key.toBase58()),l=!1;break}if(l){return{message:t.decompile(r.message,{addressLookupTableAccounts:s}),addressesLookup:s}}{console.log("两个地址映射不一致，重新获取");let t=await compileTransaction(e,n);return{message:t.message,addressesLookup:t.addressesLookup}}}export async function getAddressLookup(t,n){if(!t.startsWith(p))throw new Error("This token type does not support transactions");const a=Buffer.from(t,"base64"),r=o.deserialize(a).message.addressTableLookups.map(t=>t.accountKey);console.log("addressLookupTableAccounts1",r.length),r.push(h);const l=n.network.getProviderByChain(102),c=await l.getMultipleAccountsInfo(r),g=new Array(r.length);for(let t=0;t<c.length;t++){const o=e.deserialize(c[t].data);for(let t=0;t<o.addresses.length;t++)-1!==i.indexOf(o.addresses[t].toBase58())&&(o.addresses[t]=new s("So11111111111111111111111111111111111111112"));const n=new e({key:r[t],state:o});0!=c[t].data.length&&(g[t]=n)}const u=[],d=await l.getSlot();for(let t=0;t<g.length;t++)d<g[t].state.deactivationSlot&&u.push(g[t]);return console.log("validAddressLookupTableAccounts3",u.length),{addressesLookup:u}}export function getActualLamports(e,s,n){let a=BigInt(e.amountIn);if(!e.isBuy)return a;const r=Buffer.from(s,"base64"),i=o.deserialize(r);let l=!1;const c=t.decompile(i.message,{addressLookupTableAccounts:n});for(let t=0;t<c.instructions.length;t++){const o=c.instructions[t].programId.toBase58();if(console.log("programId",o),o==I.toBase58()||o==u.toBase58()){l=!0;break}}if(l){const t=BigInt(1e4);let o=a+a*BigInt(Math.round(e.slipPersent*Number(t)))/t;const s=BigInt(e.solLamports)-BigInt(d)-BigInt(e.priorityFee);return console.log("当前用户余额",e.solLamports),console.log("可用于购买PUMP.amm的余额",s),o>s&&(a=s*BigInt(10)/BigInt(10*(1+e.slipPersent)),console.log("余额不足，总量下移后消耗的sol",a)),a}}export function isInstructionsSupportReset(t,o){for(let e=0;e<t.instructions.length;e++){const s=t.instructions[e],n=s.programId.toBase58();console.log("dexId",n),console.log("********************************************************************************");if((g.get(n)??0)>0){console.log("data",s.data.toString("hex"));const t=P(o,s);console.log("检测指令中输入的代币数量 = "+t.input),console.log("检测指令中输出的代币数量 = "+t.output),console.log("外部传入的预请求输入的代币数量 = "+BigInt(o.preAmountIn)),console.log("外部传入的预请求输出的代币数量 = "+BigInt(o.preAmountOut));let e=BigInt(o.preAmountIn),n=BigInt(o.preAmountOut);if(t.input==e||t.output==n)return console.log("买入指令检测成功 = "+t.input),!0}}return!1}export async function getClainSignature(t,o,e,s,n,a){const r=o.substring(o.length-64);let i=Buffer.from(r,"hex").toString()+n.publicKey.toBase58();const l=await j(i),[c,g]=await v(f,m),u=await k(t,o,e),p=await A(o,e,n,a.network);return await K([u,c,g,p,l],n,s)}export async function getTransactionsSignature(t,o,e,r,i,c){for(let o=0;o<t.instructions.length;o++){if(await y(r,t.instructions[o],i,c.network)){t.instructions.splice(o,1);break}}for(let o=t.instructions.length-1;o>t.instructions.length-3;o--){const e=t.instructions[o];if(e.programId.toBase58()==n.toBase58()){e.data.readUInt32LE(0)===a&&(console.log("SOLANA_SYSTEM_PROGRAM_TRANSFER_ID"),t.instructions.splice(t.instructions.length-1))}}let g=Number(r.priorityFee);const u=z(t.instructions);console.log("gasLimitInIX",u),await E(t.instructions);const p=[...t.instructions],d=L(r);t.instructions.push(d);const{swap_pda:f,commissionAmount:h}=await O(r),w=await b(i.publicKey,f,BigInt(h));t.instructions.push(w);const I=await b(i.publicKey,B,BigInt(.5*g));t.instructions.push(I);const[A,k]=await v(1.5*u,.5*g);t.instructions.splice(0,0,A),t.instructions.splice(0,0,k);const S=await W([...t.instructions],i,e,o),x=S.serialize().length;if(console.log("交易串字节长度 = "+x),x<l)return[S];{const[t,n]=await v(u,m),a=await W([t,n],i,e,o),l=await W(p,i,e,o),c=await W([w,d],i,e,o),g=await b(i.publicKey,new s(B),BigInt(r.priorityFee));return[a,l,c,await W([g],i,e,[])]}}export async function getOwnerTradeNonce(t,o){return M(t,o.network)}export async function getTransactionsSignatureArray(t,o,e,n,a,r){const i=z(t.instructions);console.log("gasLimitInIx",i);const c=a.address;T(t),E(t.instructions);let g=new s(a.address),u=Number(n.priorityFee);const{tipAmount:p,priorityAmount:d}=_(u),[m,f]=await v(1.2*i,d),h=Math.floor(Date.now()/1e3);console.log("timestamp",h);const B=await S(h,g,r.network),I=L(n),{swap_pda:y,commissionAmount:A}=await O(n),k=await b(g,y,BigInt(A));let P=[];for(let s=0;s<w.length;s++){const n=[...t.instructions];n.push(I),n.push(k),n.push(B);const r=await b(g,w[s],BigInt(p));let i;n.push(r),n.splice(0,0,m),n.splice(0,0,f),console.log("准备系列化");let u,d=0;try{let t=x(n,c,e,o);u=await D(a,[t]),i=u.serialize(),d=i.length}catch{}if(console.log("交易串字节长度 = "+d),u&&d>0&&d<l)P.push([u]);else{console.log("进入大指令");const n=[...t.instructions];let r=x([m,f],c,e,o),i=x(n,c,e,o),l=x([k,I,B],c,e,o);const u=await b(g,w[s],BigInt(p));let d=x([u],c,e,[]),h=await C(a,[r,i,l,d]);P.push(h)}}return P}
+import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount, PublicKey } from '@solana/web3.js';
+import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, JITO_FEE_ACCOUNT, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, VERSION_TRANSACTION_PREFIX, PRE_PAID_EXPENSES, DEFAULD_SOLANA_GAS_LIMIT, COMMISSION_SOLANA_GAS_LIMIT, HIDEX_ADDRESS_LOOK_UP, BLOXROUTE, Trading_Service_Providers, PUMP_PROGRAM_ID } from '../config';
+import { checkAccountCloseInstruction, createClaimInstruction, createEd25519ProgramIx, createMemoInstructionWithTxInfo, createTipTransferInstruction, createTradeNonceVerifyInstruction, createVersionTransaction, deleteTipCurrentInInstructions, deleteTransactionGasInstruction, getDexCommisionReceiverAndLamports, getInstructionAmounts, getInstructionReplaceDataHex, getTipAndPriorityByUserPriorityFee, getTradeNonce, getTransactionGasLimitUintsInInstruction, multiSignVersionedTraByPrivy, nomalVersionedTransaction, numberToLittleEndianHex, priorityFeeInstruction, setCreateAccountBySeedInstructionLamports, setTransferInstructionLamports, versionedTra } from './InstructionCreator';
+import { createMemoInstruction } from '@solana/spl-memo';
+export function resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount) {
+    console.log('传入的输出代币数量', newOutputAmount);
+    console.log('传入的输入代币数量', newInputAmount);
+    let transferInstructionIndex = -1;
+    for (let i = 0; i < transactionMessage.instructions.length; i++) {
+        const tempInstruction = transactionMessage.instructions[i];
+        let dataHex = tempInstruction.data.toString('hex');
+        let hasChange = false;
+        if (tempInstruction.data.length == 0)
+            continue;
+        const instructionId = tempInstruction.data.readUint8();
+        if (tempInstruction.programId.toBase58() == SOLANA_SYSTEM_PROGRAM_ID.toBase58() &&
+            currentSymbol.isBuy &&
+            i != transactionMessage.instructions.length - 1 &&
+            i != transactionMessage.instructions.length - 2) {
+            hasChange = setTransferInstructionLamports(tempInstruction, dataHex, newInputAmount);
+            if (hasChange) {
+                transferInstructionIndex = i;
+                console.log('转账指令已修改 = ' + transferInstructionIndex);
+            }
+        }
+        if (tempInstruction.programId.toBase58() == SOLANA_SYSTEM_PROGRAM_ID.toBase58() && instructionId == SOLANA_CREATE_ACCOUNT_WITH_SEED_ID) {
+            console.log(tempInstruction.data.length);
+            hasChange = setCreateAccountBySeedInstructionLamports(currentSymbol.preAmountIn, tempInstruction, dataHex, newInputAmount);
+            if (hasChange) {
+                transferInstructionIndex = i;
+                console.log('CreateAccountBySeed指令已修改 = ' + transferInstructionIndex);
+            }
+        }
+        const dexProgramIndex = SUPPORT_CHANGE_PROGRAM_IDS.get(tempInstruction.programId.toBase58()) ?? 0;
+        if (dexProgramIndex > 0) {
+            const amountsResult = getInstructionAmounts(currentSymbol, tempInstruction);
+            console.log('修改前输入的代币数量 = ' + amountsResult.input);
+            console.log('修改前输出的代币数量 = ' + amountsResult.output);
+            const precision = BigInt(10000);
+            let numerator = BigInt(Math.round(currentSymbol.slipPersent * Number(precision)));
+            if (NEED_CHANGE_SLIPPAGE_PROGRAM_IDS.indexOf(tempInstruction.programId.toBase58()) == -1) {
+                if (tempInstruction.programId.toBase58() == PUMP_AMM_PROGRAM_ID.toBase58() && currentSymbol.isBuy) {
+                    const newInputChangeBefore = newInputAmount;
+                    newInputAmount = newInputAmount + (newInputAmount * numerator) / precision;
+                    console.log('增加滑点量后传入的输入代币数量', newInputAmount);
+                    const availableLamports = BigInt(currentSymbol.solLamports) - BigInt(PRE_PAID_EXPENSES) - BigInt(currentSymbol.priorityFee);
+                    console.log('当前用户余额', currentSymbol.solLamports);
+                    console.log('可用于购买PUMP.amm的余额', availableLamports);
+                    if (newInputAmount > availableLamports) {
+                        newOutputAmount = (newOutputAmount * availableLamports) / newInputAmount;
+                        console.log('余额不足，总量下移后购买的代币量', newOutputAmount);
+                        newInputAmount = availableLamports;
+                        console.log('余额不足，总量下移后消耗的sol', newInputAmount);
+                    }
+                    console.log('transferInstructionIndex = ' + transferInstructionIndex);
+                    if (transferInstructionIndex > 0) {
+                        const transferInstruction = transactionMessage.instructions[transferInstructionIndex];
+                        const dataHex2 = transferInstruction.data.toString('hex');
+                        const instructionId = transferInstruction.data.readUInt32LE(0);
+                        if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
+                            console.log('转账指令重新修改为：', newInputAmount);
+                            setTransferInstructionLamports(transferInstruction, dataHex2, newInputAmount);
+                        }
+                        else if (instructionId == SOLANA_CREATE_ACCOUNT_WITH_SEED_ID) {
+                            console.log('SOLANA_CREATE_ACCOUNT_WITH_SEED指令重新修改为：', newInputAmount);
+                            setCreateAccountBySeedInstructionLamports(newInputChangeBefore.toString(), transferInstruction, dataHex2, newInputAmount);
+                        }
+                    }
+                    if (newInputAmount > BigInt(availableLamports)) {
+                        throw new Error('Error: pump-amm insufficient account balance ' + currentSymbol.solLamports + ' for required input ' + newInputAmount);
+                    }
+                }
+                else {
+                    newOutputAmount = newOutputAmount - (newOutputAmount * numerator) / precision;
+                    console.log('newOutputAmount', newOutputAmount);
+                }
+            }
+            else {
+                console.log('滑点修改前 changeSlippageData = ', dataHex);
+                const beforeInputHex = dataHex
+                    .slice(dataHex.length - 6)
+                    .match(/.{2}/g)
+                    ?.reverse()
+                    .join('') || '';
+                const bigIntBeforeInput = BigInt('0x' + beforeInputHex);
+                console.log('修改前滑点值 = ', bigIntBeforeInput);
+                const slippageChangeResult = numberToLittleEndianHex(Number(numerator), 3);
+                dataHex = dataHex.slice(0, dataHex.length - 6) + slippageChangeResult;
+                console.log('滑点指令后 tempInstruction = ', tempInstruction.data.toString('hex'));
+            }
+            console.log('滑点 = ' + currentSymbol.slipPersent);
+            const swapInstructionBuffer = Buffer.alloc(8);
+            swapInstructionBuffer.writeBigUInt64LE(newInputAmount);
+            const newInputReverseHex = swapInstructionBuffer.toString('hex');
+            console.log('计算滑点后输入的代币数量 = ' + newInputAmount);
+            swapInstructionBuffer.writeBigUInt64LE(newOutputAmount);
+            const newOutputReverseHex = swapInstructionBuffer.toString('hex');
+            console.log('计算滑点后输出的代币数量 = ' + newOutputAmount);
+            console.log('修改前data = ', tempInstruction.data.toString('hex'));
+            let finalData = getInstructionReplaceDataHex(currentSymbol, tempInstruction.programId.toBase58(), dataHex, newInputReverseHex, newOutputReverseHex);
+            console.log('finalData = ' + finalData);
+            tempInstruction.data = Buffer.from(finalData, 'hex');
+            console.log('data3 = ' + tempInstruction.data.toString('hex'));
+        }
+    }
+    return transactionMessage;
+}
+export async function compileTransaction(swapBase64Str, HS) {
+    if (!swapBase64Str.startsWith(VERSION_TRANSACTION_PREFIX)) {
+        throw new Error('This token type does not support transactions');
+    }
+    const swapTransactionBuf = Buffer.from(swapBase64Str, 'base64');
+    const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+    const addressTables = transaction.message.addressTableLookups.map((value) => {
+        return value.accountKey;
+    });
+    console.log('addressLookupTableAccounts1', addressTables.length);
+    addressTables.push(HIDEX_ADDRESS_LOOK_UP);
+    const connection = HS.network.getProviderByChain(102);
+    const mutiAccountInfo = await connection.getMultipleAccountsInfo(addressTables);
+    const addressLookupTableAccounts = new Array(addressTables.length);
+    for (let i = 0; i < mutiAccountInfo.length; i++) {
+        const state = AddressLookupTableAccount.deserialize(mutiAccountInfo[i].data);
+        for (let i = 0; i < state.addresses.length; i++) {
+            if (JITO_FEE_ACCOUNT.indexOf(state.addresses[i].toBase58()) !== -1) {
+                state.addresses[i] = new PublicKey('So11111111111111111111111111111111111111112');
+            }
+        }
+        const lookUp = new AddressLookupTableAccount({
+            key: addressTables[i],
+            state: state
+        });
+        if (mutiAccountInfo[i].data.length != 0) {
+            addressLookupTableAccounts[i] = lookUp;
+        }
+    }
+    const transactionMessage = TransactionMessage.decompile(transaction.message, {
+        addressLookupTableAccounts: addressLookupTableAccounts
+    });
+    console.log('programId', transactionMessage.instructions[0].programId.toBase58());
+    console.log('addressLookupTableAccounts2', addressLookupTableAccounts.length);
+    const validAddressLookupTableAccounts = [];
+    const currentSlot = await connection.getSlot();
+    for (let i = 0; i < addressLookupTableAccounts.length; i++) {
+        if (currentSlot < addressLookupTableAccounts[i].state.deactivationSlot) {
+            validAddressLookupTableAccounts.push(addressLookupTableAccounts[i]);
+        }
+    }
+    console.log('validAddressLookupTableAccounts3', validAddressLookupTableAccounts.length);
+    return { message: transactionMessage, addressesLookup: validAddressLookupTableAccounts };
+}
+export async function compileTransactionByAddressLookup(swapBase64Str, addressLookupTableAccounts, HS) {
+    if (!swapBase64Str.startsWith(VERSION_TRANSACTION_PREFIX)) {
+        throw new Error('This token type does not support transactions');
+    }
+    const swapTransactionBuf = Buffer.from(swapBase64Str, 'base64');
+    const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+    let messageTables = transaction.message.addressTableLookups;
+    let isSame = true;
+    for (let i = 0; i < messageTables.length; i++) {
+        if (messageTables[i].accountKey.toBase58() != addressLookupTableAccounts[i].key.toBase58()) {
+            console.log('两个地址映射不一致，重新获取', messageTables[i].accountKey.toBase58(), addressLookupTableAccounts[i].key.toBase58());
+            isSame = false;
+            break;
+        }
+    }
+    if (!isSame) {
+        console.log('两个地址映射不一致，重新获取');
+        let compileInfo = await compileTransaction(swapBase64Str, HS);
+        return { message: compileInfo.message, addressesLookup: compileInfo.addressesLookup };
+    }
+    else {
+        const transactionMessage = TransactionMessage.decompile(transaction.message, {
+            addressLookupTableAccounts: addressLookupTableAccounts
+        });
+        return { message: transactionMessage, addressesLookup: addressLookupTableAccounts };
+    }
+}
+export async function getAddressLookup(swapBase64Str, HS) {
+    if (!swapBase64Str.startsWith(VERSION_TRANSACTION_PREFIX)) {
+        throw new Error('This token type does not support transactions');
+    }
+    const swapTransactionBuf = Buffer.from(swapBase64Str, 'base64');
+    const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+    const addressTables = transaction.message.addressTableLookups.map((value) => {
+        return value.accountKey;
+    });
+    console.log('addressLookupTableAccounts1', addressTables.length);
+    addressTables.push(HIDEX_ADDRESS_LOOK_UP);
+    const connection = HS.network.getProviderByChain(102);
+    const mutiAccountInfo = await connection.getMultipleAccountsInfo(addressTables);
+    const addressLookupTableAccounts = new Array(addressTables.length);
+    for (let i = 0; i < mutiAccountInfo.length; i++) {
+        const state = AddressLookupTableAccount.deserialize(mutiAccountInfo[i].data);
+        for (let i = 0; i < state.addresses.length; i++) {
+            if (JITO_FEE_ACCOUNT.indexOf(state.addresses[i].toBase58()) !== -1) {
+                state.addresses[i] = new PublicKey('So11111111111111111111111111111111111111112');
+            }
+        }
+        const lookUp = new AddressLookupTableAccount({
+            key: addressTables[i],
+            state: state
+        });
+        if (mutiAccountInfo[i].data.length != 0) {
+            addressLookupTableAccounts[i] = lookUp;
+        }
+    }
+    const validAddressLookupTableAccounts = [];
+    const currentSlot = await connection.getSlot();
+    for (let i = 0; i < addressLookupTableAccounts.length; i++) {
+        if (currentSlot < addressLookupTableAccounts[i].state.deactivationSlot) {
+            validAddressLookupTableAccounts.push(addressLookupTableAccounts[i]);
+        }
+    }
+    console.log('validAddressLookupTableAccounts3', validAddressLookupTableAccounts.length);
+    return { addressesLookup: validAddressLookupTableAccounts };
+}
+export function getActualLamports(currentSymbol, swapBase64Str, addressesLookup) {
+    let validLamports = BigInt(currentSymbol.amountIn);
+    if (!currentSymbol.isBuy) {
+        return validLamports;
+    }
+    const swapTransactionBuf = Buffer.from(swapBase64Str, 'base64');
+    const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+    let isPump = false;
+    const transactionMessage = TransactionMessage.decompile(transaction.message, {
+        addressLookupTableAccounts: addressesLookup
+    });
+    for (let i = 0; i < transactionMessage.instructions.length; i++) {
+        const tempInstruction = transactionMessage.instructions[i];
+        const programId = tempInstruction.programId.toBase58();
+        console.log('programId', programId);
+        if (programId == PUMP_PROGRAM_ID.toBase58() || programId == PUMP_AMM_PROGRAM_ID.toBase58()) {
+            isPump = true;
+            break;
+        }
+    }
+    if (isPump) {
+        const precision = BigInt(10000);
+        let numerator = BigInt(Math.round(currentSymbol.slipPersent * Number(precision)));
+        let preLamports = validLamports + (validLamports * numerator) / precision;
+        const availableLamports = BigInt(currentSymbol.solLamports) - BigInt(PRE_PAID_EXPENSES) - BigInt(currentSymbol.priorityFee);
+        console.log('当前用户余额', currentSymbol.solLamports);
+        console.log('可用于购买PUMP.amm的余额', availableLamports);
+        if (preLamports > availableLamports) {
+            validLamports = (availableLamports * BigInt(10)) / BigInt((1 + currentSymbol.slipPersent) * 10);
+            console.log('余额不足，总量下移后消耗的sol', validLamports);
+        }
+        return validLamports;
+    }
+}
+export function isInstructionsSupportReset(transactionMessage, currentSymbol) {
+    for (let i = 0; i < transactionMessage.instructions.length; i++) {
+        const tempInstruction = transactionMessage.instructions[i];
+        const programId = tempInstruction.programId.toBase58();
+        console.log('dexId', programId);
+        console.log('********************************************************************************');
+        const dexProgramIndex = SUPPORT_CHANGE_PROGRAM_IDS.get(programId) ?? 0;
+        if (dexProgramIndex > 0) {
+            console.log('data', tempInstruction.data.toString('hex'));
+            const amounts = getInstructionAmounts(currentSymbol, tempInstruction);
+            console.log('检测指令中输入的代币数量 = ' + amounts.input);
+            console.log('检测指令中输出的代币数量 = ' + amounts.output);
+            console.log('外部传入的预请求输入的代币数量 = ' + BigInt(currentSymbol.preAmountIn));
+            console.log('外部传入的预请求输出的代币数量 = ' + BigInt(currentSymbol.preAmountOut));
+            let preAmountInBigInt = BigInt(currentSymbol.preAmountIn);
+            let preAmountOutBigInt = BigInt(currentSymbol.preAmountOut);
+            if (amounts.input == preAmountInBigInt || amounts.output == preAmountOutBigInt) {
+                console.log('买入指令检测成功 = ' + amounts.input);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+export async function getClainSignature(signer, contentsHex, claimSignHex, recentBlockhash, owner, HS) {
+    const id = contentsHex.substring(contentsHex.length - 64);
+    const idStr = Buffer.from(id, 'hex').toString();
+    let memoStr = idStr + owner.publicKey.toBase58();
+    const memoInstruction = await createMemoInstruction(memoStr);
+    const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(COMMISSION_SOLANA_GAS_LIMIT, DEFAULD_SOLANA_GAS_LIMIT);
+    const ed25519ProgramIx = await createEd25519ProgramIx(signer, contentsHex, claimSignHex);
+    const claimProgramIx = await createClaimInstruction(contentsHex, claimSignHex, owner, HS.network);
+    const claimTx = await nomalVersionedTransaction([ed25519ProgramIx, addPriorityLimitIx, addPriorityPriceIx, claimProgramIx, memoInstruction], owner, recentBlockhash);
+    return claimTx;
+}
+export async function getTransactionsSignature(transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner, HS) {
+    for (let i = 0; i < transactionMessage.instructions.length; i++) {
+        const isDelete = await checkAccountCloseInstruction(currentSymbol, transactionMessage.instructions[i], owner, HS.network);
+        if (isDelete) {
+            transactionMessage.instructions.splice(i, 1);
+            break;
+        }
+    }
+    for (let i = transactionMessage.instructions.length - 1; i > transactionMessage.instructions.length - 3; i--) {
+        const lastInstruction = transactionMessage.instructions[i];
+        if (lastInstruction.programId.toBase58() == SOLANA_SYSTEM_PROGRAM_ID.toBase58()) {
+            const instructionId = lastInstruction.data.readUInt32LE(0);
+            if (instructionId === SOLANA_SYSTEM_PROGRAM_TRANSFER_ID) {
+                console.log('SOLANA_SYSTEM_PROGRAM_TRANSFER_ID');
+                transactionMessage.instructions.splice(transactionMessage.instructions.length - 1);
+            }
+        }
+    }
+    let priorityFee = Number(currentSymbol.priorityFee);
+    const gasLimitInIx = getTransactionGasLimitUintsInInstruction(transactionMessage.instructions);
+    console.log('gasLimitInIX', gasLimitInIx);
+    await deleteTransactionGasInstruction(transactionMessage.instructions);
+    const tempInstructions = [...transactionMessage.instructions];
+    const memoIx = createMemoInstructionWithTxInfo(currentSymbol);
+    transactionMessage.instructions.push(memoIx);
+    const { swap_pda, commissionAmount } = await getDexCommisionReceiverAndLamports(currentSymbol);
+    const commissionTransferIx = await createTipTransferInstruction(owner.publicKey, swap_pda, BigInt(commissionAmount));
+    transactionMessage.instructions.push(commissionTransferIx);
+    const tipIx = await createTipTransferInstruction(owner.publicKey, BLOXROUTE, BigInt(priorityFee * 0.5));
+    transactionMessage.instructions.push(tipIx);
+    const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(gasLimitInIx * 1.5, priorityFee * 0.5);
+    transactionMessage.instructions.splice(0, 0, addPriorityLimitIx);
+    transactionMessage.instructions.splice(0, 0, addPriorityPriceIx);
+    const swapTx = await versionedTra([...transactionMessage.instructions], owner, recentBlockhash, addressLookupTableAccounts);
+    const swapTxSer = swapTx.serialize();
+    const swapTxBytesSize = swapTxSer.length;
+    console.log('交易串字节长度 = ' + swapTxBytesSize);
+    if (swapTxBytesSize < SOLANA_MAX_TX_SERIALIZE_SIGN) {
+        return [swapTx];
+    }
+    else {
+        const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(gasLimitInIx, DEFAULD_SOLANA_GAS_LIMIT);
+        const gasFeeTx = await versionedTra([addPriorityLimitIx, addPriorityPriceIx], owner, recentBlockhash, addressLookupTableAccounts);
+        const swapTx = await versionedTra(tempInstructions, owner, recentBlockhash, addressLookupTableAccounts);
+        const commissionTx = await versionedTra([commissionTransferIx, memoIx], owner, recentBlockhash, addressLookupTableAccounts);
+        const tipIx = await createTipTransferInstruction(owner.publicKey, new PublicKey(BLOXROUTE), BigInt(currentSymbol.priorityFee));
+        const tipTx = await versionedTra([tipIx], owner, recentBlockhash, []);
+        return [gasFeeTx, swapTx, commissionTx, tipTx];
+    }
+}
+export async function getOwnerTradeNonce(owner, HS) {
+    return getTradeNonce(owner, HS.network);
+}
+export async function getTransactionsSignatureArray(transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, wallet, HS) {
+    const gasLimitInIx = getTransactionGasLimitUintsInInstruction(transactionMessage.instructions);
+    console.log('gasLimitInIx', gasLimitInIx);
+    const ownerAddr = wallet.address;
+    deleteTipCurrentInInstructions(transactionMessage);
+    deleteTransactionGasInstruction(transactionMessage.instructions);
+    let ownerPublicKey = new PublicKey(wallet.address);
+    let priorityFee = Number(currentSymbol.priorityFee);
+    const { tipAmount, priorityAmount } = getTipAndPriorityByUserPriorityFee(priorityFee);
+    const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(gasLimitInIx * 1.2, priorityAmount);
+    const timestamp = Math.floor(Date.now() / 1000);
+    console.log('timestamp', timestamp);
+    const createTradeNonceVerifyIx = await createTradeNonceVerifyInstruction(timestamp, ownerPublicKey, HS.network);
+    const memoIx = createMemoInstructionWithTxInfo(currentSymbol);
+    const { swap_pda, commissionAmount } = await getDexCommisionReceiverAndLamports(currentSymbol);
+    const commissionTransferIx = await createTipTransferInstruction(ownerPublicKey, swap_pda, BigInt(commissionAmount));
+    let swapTxArray = [];
+    for (let i = 0; i < Trading_Service_Providers.length; i++) {
+        const providerInstructions = [...transactionMessage.instructions];
+        providerInstructions.push(memoIx);
+        providerInstructions.push(commissionTransferIx);
+        providerInstructions.push(createTradeNonceVerifyIx);
+        const tipIx = await createTipTransferInstruction(ownerPublicKey, Trading_Service_Providers[i], BigInt(tipAmount));
+        providerInstructions.push(tipIx);
+        providerInstructions.splice(0, 0, addPriorityLimitIx);
+        providerInstructions.splice(0, 0, addPriorityPriceIx);
+        console.log('准备系列化');
+        let swapTxSer;
+        let swapTxBytesSize = 0;
+        let swapTx;
+        try {
+            swapTxSer = new Uint8Array();
+            swapTxBytesSize = swapTxSer.length;
+        }
+        catch { }
+        console.log('交易串字节长度 = ' + swapTxBytesSize);
+        if (swapTx && swapTxBytesSize > 0 && swapTxBytesSize < SOLANA_MAX_TX_SERIALIZE_SIGN) {
+            swapTxArray.push([swapTx]);
+        }
+        else {
+            console.log('进入大指令');
+            const bundleInstructions = [...transactionMessage.instructions];
+            let gasFeeTx = createVersionTransaction([addPriorityLimitIx, addPriorityPriceIx], ownerAddr, recentBlockhash, addressLookupTableAccounts);
+            let swapTx = createVersionTransaction(bundleInstructions, ownerAddr, recentBlockhash, addressLookupTableAccounts);
+            let commissionTx = createVersionTransaction([commissionTransferIx, memoIx, createTradeNonceVerifyIx], ownerAddr, recentBlockhash, addressLookupTableAccounts);
+            const tipIx = await createTipTransferInstruction(ownerPublicKey, Trading_Service_Providers[i], BigInt(tipAmount));
+            let tipTx = createVersionTransaction([tipIx], ownerAddr, recentBlockhash, []);
+            let bundleTransactions = await multiSignVersionedTraByPrivy(wallet, [gasFeeTx, swapTx, commissionTx, tipTx]);
+            swapTxArray.push(bundleTransactions);
+        }
+    }
+    return swapTxArray;
+}

@@ -1,1 +1,80 @@
-import{PublicKey as n,TransactionMessage as e,VersionedTransaction as o}from"@solana/web3.js";import{simulateConfig as r,TOKEN_2022_OWNER as t}from"./config";import{ASSOCIATED_TOKEN_PROGRAM_ID as a,getAssociatedTokenAddress as s,TOKEN_2022_PROGRAM_ID as i}from"@solana/spl-token";export async function getTokenOwner(e,o){const r=new n(e),t=await o.getAccountInfo(r);if(!t||!t.owner)throw new Error("Token account does not exist");return t.owner.toBase58()}export async function isToken2022(n,e){return await getTokenOwner(n,e)===t}export async function sendSolanaTransaction(n,t,a,s){const i=new e({payerKey:t.publicKey,recentBlockhash:s,instructions:a}).compileToV0Message(),c=new o(i);c.sign([t]);const l=await n.simulateTransaction(c,r);if(console.log("sendSolanaTransaction 预估结果==>",l),l?.value?.err)throw new Error(JSON.stringify(l.value.logs));const w=c.serialize();return await n.sendRawTransaction(w)}export async function getUserTokenAtaAddress(e,o,r){const t=new n(o),c=new n(e);let l=await s(t,c,!1);return r&&(l=await s(t,c,!1,i,a)),l.toBase58()}export function vertransactionsToBase64(n){try{return n.map(n=>Buffer.from(n.serialize()).toString("base64"))}catch(n){console.log("vertransactionsToBase64 error==>",n)}}export async function hashFailedMessage(n,e){const o=await n.getParsedTransaction(e,{commitment:"confirmed",maxSupportedTransactionVersion:0});if(console.log("链上hash状态异常，再次查询异常错误信息",o),o){const{meta:n}=o||{};if(n&&n?.err)return n.logMessages?.toString()||"Unknown error"}return"Hash Error, Unknown error message"}export const urlPattern=/https?:\/\/([a-zA-Z0-9.-]+)/;
+import { PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
+import { simulateConfig, TOKEN_2022_OWNER } from './config';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
+export async function getTokenOwner(tokenAddress, connection) {
+    const tokenAccountPubkey = new PublicKey(tokenAddress);
+    const accountInfo = await connection.getAccountInfo(tokenAccountPubkey);
+    if (!accountInfo || !accountInfo.owner) {
+        throw new Error('Token account does not exist');
+    }
+    const owner = accountInfo.owner.toBase58();
+    return owner;
+}
+export async function isToken2022(tokenAddress, connection) {
+    const owner = await getTokenOwner(tokenAddress, connection);
+    return owner === TOKEN_2022_OWNER;
+}
+export async function sendSolanaTransaction(connection, sender, instructions, blockhash) {
+    const message = new TransactionMessage({
+        payerKey: sender.publicKey,
+        recentBlockhash: blockhash,
+        instructions
+    }).compileToV0Message();
+    const versionedTx = new VersionedTransaction(message);
+    versionedTx.sign([sender]);
+    const simulateResponse = await connection.simulateTransaction(versionedTx, simulateConfig);
+    console.log('sendSolanaTransaction 预估结果==>', simulateResponse);
+    if (simulateResponse?.value?.err) {
+        throw new Error(JSON.stringify(simulateResponse.value.logs));
+    }
+    const rawTransaction = versionedTx.serialize();
+    return await connection.sendRawTransaction(rawTransaction);
+}
+export async function sendSolanaTransactionByPrviy(connection, wallet, instructions, blockhash) {
+    const message = new TransactionMessage({
+        payerKey: new PublicKey(wallet.address),
+        recentBlockhash: blockhash,
+        instructions
+    }).compileToV0Message();
+    const versionedTx = new VersionedTransaction(message);
+    const simulateResponse = await connection.simulateTransaction(versionedTx, simulateConfig);
+    console.log('sendSolanaTransaction 预估结果==>', simulateResponse);
+    if (simulateResponse?.value?.err) {
+        throw new Error(JSON.stringify(simulateResponse.value.logs));
+    }
+    const signedVersionTransaction = await wallet.signTransaction(versionedTx);
+    const rawTransaction = signedVersionTransaction.serialize();
+    return await connection.sendRawTransaction(rawTransaction);
+}
+export async function getUserTokenAtaAddress(userAddress, tokenAddress, TOKEN_2022) {
+    const mintPublic = new PublicKey(tokenAddress);
+    const publicOwner = new PublicKey(userAddress);
+    let userAtaAccount = await getAssociatedTokenAddress(mintPublic, publicOwner, false);
+    if (TOKEN_2022) {
+        userAtaAccount = await getAssociatedTokenAddress(mintPublic, publicOwner, false, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+    }
+    return userAtaAccount.toBase58();
+}
+export function vertransactionsToBase64(transactions) {
+    try {
+        return transactions.map((tx) => Buffer.from(tx.serialize()).toString('base64'));
+    }
+    catch (error) {
+        console.log('vertransactionsToBase64 error==>', error);
+    }
+}
+export async function hashFailedMessage(connection, hash) {
+    const hashStatus = await connection.getParsedTransaction(hash, {
+        commitment: 'confirmed',
+        maxSupportedTransactionVersion: 0
+    });
+    console.log('链上hash状态异常，再次查询异常错误信息', hashStatus);
+    if (hashStatus) {
+        const { meta } = hashStatus || {};
+        if (meta && meta?.err) {
+            return meta.logMessages?.toString() || 'Unknown error';
+        }
+    }
+    return 'Hash Error, Unknown error message';
+}
+export const urlPattern = /https?:\/\/([a-zA-Z0-9.-]+)/;

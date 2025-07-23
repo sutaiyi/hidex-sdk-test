@@ -1,1 +1,77 @@
-import t from"./web";import e from"./app";import r from"./cookie";import a from"./indexDB";import{isValidJSON as s}from"../common/utils";class o{catch;keyDefault="hidex-sdk-store";constructor(r){if("web"!==r){if("app"!==r)throw new Error("Catch constructor error");this.catch=new e}else this.catch=new t}async getItem(t){try{const e=await this.catch.getItem(`${this.keyDefault}-${t}`),r=s(e);return e&&r&&"undefined"!==e&&"null"!==e?JSON.parse(e):e}catch(t){return console.error(t),null}}async setItem(t,e){return await this.catch.setItem(`${this.keyDefault}-${t}`,"string"==typeof e?e:JSON.stringify(e))}async removeItem(t){return await this.catch.removeItem(`${this.keyDefault}-${t}`)}async getCookie(t){try{const e=await r.get(`${this.keyDefault}-${t}`),a=s(e);return e&&a&&"undefined"!==e&&"null"!==e?JSON.parse(e):e}catch(t){return console.error(t),null}}async setCookie(t,e,a){const{expires:s,path:o,secure:n}=a;return await r.set(`${this.keyDefault}-${t}`,"string"==typeof e?e:JSON.stringify(e),s,o,n)}async removeCookie(t,e){return await r.remove(`${this.keyDefault}-${t}`,e)}async getIdbItem(t){try{return await a.getItem(`${this.keyDefault}-${t}`)}catch(t){return console.error(t),null}}async setIdbItem(t,e,r){return await a.setItem(`${this.keyDefault}-${t}`,e,r)}async removeIdbItem(t){return await a.removeItem(`${this.keyDefault}-${t}`)}}export default o;
+import webCatcher from './web';
+import appCatcher from './app';
+import CookieStorage from './cookie';
+import IdbService from './indexDB';
+import { isValidJSON } from '../common/utils';
+class CatcherService {
+    catch;
+    keyDefault = 'hidex-sdk-store';
+    constructor(apparatus) {
+        if (apparatus === 'web') {
+            this.catch = new webCatcher();
+            return;
+        }
+        else if (apparatus === 'app') {
+            this.catch = new appCatcher();
+            return;
+        }
+        throw new Error('Catch constructor error');
+    }
+    async getItem(key) {
+        try {
+            const value = await this.catch.getItem(`${this.keyDefault}-${key}`);
+            const isParse = isValidJSON(value);
+            if (value && isParse && value !== 'undefined' && value !== 'null') {
+                return JSON.parse(value);
+            }
+            return value;
+        }
+        catch (error) {
+            console.error(error);
+            return null;
+        }
+    }
+    async setItem(key, value) {
+        return await this.catch.setItem(`${this.keyDefault}-${key}`, typeof value === 'string' ? value : JSON.stringify(value));
+    }
+    async removeItem(key) {
+        return await this.catch.removeItem(`${this.keyDefault}-${key}`);
+    }
+    async getCookie(key) {
+        try {
+            const value = await CookieStorage.get(`${this.keyDefault}-${key}`);
+            const isParse = isValidJSON(value);
+            if (value && isParse && value !== 'undefined' && value !== 'null') {
+                return JSON.parse(value);
+            }
+            return value;
+        }
+        catch (error) {
+            console.error(error);
+            return null;
+        }
+    }
+    async setCookie(key, value, options) {
+        const { expires, path, secure } = options;
+        return await CookieStorage.set(`${this.keyDefault}-${key}`, typeof value === 'string' ? value : JSON.stringify(value), expires, path, secure);
+    }
+    async removeCookie(key, options) {
+        return await CookieStorage.remove(`${this.keyDefault}-${key}`, options);
+    }
+    async getIdbItem(key) {
+        try {
+            return await IdbService.getItem(`${this.keyDefault}-${key}`);
+        }
+        catch (error) {
+            console.error(error);
+            return null;
+        }
+    }
+    async setIdbItem(key, value, expiresInDays) {
+        return await IdbService.setItem(`${this.keyDefault}-${key}`, value, expiresInDays);
+    }
+    async removeIdbItem(key) {
+        return await IdbService.removeItem(`${this.keyDefault}-${key}`);
+    }
+}
+export default CatcherService;

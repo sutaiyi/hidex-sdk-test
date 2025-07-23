@@ -1,1 +1,180 @@
-import{ethService as e}from"./eth/index";import{solService as t}from"./sol/index";import{defaultChainID as s}from"../common/config";import a from"./utils/approve";import{compileTransaction as i,resetInstructions as r,getTransactionsSignature as n,isInstructionsSupportReset as o,getAddressLookup as p,getOwnerTradeNonce as c}from"./sol/instruction/index";import h from"../common/eventEmitter";import w from"./sol/defiApi";import d from"./TradeHashStatusService";import{wExchange as l}from"./utils/nativeTokenTrade";import{isSol as u}from"./utils";class S extends h{app;chainId;errorCode=9800;HS;solService;ethService;approve;defiApi;checkHash;constructor(i){super(),this.chainId=s,this.solService=t(i),this.ethService=e(i),this.app=102===s?this.solService:this.ethService,this.HS=i,this.approve=new a({...i,trade:this}),this.checkHash=new d({...i,trade:this}),this.defiApi=w,this.defiApi.getLatestBlockhash(this.HS.network)}resetInstructions=(e,t,s,a)=>r(e,t,s,a);getTransactionsSignature=(e,t,s,a,i,r)=>n(e,t,s,a,i,r);compileTransaction=e=>i(e,this.HS);getAddressLookup=e=>p(e,this.HS);getOwnerTradeNonce=async e=>c(this.HS.utils.ownerKeypair(e),this.HS);isInstructionsSupportReset=(e,t)=>o(e,t);changeTradeService=s=>{switch(this.chainId=s.chainID,this.chainId){case 1:case 56:case 8453:this.ethService=e(this.HS),this.app=this.ethService;break;default:this.solService=t(this.HS),this.app=this.solService}};getBalance=async(e,t,s)=>{try{return await(this.app?.getBalance(e,t,s))||"0"}catch(e){return"0"}};getBalanceMultiple=async(e,t,s)=>await(this.app?.getBalanceMultiple(e,t,s))||[];getNetWorkFees=async(e=21e3,t)=>await(this.app?.getNetWorkFees(e,t));getSendEstimateGas=async e=>{console.log("发送前预估参数",e);const t=await(this.app?.getSendEstimateGas(e));if(t)return t;throw new Error("app undefined")};getSendFees=async(e,t,s)=>{console.log("获取发送手续费参数",e);const a=await(this.app?.getSendFees(e,t,s));if(a)return a;throw new Error("app undefined")};sendTransaction=async e=>{console.log("发送代币执行参数",e);const t=await(this.app?.sendTransaction(e));if(t)return t;throw new Error("app undefined")};getAllowance=async(e,t,s)=>{const a=await(this.app?.getAllowance(e,t,s));if(a)return a;throw new Error("app undefined")};toApprove=async(e,t,s,a)=>{console.log("授权参数",e,t,s,a);const i=await(this.app?.toApprove(e,t,s,a));if(i)return i;throw new Error("app undefined")};getSwapPath=async e=>{console.log("路由参数",e);const t=await(this.app?.getSwapPath(e));if(t)return t;throw new Error("app undefined")};getSwapEstimateGas=async(e,t,s)=>{console.log("预估参数",e,t,s);const a=await(this.app?.getSwapEstimateGas(e,t,s));if(a)return a;throw new Error("app undefined")};getSwapFees=async e=>{const t=await(this.app?.getSwapFees(e));if(t)return t;throw new Error("app undefined")};swap=async(e,t,s)=>{console.log("Swap执行参数===>",e,t,s);const a=await(this.app?.swap(e,t,s));if(a)return a;throw new Error("app undefined")};claimCommission=async e=>{const t=await(this.app?.claimCommission(e));if(t)return t;throw new Error("app undefined")};getHashStatus(e,t,s=[]){return u(t)?this.solService.hashStatus(e,t,s):this.ethService.hashStatus(e,t)}getHashsStatus(e,t,s=[]){return u(t)?this.solService.hashsStatus(e,t,s):this.ethService.hashsStatus(e,t,s)}async wrappedExchange(e,t,s,a,i="0"){const r=t;return await l(e,r,s,a,i,this.HS)}async sendSimulateTransaction(e,t){throw console.log(e,t),new Error("sendSimulateTransaction error")}}export default S;
+import { ethService } from './eth/index';
+import { solService } from './sol/index';
+import { defaultChainID } from '../common/config';
+import ApproveService from './utils/approve';
+import { compileTransaction, resetInstructions, getTransactionsSignature, isInstructionsSupportReset, getAddressLookup, getOwnerTradeNonce } from './sol/instruction/index';
+import EventEmitter from '../common/eventEmitter';
+import DefiApi from './sol/defiApi';
+import TradeHashStatusService from './TradeHashStatusService';
+import { wExchange } from './utils/nativeTokenTrade';
+import { isSol } from './utils';
+class TradeService extends EventEmitter {
+    app;
+    chainId;
+    errorCode = 9800;
+    HS;
+    solService;
+    ethService;
+    approve;
+    defiApi;
+    checkHash;
+    constructor(options) {
+        super();
+        this.chainId = defaultChainID;
+        this.solService = solService(options);
+        this.ethService = ethService(options);
+        this.app = defaultChainID === 102 ? this.solService : this.ethService;
+        this.HS = options;
+        this.approve = new ApproveService({ ...options, trade: this });
+        this.checkHash = new TradeHashStatusService({ ...options, trade: this });
+        this.defiApi = DefiApi;
+        this.defiApi.getLatestBlockhash(this.HS.network);
+    }
+    resetInstructions = (currentSymbol, transactionMessage, newInputAmount, newOutputAmount) => {
+        return resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount);
+    };
+    getTransactionsSignature = (transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner, HS) => {
+        return getTransactionsSignature(transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner, HS);
+    };
+    compileTransaction = (swapBase64Str) => {
+        return compileTransaction(swapBase64Str, this.HS);
+    };
+    getAddressLookup = (swapBase64Str) => {
+        return getAddressLookup(swapBase64Str, this.HS);
+    };
+    getOwnerTradeNonce = async (accountAddress) => {
+        return getOwnerTradeNonce(this.HS.utils.ownerKeypair(accountAddress), this.HS);
+    };
+    isInstructionsSupportReset = (transactionMessage, currentSymbol) => {
+        return isInstructionsSupportReset(transactionMessage, currentSymbol);
+    };
+    changeTradeService = (currentNetwork) => {
+        this.chainId = currentNetwork.chainID;
+        switch (this.chainId) {
+            case 1:
+            case 56:
+            case 8453:
+                this.ethService = ethService(this.HS);
+                this.app = this.ethService;
+                break;
+            default:
+                this.solService = solService(this.HS);
+                this.app = this.solService;
+        }
+    };
+    getBalance = async (accountAddress, tokenAddress, isAta) => {
+        try {
+            const balance = await this.app?.getBalance(accountAddress, tokenAddress, isAta);
+            return balance || '0';
+        }
+        catch (error) {
+            return '0';
+        }
+    };
+    getBalanceMultiple = async (chain, accountAddress, tokens) => {
+        const balanceMultiple = await this.app?.getBalanceMultiple(chain, accountAddress, tokens);
+        return balanceMultiple || [];
+    };
+    getNetWorkFees = async (gasLimit = 21000, tradeType) => {
+        const fees = await this.app?.getNetWorkFees(gasLimit, tradeType);
+        return fees;
+    };
+    getSendEstimateGas = async (sendParams) => {
+        console.log('发送前预估参数', sendParams);
+        const result = await this.app?.getSendEstimateGas(sendParams);
+        if (result) {
+            return result;
+        }
+        throw new Error('app undefined');
+    };
+    getSendFees = async (networkFee, toAddress, tokenAddress) => {
+        console.log('获取发送手续费参数', networkFee);
+        const result = await this.app?.getSendFees(networkFee, toAddress, tokenAddress);
+        if (result) {
+            return result;
+        }
+        throw new Error('app undefined');
+    };
+    sendTransaction = async (sendParams) => {
+        console.log('发送代币执行参数', sendParams);
+        const result = await this.app?.sendTransaction(sendParams);
+        if (result) {
+            return result;
+        }
+        throw new Error('app undefined');
+    };
+    getAllowance = async (tokenAddress, accountAddress, authorizedAddress) => {
+        const result = await this.app?.getAllowance(tokenAddress, accountAddress, authorizedAddress);
+        if (result) {
+            return result;
+        }
+        throw new Error('app undefined');
+    };
+    toApprove = async (tokenAddress, accountAddress, authorizedAddress, amountToApprove) => {
+        console.log('授权参数', tokenAddress, accountAddress, authorizedAddress, amountToApprove);
+        const result = await this.app?.toApprove(tokenAddress, accountAddress, authorizedAddress, amountToApprove);
+        if (result) {
+            return result;
+        }
+        throw new Error('app undefined');
+    };
+    getSwapPath = async (currentSymbol) => {
+        console.log('路由参数', currentSymbol);
+        const result = await this.app?.getSwapPath(currentSymbol);
+        if (result) {
+            return result;
+        }
+        throw new Error('app undefined');
+    };
+    getSwapEstimateGas = async (currentSymbol, path, wallet) => {
+        console.log('预估参数', currentSymbol, path, wallet);
+        const result = await this.app?.getSwapEstimateGas(currentSymbol, path, wallet);
+        if (result) {
+            return result;
+        }
+        throw new Error('app undefined');
+    };
+    getSwapFees = async (currentSymbol) => {
+        const result = await this.app?.getSwapFees(currentSymbol);
+        if (result) {
+            return result;
+        }
+        throw new Error('app undefined');
+    };
+    swap = async (currentSymbol, transaction, accountAddress) => {
+        console.log('Swap执行参数===>', currentSymbol, transaction, accountAddress);
+        const result = await this.app?.swap(currentSymbol, transaction, accountAddress);
+        if (result) {
+            return result;
+        }
+        throw new Error('app undefined');
+    };
+    claimCommission = async (params) => {
+        const result = await this.app?.claimCommission(params);
+        if (result) {
+            return result;
+        }
+        throw new Error('app undefined');
+    };
+    getHashStatus(hash, chain, bundles = []) {
+        if (isSol(chain)) {
+            return this.solService.hashStatus(hash, chain, bundles);
+        }
+        return this.ethService.hashStatus(hash, chain);
+    }
+    getHashsStatus(hashs, chain, bundles = []) {
+        if (isSol(chain)) {
+            return this.solService.hashsStatus(hashs, chain, bundles);
+        }
+        return this.ethService.hashsStatus(hashs, chain, bundles);
+    }
+    async wrappedExchange(chain, accountAddress, type, priorityFee, amount = '0') {
+        const privateKey = accountAddress;
+        return await wExchange(chain, privateKey, type, priorityFee, amount, this.HS);
+    }
+    async sendSimulateTransaction(accountAddress, vertransaction) {
+        console.log(accountAddress, vertransaction);
+        throw new Error('sendSimulateTransaction error');
+    }
+}
+export default TradeService;
