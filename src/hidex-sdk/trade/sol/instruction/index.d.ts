@@ -1,5 +1,6 @@
 import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount } from '@solana/web3.js';
 import { CurrentSymbol, OptionsCommon } from '../../../main/interfaces';
+import { ConnectedSolanaWallet } from '@privy-io/react-auth/solana';
 export declare function resetInstructions(currentSymbol: CurrentSymbol, transactionMessage: TransactionMessage, newInputAmount: bigint, newOutputAmount: bigint): TransactionMessage;
 export declare function compileTransaction(swapBase64Str: string, HS: OptionsCommon): Promise<{
     message: TransactionMessage;
@@ -17,5 +18,5 @@ export declare function isInstructionsSupportReset(transactionMessage: Transacti
 export declare function getClainSignature(signer: string, contentsHex: string, claimSignHex: string, recentBlockhash: string, owner: any, HS: OptionsCommon): Promise<VersionedTransaction>;
 export declare function getTransactionsSignature(transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any, HS: OptionsCommon): Promise<Array<VersionedTransaction>>;
 export declare function getOwnerTradeNonce(owner: any, HS: OptionsCommon): Promise<number>;
-export declare function getTransactionsSignatureArray(transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any, HS: OptionsCommon): Promise<Array<Array<VersionedTransaction>>>;
+export declare function getTransactionsSignatureArray(transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, wallet: ConnectedSolanaWallet, HS: OptionsCommon): Promise<Array<Array<VersionedTransaction>>>;
 //# sourceMappingURL=index.d.ts.map

@@ -61,7 +61,7 @@ const setBootedOssItem = async (token, apparatus, key, value, isClear) => {
         if (key == 'all' && value) {
             if (isClear) {
                 walletPutData = defaluBoootedOss;
-                url = '/frontend/app/personal/setItem?reset=y';
+                url = '/api/frontend/app/personal/setItem?reset=y';
             }
             else {
                 if (walletPutData.walletBooted && !value.walletBooted) {

@@ -1,8 +1,8 @@
-import { ICatcher } from "../catch/interfaces";
-import { ChainItem, INetworkService } from "../network/interfaces";
-import { IDexFeeService } from "../trade/interfaces";
-import { IUtilsService } from "../utils/interfaces";
-import { IWalletService } from "../wallet/interfaces";
+import { ICatcher } from '../catch/interfaces';
+import { ChainItem, INetworkService } from '../network/interfaces';
+import { IDexFeeService } from '../trade/interfaces';
+import { IUtilsService } from '../utils/interfaces';
+import { IWalletService } from '../wallet/interfaces';
 export * from '../network/interfaces';
 export * from '../wallet/interfaces';
 export * from '../trade/interfaces';

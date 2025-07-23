@@ -85,6 +85,35 @@ export async function versionedTra(instructions, owner, latestBlockhash, address
     versionedTx.sign([owner]);
     return versionedTx;
 }
+export function createVersionTransaction(instructions, ownerAddress, latestBlockhash, addressLookupTableAccounts) {
+    const message = new TransactionMessage({
+        payerKey: new PublicKey(ownerAddress),
+        recentBlockhash: latestBlockhash,
+        instructions
+    }).compileToV0Message(addressLookupTableAccounts);
+    return new VersionedTransaction(message);
+}
+export async function multiSignVersionedTraByPrivy(wallet, transactions) {
+    try {
+        const signedVersionTransactions = await wallet.signAllTransactions(transactions);
+        return signedVersionTransactions;
+    }
+    catch (error) {
+        console.log('Privy SignTransaction sign error', error);
+        throw error;
+    }
+}
+export async function signVersionedTraByPrivy(wallet, transactions) {
+    try {
+        const signedVersionTransaction = await wallet.signTransaction(transactions[0]);
+        console.log('Transaction signed successfully', signedVersionTransaction);
+        return signedVersionTransaction;
+    }
+    catch (error) {
+        console.log('Privy SignTransaction sign error', error);
+        throw error;
+    }
+}
 export async function nomalVersionedTransaction(instructions, owner, latestBlockhash) {
     const message = new TransactionMessage({
         payerKey: owner.publicKey,
@@ -246,12 +275,12 @@ export async function createTradeNonceVerifyInstruction(timeStamp, owner, networ
     initAnchor(owner, network);
     const programId = new PublicKey(PROGRAMID());
     const program = new anchor.Program(abis.solanaIDL, programId);
-    const [trade_nonce_account] = await PublicKey.findProgramAddress([Buffer.from(SEED_TRADE_NONCE), owner.publicKey.toBuffer()], programId);
+    const [trade_nonce_account] = await PublicKey.findProgramAddress([Buffer.from(SEED_TRADE_NONCE), owner.toBuffer()], programId);
     return program.methods
         .tradeNonceVerify(new anchor.BN(timeStamp))
         .accounts({
         tradeNonceAccount: trade_nonce_account,
-        signer: owner.publicKey,
+        signer: owner,
         systemProgram: SystemProgram.programId
     })
         .instruction();

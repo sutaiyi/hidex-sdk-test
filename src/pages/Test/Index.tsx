@@ -4,12 +4,14 @@ import './Test.css';
 import tradeTest from './trade';
 import networkTest from './network';
 import walletTest from './wallet';
+import PrivyTest from './Privy';
 import catcherTest from './catcher';
 import TradeFrom from '../TradeFrom';
 import WalletFrom from '../WalletFrom';
 import { setBeforeTradeData } from './solTrade';
 import { HidexSDK } from '@/hidexService';
 import Decryption from './decryption';
+import { usePrivy } from '@privy-io/react-auth';
 // import TestOther from './testOther';
 
 const Test = React.memo(() => {
@@ -36,7 +38,8 @@ const Test = React.memo(() => {
 
   const btns: any = {
     network: networkTest(),
-    wallet: walletTest(),
+    // wallet: walletTest(),
+    Privy: PrivyTest(usePrivy),
     trade: tradeTest(),
     catcher: catcherTest(),
   };

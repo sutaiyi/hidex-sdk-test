@@ -3,6 +3,7 @@ import { ChainItem, INetworkService } from '../network/interfaces';
 import { ICatcher } from '../catch/interfaces';
 import EventEmitter from '../common/eventEmitter';
 import { OptionsCommon } from '../main/interfaces';
+import { ConnectedSolanaWallet, ConnectedWallet } from '@privy-io/react-auth';
 export type HashStatus = 'Confirmed' | 'Pending' | 'Failed' | 'Expired';
 export interface ITradeOthersFunction {
     defiApi: IDefiApi;
@@ -65,7 +66,7 @@ export interface ITradeFunctions {
         data: any;
         authorizationTarget?: string;
     }>;
-    getSwapEstimateGas(currentSymbol: CurrentSymbol, path: any, accountAddress: string): Promise<{
+    getSwapEstimateGas(currentSymbol: CurrentSymbol, path: any, wallet: ConnectedSolanaWallet | ConnectedWallet): Promise<{
         gasLimit: number;
         data?: any;
     }>;
@@ -149,6 +150,7 @@ export type SendTransactionParams = {
     to: string;
     amount: string;
     tokenAddress?: string;
+    decimals?: number;
 };
 export type CurrentSymbol = {
     chain: string | number;

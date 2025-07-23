@@ -7,7 +7,6 @@ import EventEmitter from '../common/eventEmitter';
 import DefiApi from './sol/defiApi';
 import TradeHashStatusService from './TradeHashStatusService';
 import { wExchange } from './utils/nativeTokenTrade';
-import { simulateConfig } from './sol/config';
 import { isSol } from './utils';
 class TradeService extends EventEmitter {
     app;
@@ -44,7 +43,7 @@ class TradeService extends EventEmitter {
         return getAddressLookup(swapBase64Str, this.HS);
     };
     getOwnerTradeNonce = async (accountAddress) => {
-        return getOwnerTradeNonce(this.HS.utils.ownerKeypair(await this.HS.wallet.ownerKey(accountAddress)), this.HS);
+        return getOwnerTradeNonce(this.HS.utils.ownerKeypair(accountAddress), this.HS);
     };
     isInstructionsSupportReset = (transactionMessage, currentSymbol) => {
         return isInstructionsSupportReset(transactionMessage, currentSymbol);
@@ -127,9 +126,9 @@ class TradeService extends EventEmitter {
         }
         throw new Error('app undefined');
     };
-    getSwapEstimateGas = async (currentSymbol, path, accountAddress) => {
-        console.log('预估参数', currentSymbol, path, accountAddress);
-        const result = await this.app?.getSwapEstimateGas(currentSymbol, path, accountAddress);
+    getSwapEstimateGas = async (currentSymbol, path, wallet) => {
+        console.log('预估参数', currentSymbol, path, wallet);
+        const result = await this.app?.getSwapEstimateGas(currentSymbol, path, wallet);
         if (result) {
             return result;
         }
@@ -170,28 +169,11 @@ class TradeService extends EventEmitter {
         return this.ethService.hashsStatus(hashs, chain, bundles);
     }
     async wrappedExchange(chain, accountAddress, type, priorityFee, amount = '0') {
-        const privateKey = await this.HS.wallet.ownerKey(accountAddress);
+        const privateKey = accountAddress;
         return await wExchange(chain, privateKey, type, priorityFee, amount, this.HS);
     }
     async sendSimulateTransaction(accountAddress, vertransaction) {
-        const privateKey = await this.HS.wallet.ownerKey(accountAddress);
-        const sender = this.HS.utils.ownerKeypair(privateKey);
-        const connection = await this.HS.network.getProviderByChain(102);
-        if (connection) {
-            const simulateResponse = await connection.simulateTransaction(vertransaction, simulateConfig);
-            console.log('第二次交易 - 预估', simulateResponse);
-            if (simulateResponse && simulateResponse?.value?.err) {
-                throw new Error(JSON.stringify(simulateResponse.value.logs));
-            }
-            vertransaction.sign([sender]);
-            const rawTransaction = vertransaction.serialize();
-            const hash = await connection.sendRawTransaction(rawTransaction);
-            if (hash) {
-                const result = { error: null, result: { hash, data: [vertransaction] } };
-                console.log('第二次交易结果：', result);
-                return { error: null, result: { hash, data: [vertransaction] } };
-            }
-        }
+        console.log(accountAddress, vertransaction);
         throw new Error('sendSimulateTransaction error');
     }
 }

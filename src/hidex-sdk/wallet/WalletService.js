@@ -91,8 +91,13 @@ class WalletService {
         console.log('walletInit...');
         console.log('walletStore', walletStore);
         console.log('bootedOss', bootedOss);
-        if (bootedOss && (!walletStore.walletList?.length || walletStore.pathIndex !== bootedOss.pathIndex)) {
+        if (bootedOss &&
+            (!walletStore.walletList?.length ||
+                walletStore.pathIndex !== bootedOss.pathIndex ||
+                Object.keys(bootedOss.walletBooted).toString().indexOf(walletStore?.walletList[0]?.mnemonic) === -1)) {
             console.log('WalletResting...');
+            await this.HS.catcher.removeItem('dataCache');
+            await this.setWalletStore(defalutWalletStore);
             const maxPathIndex = bootedOss.pathIndex;
             let id = 0;
             const walletBootedArr = Object.keys(bootedOss.walletBooted);

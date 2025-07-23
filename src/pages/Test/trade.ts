@@ -100,6 +100,7 @@ const tradeFun = () => {
         const { token, account } = info;
         const toAddress = '74fonSdF1PXNZ8WyucrP9eDBxgyjUigA5EjgXcPuC7rm';
         const totalFee = await trade.getSendFees(networkFee, toAddress, token.address);
+        const tokenAddress = token.address;
         console.log('总的手续费' + totalFee);
         // 判断母币是否足够
         // ...TODO:
@@ -109,9 +110,10 @@ const tradeFun = () => {
         const data = await trade.sendTransaction({
           from: account.address,
           to: toAddress, // 自己转给自己
-          amount: String(0.016 * Math.pow(10, 9)), // 实际转转数量
-          tokenAddress: '', // 发送母币种地址或者其他代币地址  注意：为空代表母币种
+          amount: String(0.016 * Math.pow(10, token.decimals)), // 实际转转数量
+          tokenAddress, // 发送母币种地址或者其他代币地址  注意：为空代表母币种
           currentNetWorkFee: networkFee,
+          decimals: token.decimals,
         });
         console.log('转账结果===>', data);
         if (data.error) {
@@ -230,7 +232,7 @@ const tradeFun = () => {
         utils.setStatistics({ timerKey: 'tradeFull', isBegin: true });
         console.time('tradeFullTimer');
         console.time('tradeTimer');
-        const { chainName, account, token, balance, balanceStr, tokenBalanceStr, priceUSD, cryptoPriceUSD, tradeNoce } = info;
+        const { chainName, account, token, balance, balanceStr, tokenBalanceStr, priceUSD, cryptoPriceUSD, tradeNoce, wallet } = info;
         const isBuy = true; // 买入
         const { address } = account;
         const currentNetwork = await network.choose(chainName);
@@ -282,7 +284,7 @@ const tradeFun = () => {
         }
 
         console.time('getSwapEstimateGasTimer');
-        const estimateResult = await trade.getSwapEstimateGas(currentSymbol, swapPath, address);
+        const estimateResult = await trade.getSwapEstimateGas(currentSymbol, swapPath, wallet);
         console.timeEnd('getSwapEstimateGasTimer');
 
         console.time('getNetWorkFeesTimer');
@@ -324,7 +326,7 @@ const tradeFun = () => {
         }
         console.time('tradeFullTimer');
         console.time('tradeTimer');
-        const { chainName, account, token, balance, priceUSD, cryptoPriceUSD, balanceStr, tokenBalanceStr, tradeNoce } = info;
+        const { chainName, account, token, balance, priceUSD, cryptoPriceUSD, balanceStr, tokenBalanceStr, tradeNoce, wallet } = info;
         const isBuy = false; // 卖出
         const { address } = account;
         const currentNetwork = await network.choose(chainName);
@@ -377,7 +379,7 @@ const tradeFun = () => {
         }
 
         console.time('getSwapEstimateGasTimer');
-        const estimateResult = await trade.getSwapEstimateGas(currentSymbol, swapPath, address);
+        const estimateResult = await trade.getSwapEstimateGas(currentSymbol, swapPath, wallet);
         console.timeEnd('getSwapEstimateGasTimer');
 
         console.time('getNetWorkFeesTimer');

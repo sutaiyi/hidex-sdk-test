@@ -4,13 +4,16 @@ import { HidexSDK } from '@/hidexService';
 import { queryStringify, simpleAddress, strToNumberByDecimals } from '@/common/utils';
 import { getChainsTokenPriceUsd, swapCommission } from '@/data/api';
 import { getTokenInfo } from '@/data/codex/query';
+import { useSolanaWallets } from '@privy-io/react-auth';
 
 interface SearchComponentProps {
   onResultSelect: (result: any) => void;
 }
 
 const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => {
-  const { network, wallet, trade, utils } = HidexSDK;
+  const { wallets } = useSolanaWallets();
+
+  const { network, trade, utils } = HidexSDK;
   const [inputValue, setInputValue] = useState('');
   const [results, setResults] = useState<any>([]);
   const [selected, setSelected] = useState<any>(null);
@@ -94,9 +97,11 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
       try {
         const chainName = network.getChainNameByChainId(result?.token?.networkId);
         const currentNetwork = await network.choose(chainName);
-
-        const { accountItem }: { accountItem: any } = await wallet.getCurrentWallet();
-        const account = accountItem[chainName];
+        if (!wallets?.length) {
+          alert('请先登录Privy');
+          return;
+        }
+        const account = wallets[0];
         const commissionPro = swapCommission({ chainId: currentNetwork.chainID, walletAddress: account.address });
 
         let IS_TOKEN_2022 = false;
@@ -148,6 +153,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           wSymbol: network.get(chainName).tokens[1].symbol,
           isPump,
           commissionData,
+          wallet: wallets[0],
         };
         setSelected(tradeInfo);
         onResultSelect(tradeInfo);

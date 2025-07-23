@@ -2,6 +2,7 @@ import { CurrentSymbol, ITradeService, NetWorkFee, ITradeFunctions, SendTransact
 import { ChainItem, OptionsCommon } from '../main/interfaces';
 import EventEmitter from '../common/eventEmitter';
 import { AddressLookupTableAccount, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
+import { ConnectedSolanaWallet, ConnectedWallet } from '@privy-io/react-auth';
 declare class TradeService extends EventEmitter implements ITradeService {
     app: ITradeFunctions | null;
     chainId: number;
@@ -45,7 +46,7 @@ declare class TradeService extends EventEmitter implements ITradeService {
         data: any;
         authorizationTarget?: string;
     }>;
-    getSwapEstimateGas: (currentSymbol: CurrentSymbol, path: any, accountAddress: string) => Promise<{
+    getSwapEstimateGas: (currentSymbol: CurrentSymbol, path: any, wallet: ConnectedSolanaWallet | ConnectedWallet) => Promise<{
         gasLimit: number;
         data?: any;
     }>;

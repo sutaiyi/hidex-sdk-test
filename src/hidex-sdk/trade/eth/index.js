@@ -5,7 +5,7 @@ import { getBaseFeePerGas, getUseGasPrice } from './utils';
 import { NETWORK_FEE_RATES, networkWeight } from './config';
 import { abiInFun, actionNameAndValue } from './abiFun';
 export const ethService = (HS) => {
-    const { network, wallet } = HS;
+    const { network } = HS;
     return {
         getBalance: async (accountAddress, tokenAddress = '') => {
             const currentNetwork = network.get();
@@ -174,7 +174,7 @@ export const ethService = (HS) => {
             try {
                 const currentNetWork = network.get();
                 const amount = amountToApprove || ethers.constants.MaxUint256;
-                const ownerKey = await wallet.ownerKey(accountAddress);
+                const ownerKey = accountAddress;
                 const profun = network.sysProviderRpcs[currentNetWork.chain].map((v) => {
                     const Brc20TokenContract = new ethers.Contract(tokenAddress, abis.tokenABI, v);
                     const walletProvider = new ethers.Wallet(ownerKey, v);
@@ -246,7 +246,7 @@ export const ethService = (HS) => {
             console.time('sendTransaction');
             const { gasLimit, maxPriorityFeePerGas, maxFeePerGas, gasPrice } = currentNetWorkFee;
             const currentChain = network.get();
-            const ownerKey = await wallet.ownerKey(from);
+            const ownerKey = from;
             const provider = await network.getFastestProviderByChain(currentChain.chain);
             const walletProvider = new ethers.Wallet(ownerKey, provider);
             let params = {};
@@ -334,8 +334,9 @@ export const ethService = (HS) => {
             }
             throw new Error('getSwapPath Error');
         },
-        getSwapEstimateGas: async (currentSymbol, path, accountAddress) => {
-            const ownerKey = await wallet.ownerKey(accountAddress);
+        getSwapEstimateGas: async (currentSymbol, path, wallet) => {
+            const accountAddress = wallet.address;
+            const ownerKey = accountAddress;
             const currentNetWork = network.get();
             const { amountIn, amountOutMin } = currentSymbol;
             const { action, value } = actionNameAndValue(currentSymbol.in.address, currentSymbol.out.address, amountIn);
@@ -385,7 +386,7 @@ export const ethService = (HS) => {
             const currentNetWork = network.get();
             const provider = await network.getClipProviderByChain(currentNetWork.chain);
             const { gasLimit, data } = transaction;
-            const ownerKey = await wallet.ownerKey(accountAddress);
+            const ownerKey = accountAddress;
             const walletProvider = new ethers.Wallet(ownerKey, provider);
             const { amountIn, networkFee } = currentSymbol;
             const { value } = actionNameAndValue(currentSymbol.in.address, currentSymbol.out.address, amountIn);

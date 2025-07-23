@@ -1,11 +1,11 @@
 {
 	"name": "hidex-sdk",
-	"version": "2.2.19",
+	"version": "3.0.0",
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build:minjs": "./build-minjs.sh",
-		"build": "npm run clean && tsc && cp -r ./dist/ ./lib/ && npm run build:cpr",
+		"build": "npm run clean && tsc && shx cp -r ./dist/ ./lib/ && npm run build:cpr",
 		"build:next": "npm run clean && tsc && npm run build:minjs && npm run build:cpr",
 		"build:cpr": "shx cp -r ./lib/ ./example/src/hidex-sdk/ && npm run package",
 		"build:win": "npm run clean && tsc && robocopy ./lib/ ./example/src/hidex-sdk/ /MIR",
@@ -16,6 +16,7 @@
 	},
 	"dependencies": {
 		"@codex-data/sdk": "^1.0.3",
+		"@privy-io/react-auth": "^2.18.0",
 		"@project-serum/anchor": "^0.26.0",
 		"@react-native-async-storage/async-storage": "^2.1.2",
 		"@solana/spl-memo": "^0.2.5",

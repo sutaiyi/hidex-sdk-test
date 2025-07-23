@@ -46,11 +46,11 @@ const Rend = () => {
           alert(message + ', 进入《Hidex SDK 调试》点击 Wallet 下的解锁即可');
           return;
         }
-        if (code === 13002) {
-          setHasToken(false);
-          return;
-        }
-        alert(code + '-' + message);
+        // if (code === 13002) {
+        //   setHasToken(false);
+        //   return;
+        // }
+        // alert(code + '-' + message);
       }
     };
     initLoading();

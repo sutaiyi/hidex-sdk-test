@@ -1,7 +1,7 @@
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { smTokenAddress } from '../../common/config';
 import { getTokenOwner, hashFailedMessage, sendSolanaTransaction, vertransactionsToBase64 } from './utils';
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createTransferInstruction, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createTransferCheckedInstruction, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { simulateConfig, TOKEN_2022_OWNER } from './config';
 import { priorityFeeInstruction } from './instruction/InstructionCreator';
 import defiApi from './defiApi';
@@ -12,7 +12,7 @@ import { getWithdrawSign } from '../../api/hidex';
 import { setStatistics } from '../../utils/timeStatistics';
 const utils = new UtilsService();
 export const solService = (HS) => {
-    const { network, wallet } = HS;
+    const { network } = HS;
     const getBalance = async (accountAddress, tokenAddress = '', isAta = false) => {
         const currentNetwork = network.get(102);
         try {
@@ -128,13 +128,13 @@ export const solService = (HS) => {
             if (Number(balanceWsol) === 0) {
                 ataCreateFee = 2039280 / Math.pow(10, 9);
             }
-            const accountSave = 890880 / Math.pow(10, 9);
+            const accountSave = 900880 / Math.pow(10, 9);
             return netFee + dexFee + accountSave + priorityFee + ataCreateFee;
         },
         sendTransaction: async (sendParams) => {
-            const { from, to, amount, tokenAddress, currentNetWorkFee } = sendParams;
+            const { from, to, amount, tokenAddress, currentNetWorkFee, decimals = 9 } = sendParams;
             try {
-                let ownerKey = await wallet.ownerKey(from);
+                let ownerKey = from;
                 const senderPublicKey = utils.ownerKeypair(ownerKey).publicKey;
                 const receiverPublicKey = new PublicKey(to);
                 const instructions = [];
@@ -156,7 +156,7 @@ export const solService = (HS) => {
                     if (toTokenAtaInfo == null || toTokenAtaInfo.data.length == 0) {
                         instructions.push(createAssociatedTokenAccountInstruction(senderPublicKey, toTokenAta, receiverPublicKey, tokenMintAddress, is2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID));
                     }
-                    instructions.push(createTransferInstruction(fromTokenAta, toTokenAta, senderPublicKey, BigInt(amount), [], is2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID));
+                    instructions.push(createTransferCheckedInstruction(fromTokenAta, tokenMintAddress, toTokenAta, senderPublicKey, BigInt(amount), decimals, [], is2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID));
                 }
                 const insPriority = await priorityFeeInstruction(200000, currentNetWorkFee.value);
                 instructions.unshift(...insPriority);
@@ -191,8 +191,9 @@ export const solService = (HS) => {
                 data: null
             };
         },
-        getSwapEstimateGas: async (currentSymbol, path, accountAddress) => {
+        getSwapEstimateGas: async (currentSymbol, path, wallet) => {
             const { compile } = currentSymbol;
+            const accountAddress = wallet.address;
             let compileUse = compile;
             let txArray = [];
             console.log('------------isGetAddressLookup------------------', !!compileUse?.addressesLookup);
@@ -204,8 +205,10 @@ export const solService = (HS) => {
                 throw new Error('Failed to swap_get_router' + JSON.stringify(currentSymbol) + path);
             }
             if (compileUse?.addressesLookup && swapTransaction) {
+                console.log('message', 1);
                 const { message, addressesLookup } = await compileTransactionByAddressLookup(swapTransaction, compileUse?.addressesLookup, HS);
-                txArray = await getTransactionsSignatureArray(message, addressesLookup, recentBlockhash, currentSymbol, HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress)), HS);
+                console.log('message', message);
+                txArray = await getTransactionsSignatureArray(message, addressesLookup, recentBlockhash, currentSymbol, wallet, HS);
             }
             console.log('txArray', txArray);
             if (txArray.length === 0) {
@@ -214,7 +217,7 @@ export const solService = (HS) => {
                 currentSymbol.preAmountIn = data.inAmount;
                 currentSymbol.preAmountOut = data.otherAmountThreshold;
                 const { message, addressesLookup } = await compileTransactionByAddressLookup(swapTransaction, compileUse?.addressesLookup, HS);
-                txArray = await getTransactionsSignatureArray(message, addressesLookup, recentBlockhash, currentSymbol, HS.utils.ownerKeypair(await wallet.ownerKey(accountAddress)), HS);
+                txArray = await getTransactionsSignatureArray(message, addressesLookup, recentBlockhash, currentSymbol, wallet, HS);
                 setStatistics({ timerKey: 'CompileTransaction', isBegin: false });
                 console.timeEnd('AgainRouterTimer');
             }
@@ -324,7 +327,7 @@ export const solService = (HS) => {
                     const connection = network.getProviderByChain(102);
                     const { blockhash } = defiApi.lastBlockHash;
                     const { signer, contents: contentsHex, signature: claimSignHex } = withdrawRes.data;
-                    const vsTransaction = await getClainSignature(signer, contentsHex.substring(2), claimSignHex.substring(2), blockhash, HS.utils.ownerKeypair(await wallet.ownerKey(params.walletAddress)), HS);
+                    const vsTransaction = await getClainSignature(signer, contentsHex.substring(2), claimSignHex.substring(2), blockhash, params.walletAddress, HS);
                     const simulateResponse = await connection.simulateTransaction(vsTransaction, simulateConfig);
                     console.log('领取 预估结果==>', simulateResponse);
                     if (simulateResponse?.value?.err) {

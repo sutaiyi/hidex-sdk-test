@@ -1,6 +1,6 @@
 import { TransactionMessage, VersionedTransaction, AddressLookupTableAccount, PublicKey } from '@solana/web3.js';
-import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, JITO_FEE_ACCOUNT, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, VERSION_TRANSACTION_PREFIX, PRE_PAID_EXPENSES, DEFAULD_SOLANA_GAS_LIMIT, COMMISSION_SOLANA_GAS_LIMIT, HIDEX_ADDRESS_LOOK_UP, BLOXROUTE, Trading_Service_Providers, PUMP_PROGRAM_ID, } from '../config';
-import { checkAccountCloseInstruction, createClaimInstruction, createEd25519ProgramIx, createMemoInstructionWithTxInfo, createTipTransferInstruction, createTradeNonceVerifyInstruction, deleteTipCurrentInInstructions, deleteTransactionGasInstruction, getDexCommisionReceiverAndLamports, getInstructionAmounts, getInstructionReplaceDataHex, getTipAndPriorityByUserPriorityFee, getTradeNonce, getTransactionGasLimitUintsInInstruction, nomalVersionedTransaction, numberToLittleEndianHex, priorityFeeInstruction, setCreateAccountBySeedInstructionLamports, setTransferInstructionLamports, versionedTra } from './InstructionCreator';
+import { SOLANA_SYSTEM_PROGRAM_ID, SOLANA_SYSTEM_PROGRAM_TRANSFER_ID, SOLANA_CREATE_ACCOUNT_WITH_SEED_ID, JITO_FEE_ACCOUNT, SOLANA_MAX_TX_SERIALIZE_SIGN, NEED_CHANGE_SLIPPAGE_PROGRAM_IDS, SUPPORT_CHANGE_PROGRAM_IDS, PUMP_AMM_PROGRAM_ID, VERSION_TRANSACTION_PREFIX, PRE_PAID_EXPENSES, DEFAULD_SOLANA_GAS_LIMIT, COMMISSION_SOLANA_GAS_LIMIT, HIDEX_ADDRESS_LOOK_UP, BLOXROUTE, Trading_Service_Providers, PUMP_PROGRAM_ID } from '../config';
+import { checkAccountCloseInstruction, createClaimInstruction, createEd25519ProgramIx, createMemoInstructionWithTxInfo, createTipTransferInstruction, createTradeNonceVerifyInstruction, createVersionTransaction, deleteTipCurrentInInstructions, deleteTransactionGasInstruction, getDexCommisionReceiverAndLamports, getInstructionAmounts, getInstructionReplaceDataHex, getTipAndPriorityByUserPriorityFee, getTradeNonce, getTransactionGasLimitUintsInInstruction, multiSignVersionedTraByPrivy, nomalVersionedTransaction, numberToLittleEndianHex, priorityFeeInstruction, setCreateAccountBySeedInstructionLamports, setTransferInstructionLamports, signVersionedTraByPrivy, versionedTra } from './InstructionCreator';
 import { createMemoInstruction } from '@solana/spl-memo';
 export function resetInstructions(currentSymbol, transactionMessage, newInputAmount, newOutputAmount) {
     console.log('传入的输出代币数量', newOutputAmount);
@@ -159,12 +159,13 @@ export async function compileTransactionByAddressLookup(swapBase64Str, addressLo
     let isSame = true;
     for (let i = 0; i < messageTables.length; i++) {
         if (messageTables[i].accountKey.toBase58() != addressLookupTableAccounts[i].key.toBase58()) {
-            console.log("两个地址映射不一致，重新获取", messageTables[i].accountKey.toBase58(), addressLookupTableAccounts[i].key.toBase58());
+            console.log('两个地址映射不一致，重新获取', messageTables[i].accountKey.toBase58(), addressLookupTableAccounts[i].key.toBase58());
             isSame = false;
+            break;
         }
     }
     if (!isSame) {
-        console.log("两个地址映射不一致，重新获取");
+        console.log('两个地址映射不一致，重新获取');
         let compileInfo = await compileTransaction(swapBase64Str, HS);
         return { message: compileInfo.message, addressesLookup: compileInfo.addressesLookup };
     }
@@ -336,27 +337,29 @@ export async function getTransactionsSignature(transactionMessage, addressLookup
 export async function getOwnerTradeNonce(owner, HS) {
     return getTradeNonce(owner, HS.network);
 }
-export async function getTransactionsSignatureArray(transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner, HS) {
+export async function getTransactionsSignatureArray(transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, wallet, HS) {
     const gasLimitInIx = getTransactionGasLimitUintsInInstruction(transactionMessage.instructions);
-    console.log("gasLimitInIx", gasLimitInIx);
+    console.log('gasLimitInIx', gasLimitInIx);
+    const ownerAddr = wallet.address;
     deleteTipCurrentInInstructions(transactionMessage);
     deleteTransactionGasInstruction(transactionMessage.instructions);
+    let ownerPublicKey = new PublicKey(wallet.address);
     let priorityFee = Number(currentSymbol.priorityFee);
     const { tipAmount, priorityAmount } = getTipAndPriorityByUserPriorityFee(priorityFee);
     const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(gasLimitInIx * 1.2, priorityAmount);
     const timestamp = Math.floor(Date.now() / 1000);
-    console.log("timestamp", timestamp);
-    const createTradeNonceVerifyIx = await createTradeNonceVerifyInstruction(timestamp, owner, HS.network);
+    console.log('timestamp', timestamp);
+    const createTradeNonceVerifyIx = await createTradeNonceVerifyInstruction(timestamp, ownerPublicKey, HS.network);
     const memoIx = createMemoInstructionWithTxInfo(currentSymbol);
     const { swap_pda, commissionAmount } = await getDexCommisionReceiverAndLamports(currentSymbol);
-    const commissionTransferIx = await createTipTransferInstruction(owner.publicKey, swap_pda, BigInt(commissionAmount));
+    const commissionTransferIx = await createTipTransferInstruction(ownerPublicKey, swap_pda, BigInt(commissionAmount));
     let swapTxArray = [];
     for (let i = 0; i < Trading_Service_Providers.length; i++) {
         const providerInstructions = [...transactionMessage.instructions];
         providerInstructions.push(memoIx);
         providerInstructions.push(commissionTransferIx);
         providerInstructions.push(createTradeNonceVerifyIx);
-        const tipIx = await createTipTransferInstruction(owner.publicKey, Trading_Service_Providers[i], BigInt(tipAmount));
+        const tipIx = await createTipTransferInstruction(ownerPublicKey, Trading_Service_Providers[i], BigInt(tipAmount));
         providerInstructions.push(tipIx);
         providerInstructions.splice(0, 0, addPriorityLimitIx);
         providerInstructions.splice(0, 0, addPriorityPriceIx);
@@ -365,7 +368,8 @@ export async function getTransactionsSignatureArray(transactionMessage, addressL
         let swapTxBytesSize = 0;
         let swapTx;
         try {
-            swapTx = await versionedTra(providerInstructions, owner, recentBlockhash, addressLookupTableAccounts);
+            let unSignVersionTransaction = createVersionTransaction(providerInstructions, ownerAddr, recentBlockhash, addressLookupTableAccounts);
+            swapTx = await signVersionedTraByPrivy(wallet, [unSignVersionTransaction]);
             swapTxSer = swapTx.serialize();
             swapTxBytesSize = swapTxSer.length;
         }
@@ -377,12 +381,13 @@ export async function getTransactionsSignatureArray(transactionMessage, addressL
         else {
             console.log('进入大指令');
             const bundleInstructions = [...transactionMessage.instructions];
-            const gasFeeTx = await versionedTra([addPriorityLimitIx, addPriorityPriceIx], owner, recentBlockhash, addressLookupTableAccounts);
-            const swapTx = await versionedTra(bundleInstructions, owner, recentBlockhash, addressLookupTableAccounts);
-            const commissionTx = await versionedTra([commissionTransferIx, memoIx, createTradeNonceVerifyIx], owner, recentBlockhash, addressLookupTableAccounts);
-            const tipIx = await createTipTransferInstruction(owner.publicKey, Trading_Service_Providers[i], BigInt(tipAmount));
-            const tipTx = await versionedTra([tipIx], owner, recentBlockhash, []);
-            swapTxArray.push([gasFeeTx, swapTx, commissionTx, tipTx]);
+            let gasFeeTx = createVersionTransaction([addPriorityLimitIx, addPriorityPriceIx], ownerAddr, recentBlockhash, addressLookupTableAccounts);
+            let swapTx = createVersionTransaction(bundleInstructions, ownerAddr, recentBlockhash, addressLookupTableAccounts);
+            let commissionTx = createVersionTransaction([commissionTransferIx, memoIx, createTradeNonceVerifyIx], ownerAddr, recentBlockhash, addressLookupTableAccounts);
+            const tipIx = await createTipTransferInstruction(ownerPublicKey, Trading_Service_Providers[i], BigInt(tipAmount));
+            let tipTx = createVersionTransaction([tipIx], ownerAddr, recentBlockhash, []);
+            let bundleTransactions = await multiSignVersionedTraByPrivy(wallet, [gasFeeTx, swapTx, commissionTx, tipTx]);
+            swapTxArray.push(bundleTransactions);
         }
     }
     return swapTxArray;
