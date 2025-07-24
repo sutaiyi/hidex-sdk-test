@@ -543,14 +543,14 @@ const tradeFun = () => {
     提前建立链接: async () => {
       trade.defiApi.establishingConnection();
     },
-    领取佣金: async () => {
-      const chainName = 'SOLANA';
-      const { accountItem } = await wallet.getCurrentWallet();
+    领取佣金: async (info: any) => {
+      const { wallet } = info;
       // 领取佣金
       const { code, message, txhash } = await trade.claimCommission({
         chainId: 102,
-        walletAddress: accountItem[chainName]?.address,
+        walletAddress: wallet?.address,
         amount: '1',
+        wallet,
       });
       console.log('领取佣金==>', { code, message, txhash });
       if (code === 200) {
