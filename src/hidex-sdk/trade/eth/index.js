@@ -242,17 +242,19 @@ export const ethService = (HS) => {
             return value;
         },
         sendTransaction: async (sendParams) => {
-            const { from, to, amount, tokenAddress, currentNetWorkFee } = sendParams;
+            const { to, amount, tokenAddress, currentNetWorkFee, wallet } = sendParams;
+            const ethWallet = wallet;
             console.time('sendTransaction');
             const { gasLimit, maxPriorityFeePerGas, maxFeePerGas, gasPrice } = currentNetWorkFee;
             const currentChain = network.get();
-            const ownerKey = from;
-            const provider = await network.getFastestProviderByChain(currentChain.chain);
-            const walletProvider = new ethers.Wallet(ownerKey, provider);
-            let params = {};
+            await ethWallet.switchChain(currentChain.chainID);
+            const ethProvider = await ethWallet.getEthereumProvider();
+            const ethersProvider = new ethers.providers.Web3Provider(ethProvider);
+            const signer = ethersProvider.getSigner();
+            let txParams = {};
             const upLimit = Math.floor(gasLimit);
             if (gasPrice === '0') {
-                params = {
+                txParams = {
                     gasLimit: upLimit,
                     type: 2,
                     maxPriorityFeePerGas,
@@ -260,36 +262,36 @@ export const ethService = (HS) => {
                 };
             }
             else {
-                params = {
+                txParams = {
                     gasLimit: upLimit,
                     gasPrice
                 };
             }
-            if (tokenAddress && tokenAddress !== currentChain.tokens[0].address) {
-                const contract = new ethers.Contract(tokenAddress, abis.tokenABI, walletProvider);
-                const txData = contract.interface.encodeFunctionData('transfer', [to, amount]);
-                const transaction = {
-                    to: tokenAddress,
-                    data: txData
-                };
-                const response = await walletProvider.sendTransaction({
-                    ...transaction,
-                    ...params
-                });
+            try {
+                let tx;
+                if (tokenAddress && tokenAddress !== currentChain.tokens[0].address) {
+                    const contract = new ethers.Contract(tokenAddress, abis.tokenABI, signer);
+                    const txData = await contract.populateTransaction.transfer(to, amount);
+                    tx = {
+                        to: tokenAddress,
+                        data: txData.data,
+                        ...txParams
+                    };
+                }
+                else {
+                    tx = {
+                        to,
+                        value: amount,
+                        ...txParams
+                    };
+                }
+                const response = await signer.sendTransaction(tx);
                 console.timeEnd('sendTransaction');
                 return { error: null, result: response };
             }
-            else {
-                const transaction = {
-                    to,
-                    value: amount
-                };
-                const response = await walletProvider.sendTransaction({
-                    ...transaction,
-                    ...params
-                });
+            catch (err) {
                 console.timeEnd('sendTransaction');
-                return { error: null, result: response };
+                return { error: err.message || true, result: null };
             }
         },
         getSwapPath: async (currentSymbol) => {

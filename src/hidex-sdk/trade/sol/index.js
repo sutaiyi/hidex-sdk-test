@@ -5,12 +5,10 @@ import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccoun
 import { simulateConfig, TOKEN_2022_OWNER } from './config';
 import { priorityFeeInstruction } from './instruction/InstructionCreator';
 import defiApi from './defiApi';
-import UtilsService from '../../utils/UtilsService';
 import { compileTransactionByAddressLookup, getAddressLookup, getClainSignature, getTransactionsSignatureArray } from './instruction';
 import { NETWORK_FEE_RATES } from '../eth/config';
 import { getWithdrawSign } from '../../api/hidex';
 import { setStatistics } from '../../utils/timeStatistics';
-const utils = new UtilsService();
 export const solService = (HS) => {
     const { network } = HS;
     const getBalance = async (accountAddress, tokenAddress = '', isAta = false) => {
@@ -132,10 +130,9 @@ export const solService = (HS) => {
             return netFee + dexFee + accountSave + priorityFee + ataCreateFee;
         },
         sendTransaction: async (sendParams) => {
-            const { from, to, amount, tokenAddress, currentNetWorkFee, decimals = 9, wallet } = sendParams;
+            const { to, amount, tokenAddress, currentNetWorkFee, decimals = 9, wallet } = sendParams;
             try {
-                let ownerKey = from;
-                const senderPublicKey = utils.ownerKeypair(ownerKey).publicKey;
+                const senderPublicKey = new PublicKey(wallet.address);
                 const receiverPublicKey = new PublicKey(to);
                 const instructions = [];
                 const connection = await network.getFastestProviderByChain(102);
@@ -163,7 +160,6 @@ export const solService = (HS) => {
                 const { blockhash } = await connection.getLatestBlockhash();
                 const result = await sendSolanaTransactionByPrviy(connection, wallet, instructions, blockhash);
                 console.timeEnd('sendTransaction');
-                ownerKey = '';
                 return { error: null, result: { hash: result, message: 'SUCCESS' } };
             }
             catch (error) {

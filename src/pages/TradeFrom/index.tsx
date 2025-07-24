@@ -4,14 +4,15 @@ import { HidexSDK } from '@/hidexService';
 import { queryStringify, simpleAddress, strToNumberByDecimals } from '@/common/utils';
 import { getChainsTokenPriceUsd, swapCommission } from '@/data/api';
 import { getTokenInfo } from '@/data/codex/query';
-import { useSolanaWallets } from '@privy-io/react-auth';
+import { ConnectedSolanaWallet, ConnectedWallet, useSolanaWallets, useWallets } from '@privy-io/react-auth';
 
 interface SearchComponentProps {
   onResultSelect: (result: any) => void;
 }
 
 const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => {
-  const { wallets } = useSolanaWallets();
+  const { wallets: solanaWallets } = useSolanaWallets();
+  const { wallets } = useWallets();
 
   const { network, trade, utils } = HidexSDK;
   const [inputValue, setInputValue] = useState('');
@@ -101,7 +102,10 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           alert('请先登录Privy');
           return;
         }
-        const account = wallets[0];
+        let account: ConnectedSolanaWallet | ConnectedWallet = wallets[0];
+        if (chainName === 'SOLANA') {
+          account = solanaWallets[0];
+        }
         const commissionPro = swapCommission({ chainId: currentNetwork.chainID, walletAddress: account.address });
 
         let IS_TOKEN_2022 = false;
@@ -136,7 +140,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
         const cryptoPriceUSD = (1 / Number(priceWeiItem[currentNetwork.chainID])) * 10 ** currentNetwork.tokens[0].decimals;
         const tradeInfo = {
           ...result,
-          account: account,
+          account,
           chainName,
           chainId: network.getChainIdByChainName(chainName),
           balance: strToNumberByDecimals(balance, currentNetwork.tokens[0].decimals),
@@ -153,7 +157,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           wSymbol: network.get(chainName).tokens[1].symbol,
           isPump,
           commissionData,
-          wallet: wallets[0],
+          wallet: account,
         };
         setSelected(tradeInfo);
         onResultSelect(tradeInfo);

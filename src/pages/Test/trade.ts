@@ -81,6 +81,7 @@ const tradeFun = () => {
           amount: String(0.0001 * Math.pow(10, token.decimals)), // 实际转转数量
           tokenAddress: token.address, // 发送母币种地址或者其他代币地址  注意：为空代表母币种
           currentNetWorkFee: networkFee,
+          wallet: account,
         });
         console.log('转账结果===>', data);
         if (data.error) {
@@ -97,7 +98,7 @@ const tradeFun = () => {
         const networkFeeList = await tradeFun().获取SOL转账网络费用列表(info);
         const networkFee = networkFeeList[0];
         console.log(networkFee);
-        const { token, account } = info;
+        const { token, account, wallet } = info;
         const toAddress = '74fonSdF1PXNZ8WyucrP9eDBxgyjUigA5EjgXcPuC7rm';
         const totalFee = await trade.getSendFees(networkFee, toAddress, token.address);
         const tokenAddress = token.address;
@@ -106,14 +107,14 @@ const tradeFun = () => {
         // ...TODO:
         // 1、如果是转母必币，需要将“总的手续费” 加上 “转出的母币数量”  判断母币余额是否足够
         // 2、如果是转代币，判断余额是否大于“总的手续费”
-
         const data = await trade.sendTransaction({
           from: account.address,
           to: toAddress, // 自己转给自己
-          amount: String(0.016 * Math.pow(10, token.decimals)), // 实际转转数量
+          amount: String(0.001 * Math.pow(10, token.decimals)), // 实际转转数量
           tokenAddress, // 发送母币种地址或者其他代币地址  注意：为空代表母币种
           currentNetWorkFee: networkFee,
           decimals: token.decimals,
+          wallet,
         });
         console.log('转账结果===>', data);
         if (data.error) {

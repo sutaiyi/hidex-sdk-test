@@ -59,6 +59,7 @@ declare class TradeService extends EventEmitter implements ITradeService {
         chainId: number;
         walletAddress: string;
         amount: string;
+        wallet: ConnectedSolanaWallet | ConnectedWallet;
     }) => Promise<WithdrawSign>;
     getHashStatus(hash: string, chain: string | number, bundles?: Array<string>): Promise<{
         status: HashStatus;

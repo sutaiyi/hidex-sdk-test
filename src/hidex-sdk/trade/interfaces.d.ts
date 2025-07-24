@@ -79,6 +79,7 @@ export interface ITradeFunctions {
         chainId: number;
         walletAddress: string;
         amount: string;
+        wallet: ConnectedSolanaWallet | ConnectedWallet;
     }): Promise<WithdrawSign>;
 }
 export interface ITradeAbout extends ITradeFunctions {
@@ -151,7 +152,7 @@ export type SendTransactionParams = {
     amount: string;
     tokenAddress?: string;
     decimals?: number;
-    wallet: ConnectedSolanaWallet;
+    wallet: ConnectedSolanaWallet | ConnectedWallet;
 };
 export type CurrentSymbol = {
     chain: string | number;

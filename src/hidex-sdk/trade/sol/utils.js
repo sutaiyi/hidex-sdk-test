@@ -37,12 +37,12 @@ export async function sendSolanaTransactionByPrviy(connection, wallet, instructi
         instructions
     }).compileToV0Message();
     const versionedTx = new VersionedTransaction(message);
-    const simulateResponse = await connection.simulateTransaction(versionedTx, simulateConfig);
+    const signedVersionTransaction = await wallet.signTransaction(versionedTx);
+    const simulateResponse = await connection.simulateTransaction(signedVersionTransaction, simulateConfig);
     console.log('sendSolanaTransaction 预估结果==>', simulateResponse);
     if (simulateResponse?.value?.err) {
         throw new Error(JSON.stringify(simulateResponse.value.logs));
     }
-    const signedVersionTransaction = await wallet.signTransaction(versionedTx);
     const rawTransaction = signedVersionTransaction.serialize();
     return await connection.sendRawTransaction(rawTransaction);
 }
