@@ -16,7 +16,7 @@ const solanaConnectors = toSolanaWalletConnectors();
 function App() {
   return (
     <PrivyProvider
-      appId="cmd6re3jf00udju0mf6ryindi"
+      appId="cmdmgvko300shjs0jwjpvfqvm" // "cmd6re3jf00udju0mf6ryindi"
       config={{
         // defaultChain: bsc,
         // supportedChains: [bsc],
@@ -35,7 +35,7 @@ function App() {
             connectors: solanaConnectors,
           },
         },
-        // loginMethods: ['email', 'apple', 'twitter', 'telegram', 'google', 'wallet'], // ['wallet'],
+        loginMethods: ['email', 'twitter', 'telegram', 'google', 'wallet'], // ['wallet'],
         // fundingMethodConfig: {
         //   moonpay: {
         //     useSandbox: true,
