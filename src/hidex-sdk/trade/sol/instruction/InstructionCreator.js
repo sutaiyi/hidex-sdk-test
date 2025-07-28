@@ -94,6 +94,7 @@ export function createVersionTransaction(instructions, ownerAddress, latestBlock
     return new VersionedTransaction(message);
 }
 export async function multiSignVersionedTraByPrivy(wallet, transactions) {
+    console.log('multiSignVersionedTraByPrivy');
     try {
         const signedVersionTransactions = await wallet.signAllTransactions(transactions);
         return signedVersionTransactions;
@@ -104,6 +105,7 @@ export async function multiSignVersionedTraByPrivy(wallet, transactions) {
     }
 }
 export async function signVersionedTraByPrivy(wallet, transactions) {
+    console.log('signVersionedTraByPrivy');
     try {
         const signedVersionTransaction = await wallet.signTransaction(transactions[0]);
         console.log('Transaction signed successfully', signedVersionTransaction);
