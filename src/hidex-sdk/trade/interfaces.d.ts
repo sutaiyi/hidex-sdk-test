@@ -4,6 +4,7 @@ import { ICatcher } from '../catch/interfaces';
 import EventEmitter from '../common/eventEmitter';
 import { OptionsCommon } from '../main/interfaces';
 import { ConnectedSolanaWallet, ConnectedWallet } from '@privy-io/react-auth';
+import { UseSignTransactionInterface } from '@privy-io/react-auth/solana';
 export type HashStatus = 'Confirmed' | 'Pending' | 'Failed' | 'Expired';
 export interface ITradeOthersFunction {
     defiApi: IDefiApi;
@@ -66,7 +67,9 @@ export interface ITradeFunctions {
         data: any;
         authorizationTarget?: string;
     }>;
-    getSwapEstimateGas(currentSymbol: CurrentSymbol, path: any, wallet: ConnectedSolanaWallet | ConnectedWallet): Promise<{
+    getSwapEstimateGas(currentSymbol: CurrentSymbol, path: any, wallet: (ConnectedSolanaWallet & {
+        useSignTransaction: UseSignTransactionInterface['signTransaction'];
+    }) | ConnectedWallet): Promise<{
         gasLimit: number;
         data?: any;
     }>;
@@ -79,7 +82,9 @@ export interface ITradeFunctions {
         chainId: number;
         walletAddress: string;
         amount: string;
-        wallet: ConnectedSolanaWallet | ConnectedWallet;
+        wallet: (ConnectedSolanaWallet & {
+            useSignTransaction: UseSignTransactionInterface['signTransaction'];
+        }) | ConnectedWallet;
     }): Promise<WithdrawSign>;
 }
 export interface ITradeAbout extends ITradeFunctions {
@@ -152,7 +157,9 @@ export type SendTransactionParams = {
     amount: string;
     tokenAddress?: string;
     decimals?: number;
-    wallet: ConnectedSolanaWallet | ConnectedWallet;
+    wallet: (ConnectedSolanaWallet & {
+        useSignTransaction: UseSignTransactionInterface['signTransaction'];
+    }) | ConnectedWallet;
 };
 export type CurrentSymbol = {
     chain: string | number;

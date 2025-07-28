@@ -39,6 +39,6 @@ export const untieCommissionResult = (commissionResult: any) => {
   return {
     commissionRate: 0,
     feeRate: 0,
-    inviterAddress: '0x0000000000000000000000000000000000000000',
+    inviterAddress: 'GUMstaphPhNAbbKnXhpgC1PTdK96NtspMjHJ2D8qfXHN',
   };
 };

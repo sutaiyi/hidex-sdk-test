@@ -3,6 +3,7 @@ import { ChainItem, OptionsCommon } from '../main/interfaces';
 import EventEmitter from '../common/eventEmitter';
 import { AddressLookupTableAccount, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
 import { ConnectedSolanaWallet, ConnectedWallet } from '@privy-io/react-auth';
+import { UseSignTransactionInterface } from '@privy-io/react-auth/solana';
 declare class TradeService extends EventEmitter implements ITradeService {
     app: ITradeFunctions | null;
     chainId: number;
@@ -46,7 +47,9 @@ declare class TradeService extends EventEmitter implements ITradeService {
         data: any;
         authorizationTarget?: string;
     }>;
-    getSwapEstimateGas: (currentSymbol: CurrentSymbol, path: any, wallet: ConnectedSolanaWallet | ConnectedWallet) => Promise<{
+    getSwapEstimateGas: (currentSymbol: CurrentSymbol, path: any, wallet: (ConnectedSolanaWallet & {
+        useSignTransaction: UseSignTransactionInterface["signTransaction"];
+    }) | ConnectedWallet) => Promise<{
         gasLimit: number;
         data?: any;
     }>;
@@ -59,7 +62,9 @@ declare class TradeService extends EventEmitter implements ITradeService {
         chainId: number;
         walletAddress: string;
         amount: string;
-        wallet: ConnectedSolanaWallet | ConnectedWallet;
+        wallet: (ConnectedSolanaWallet & {
+            useSignTransaction: UseSignTransactionInterface["signTransaction"];
+        }) | ConnectedWallet;
     }) => Promise<WithdrawSign>;
     getHashStatus(hash: string, chain: string | number, bundles?: Array<string>): Promise<{
         status: HashStatus;

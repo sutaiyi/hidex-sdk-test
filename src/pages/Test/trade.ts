@@ -230,10 +230,12 @@ const tradeFun = () => {
         if (!info) {
           alert('请选择代币');
         }
+
         utils.setStatistics({ timerKey: 'tradeFull', isBegin: true });
         console.time('tradeFullTimer');
         console.time('tradeTimer');
         const { chainName, account, token, balance, balanceStr, tokenBalanceStr, priceUSD, cryptoPriceUSD, tradeNoce, wallet } = info;
+        console.log('wallet', wallet);
         const isBuy = true; // 买入
         const { address } = account;
         const currentNetwork = await network.choose(chainName);

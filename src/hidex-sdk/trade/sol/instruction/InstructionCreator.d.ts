@@ -1,8 +1,8 @@
 import * as anchor from '@project-serum/anchor';
-import { AddressLookupTableAccount, PublicKey, TransactionInstruction, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
+import { AddressLookupTableAccount, Connection, PublicKey, TransactionInstruction, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
 import { INetworkService } from '../../../network/interfaces';
 import { CurrentSymbol } from '../../interfaces';
-import { ConnectedSolanaWallet } from '@privy-io/react-auth/solana';
+import { ConnectedSolanaWallet, SupportedSolanaTransaction, UseSignTransactionInterface } from '@privy-io/react-auth/solana';
 export declare const isBuy: (currentSymbol: CurrentSymbol) => boolean;
 export declare function initAnchor(owner: any, network: INetworkService): void;
 export declare function information(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<{
@@ -25,9 +25,15 @@ export declare function information(currentSymbol: CurrentSymbol, owner: any, ne
 export declare function priorityFeeInstruction(limit: number, fee: number): Promise<TransactionInstruction[]>;
 export declare function versionedTra(instructions: TransactionInstruction[], owner: any, latestBlockhash: string, addressLookupTableAccounts: AddressLookupTableAccount[]): Promise<VersionedTransaction>;
 export declare function createVersionTransaction(instructions: TransactionInstruction[], ownerAddress: string, latestBlockhash: string, addressLookupTableAccounts: AddressLookupTableAccount[]): VersionedTransaction;
-export declare function multiSignVersionedTraByPrivy(wallet: ConnectedSolanaWallet, transactions: VersionedTransaction[]): Promise<VersionedTransaction[]>;
-export declare function signVersionedTraByPrivy(wallet: ConnectedSolanaWallet, transactions: VersionedTransaction[]): Promise<VersionedTransaction>;
-export declare function nomalVersionedTransaction(instructions: TransactionInstruction[], owner: any, latestBlockhash: string): Promise<VersionedTransaction>;
+export declare function multiSignVersionedTraByPrivy(wallet: ConnectedSolanaWallet & {
+    useSignTransaction: UseSignTransactionInterface['signTransaction'];
+}, connection: Connection, transactions: VersionedTransaction[]): Promise<SupportedSolanaTransaction[]>;
+export declare function signVersionedTraByPrivy(wallet: ConnectedSolanaWallet & {
+    useSignTransaction: UseSignTransactionInterface['signTransaction'];
+}, connection: Connection, transactions: VersionedTransaction[]): Promise<VersionedTransaction>;
+export declare function nomalVersionedTransaction(wallet: ConnectedSolanaWallet & {
+    useSignTransaction: UseSignTransactionInterface['signTransaction'];
+}, instructions: TransactionInstruction[], ownerAddr: PublicKey, connection: Connection, latestBlockhash: string): Promise<VersionedTransaction>;
 export declare function getTotalFee(currentSymbol: CurrentSymbol): string;
 export declare function deleteTransactionGasInstruction(instructions: TransactionInstruction[]): Promise<void>;
 export declare function getTransactionGasLimitUintsInInstruction(instructions: TransactionInstruction[]): number;
@@ -38,7 +44,7 @@ export declare function createSwapCompleteInstruction(currentSymbol: CurrentSymb
 export declare function createBuySwapPrepareInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function createBuySwapCompletedInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function createSaleSwapPrepareInstruction(currentSymbol: CurrentSymbol, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
-export declare function createClaimInstruction(contents: string, signatrue: string, owner: any, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
+export declare function createClaimInstruction(contents: string, signatrue: string, ownerAddr: string): Promise<anchor.web3.TransactionInstruction>;
 export declare function createTradeNonceVerifyInstruction(timeStamp: number, owner: PublicKey, network: INetworkService): Promise<anchor.web3.TransactionInstruction>;
 export declare function getTradeNonce(owner: any, network: INetworkService): Promise<number>;
 export declare function createEd25519ProgramIx(signer: string, contents: string, signatrue: string): Promise<anchor.web3.TransactionInstruction>;

@@ -93,10 +93,17 @@ export function createVersionTransaction(instructions, ownerAddress, latestBlock
     }).compileToV0Message(addressLookupTableAccounts);
     return new VersionedTransaction(message);
 }
-export async function multiSignVersionedTraByPrivy(wallet, transactions) {
-    console.log('multiSignVersionedTraByPrivy');
+export async function multiSignVersionedTraByPrivy(wallet, connection, transactions) {
     try {
-        const signedVersionTransactions = await wallet.signAllTransactions(transactions);
+        const signaturePromises = transactions.map((tx) => wallet.useSignTransaction({
+            transaction: tx,
+            address: wallet.address,
+            connection: connection,
+            uiOptions: {
+                showWalletUIs: false
+            }
+        }));
+        const signedVersionTransactions = await Promise.all(signaturePromises);
         return signedVersionTransactions;
     }
     catch (error) {
@@ -104,10 +111,16 @@ export async function multiSignVersionedTraByPrivy(wallet, transactions) {
         throw error;
     }
 }
-export async function signVersionedTraByPrivy(wallet, transactions) {
-    console.log('signVersionedTraByPrivy');
+export async function signVersionedTraByPrivy(wallet, connection, transactions) {
     try {
-        const signedVersionTransaction = await wallet.signTransaction(transactions[0]);
+        const signedVersionTransaction = await wallet.useSignTransaction({
+            transaction: transactions[0],
+            address: wallet.address,
+            connection: connection,
+            uiOptions: {
+                showWalletUIs: false
+            }
+        });
         console.log('Transaction signed successfully', signedVersionTransaction);
         return signedVersionTransaction;
     }
@@ -116,14 +129,14 @@ export async function signVersionedTraByPrivy(wallet, transactions) {
         throw error;
     }
 }
-export async function nomalVersionedTransaction(instructions, owner, latestBlockhash) {
+export async function nomalVersionedTransaction(wallet, instructions, ownerAddr, connection, latestBlockhash) {
     const message = new TransactionMessage({
-        payerKey: owner.publicKey,
+        payerKey: ownerAddr,
         recentBlockhash: latestBlockhash,
         instructions
     }).compileToV0Message();
     const versionedTx = new VersionedTransaction(message);
-    versionedTx.sign([owner]);
+    await signVersionedTraByPrivy(wallet, connection, [versionedTx]);
     return versionedTx;
 }
 export function getTotalFee(currentSymbol) {
@@ -252,8 +265,7 @@ export async function createSaleSwapPrepareInstruction(currentSymbol, owner, net
     })
         .instruction();
 }
-export async function createClaimInstruction(contents, signatrue, owner, network) {
-    initAnchor(owner, network);
+export async function createClaimInstruction(contents, signatrue, ownerAddr) {
     const programId = new PublicKey(PROGRAMID());
     const program = new anchor.Program(abis.solanaIDL, programId);
     const [data_pda] = await PublicKey.findProgramAddress([Buffer.from(SEED_DATA)], programId);
@@ -267,7 +279,7 @@ export async function createClaimInstruction(contents, signatrue, owner, network
         swapPda: swap_pda,
         configPda: data_pda,
         noncePda: nonce_data,
-        user: owner.publicKey,
+        user: new PublicKey(ownerAddr),
         ixSysvar: anchor.web3.SYSVAR_INSTRUCTIONS_PUBKEY,
         systemProgram: SystemProgram.programId
     })

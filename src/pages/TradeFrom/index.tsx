@@ -4,7 +4,8 @@ import { HidexSDK } from '@/hidexService';
 import { queryStringify, simpleAddress, strToNumberByDecimals } from '@/common/utils';
 import { getChainsTokenPriceUsd, swapCommission } from '@/data/api';
 import { getTokenInfo } from '@/data/codex/query';
-import { ConnectedSolanaWallet, ConnectedWallet, useSolanaWallets, useWallets } from '@privy-io/react-auth';
+import { ConnectedSolanaWallet, ConnectedWallet, useSolanaWallets, useWallets, useSignTransaction } from '@privy-io/react-auth';
+import { UseSignTransactionInterface } from '@privy-io/react-auth/solana';
 
 interface SearchComponentProps {
   onResultSelect: (result: any) => void;
@@ -13,6 +14,7 @@ interface SearchComponentProps {
 const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => {
   const { wallets: solanaWallets } = useSolanaWallets();
   const { wallets } = useWallets();
+  const { signTransaction } = useSignTransaction();
 
   const { network, trade, utils } = HidexSDK;
   const [inputValue, setInputValue] = useState('');
@@ -102,19 +104,26 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           alert('请先登录Privy');
           return;
         }
-        let account: ConnectedSolanaWallet | ConnectedWallet = wallets[0];
-        if (chainName === 'SOLANA') {
-          account = solanaWallets[0];
-        }
+
+        let account: ConnectedSolanaWallet | ConnectedWallet | { useSignTransaction: UseSignTransactionInterface['signTransaction'] } = solanaWallets[0];
+        (account as any).useSignTransaction = signTransaction;
+        console.log('account', account);
+
         const commissionPro = swapCommission({ chainId: currentNetwork.chainID, walletAddress: account.address });
 
         let IS_TOKEN_2022 = false;
         let userWsolAtaLamports = '0';
         let tokenAtaLamports = '0';
+
+        console.log(wallets);
+
         if (utils.trade.isSol(chainName)) {
           IS_TOKEN_2022 = await utils.trade?.isToken2022(result?.token.address, network.getProviderByChain(102));
+
           const wsolAtaAddress = await utils.trade?.getUserTokenAtaAddress(account.address, currentNetwork.tokens[1].address, IS_TOKEN_2022);
+
           const tokenAtaAddress = await utils.trade?.getUserTokenAtaAddress(account.address, result?.token.address, IS_TOKEN_2022);
+
           console.log('wsolAtaAddress==>', wsolAtaAddress, 'tokenAtaAddress==>', tokenAtaAddress);
           const [userWsolAtaLamportsP, tokenAtaLamportsP] = await Promise.all([
             trade.getBalance(account.address, wsolAtaAddress, true),
@@ -133,7 +142,6 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onResultSelect }) => 
           getTokenInfo(queryStringify({ address: result?.token.address, networkId: network.getCodexChainIdByChain(currentNetwork.chain) })),
           commissionPro,
         ]);
-
         localStorage.setItem('commissionData', JSON.stringify(commissionData));
 
         const isPump = tokenInfo?.data?.token?.launchpad?.completed === false;

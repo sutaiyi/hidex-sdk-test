@@ -5,7 +5,7 @@ import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccoun
 import { simulateConfig, TOKEN_2022_OWNER } from './config';
 import { priorityFeeInstruction } from './instruction/InstructionCreator';
 import defiApi from './defiApi';
-import { compileTransactionByAddressLookup, getAddressLookup, getClainSignature, getTransactionsSignatureArray } from './instruction';
+import { compileTransactionByAddressLookup, getAddressLookup, getClaimSignature, getTransactionsSignatureArray } from './instruction';
 import { NETWORK_FEE_RATES } from '../eth/config';
 import { getWithdrawSign } from '../../api/hidex';
 import { setStatistics } from '../../utils/timeStatistics';
@@ -190,6 +190,7 @@ export const solService = (HS) => {
         getSwapEstimateGas: async (currentSymbol, path, wallet) => {
             const { compile } = currentSymbol;
             const accountAddress = wallet.address;
+            const connection = network.getProviderByChain(102);
             let compileUse = compile;
             let txArray = [];
             console.log('------------isGetAddressLookup------------------', !!compileUse?.addressesLookup);
@@ -204,7 +205,7 @@ export const solService = (HS) => {
                 console.log('message', 1);
                 const { message, addressesLookup } = await compileTransactionByAddressLookup(swapTransaction, compileUse?.addressesLookup, HS);
                 console.log('message', message);
-                txArray = await getTransactionsSignatureArray(message, addressesLookup, recentBlockhash, currentSymbol, wallet, HS);
+                txArray = await getTransactionsSignatureArray(message, addressesLookup, recentBlockhash, currentSymbol, wallet, connection, HS);
             }
             console.log('txArray', txArray);
             if (txArray.length === 0) {
@@ -213,7 +214,7 @@ export const solService = (HS) => {
                 currentSymbol.preAmountIn = data.inAmount;
                 currentSymbol.preAmountOut = data.otherAmountThreshold;
                 const { message, addressesLookup } = await compileTransactionByAddressLookup(swapTransaction, compileUse?.addressesLookup, HS);
-                txArray = await getTransactionsSignatureArray(message, addressesLookup, recentBlockhash, currentSymbol, wallet, HS);
+                txArray = await getTransactionsSignatureArray(message, addressesLookup, recentBlockhash, currentSymbol, wallet, connection, HS);
                 setStatistics({ timerKey: 'CompileTransaction', isBegin: false });
                 console.timeEnd('AgainRouterTimer');
             }
@@ -323,7 +324,7 @@ export const solService = (HS) => {
                     const connection = network.getProviderByChain(102);
                     const { blockhash } = defiApi.lastBlockHash;
                     const { signer, contents: contentsHex, signature: claimSignHex } = withdrawRes.data;
-                    const vsTransaction = await getClainSignature(signer, contentsHex.substring(2), claimSignHex.substring(2), blockhash, params.walletAddress, HS);
+                    const vsTransaction = await getClaimSignature(signer, contentsHex.substring(2), claimSignHex.substring(2), blockhash, params.wallet, connection);
                     const simulateResponse = await connection.simulateTransaction(vsTransaction, simulateConfig);
                     console.log('领取 预估结果==>', simulateResponse);
                     if (simulateResponse?.value?.err) {

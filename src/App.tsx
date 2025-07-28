@@ -16,7 +16,7 @@ const solanaConnectors = toSolanaWalletConnectors();
 function App() {
   return (
     <PrivyProvider
-      appId="cmdmgvko300shjs0jwjpvfqvm" // "cmd6re3jf00udju0mf6ryindi"
+      appId="cmd2k22iw02c4ld0mfzv1vdrd" // "cmd6re3jf00udju0mf6ryindi"
       config={{
         // defaultChain: bsc,
         // supportedChains: [bsc],
