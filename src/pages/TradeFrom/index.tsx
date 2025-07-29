@@ -4,8 +4,8 @@ import { HidexSDK } from '@/hidexService';
 import { queryStringify, simpleAddress, strToNumberByDecimals } from '@/common/utils';
 import { getChainsTokenPriceUsd, swapCommission } from '@/data/api';
 import { getTokenInfo } from '@/data/codex/query';
-import { ConnectedSolanaWallet, ConnectedWallet, useSolanaWallets, useWallets, useSignTransaction } from '@privy-io/react-auth';
-import { UseSignTransactionInterface } from '@privy-io/react-auth/solana';
+import { ConnectedSolanaWallet, ConnectedWallet, useSolanaWallets, useWallets } from '@privy-io/react-auth';
+import { UseSignTransactionInterface, useSignTransaction } from '@privy-io/react-auth/solana';
 
 interface SearchComponentProps {
   onResultSelect: (result: any) => void;

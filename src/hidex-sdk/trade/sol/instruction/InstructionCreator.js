@@ -99,9 +99,6 @@ export async function multiSignVersionedTraByPrivy(wallet, connection, transacti
             transaction: tx,
             address: wallet.address,
             connection: connection,
-            transactionOptions: {
-                skipPreflight: true
-            },
             uiOptions: {
                 showWalletUIs: false
             }
@@ -120,9 +117,6 @@ export async function signVersionedTraByPrivy(wallet, connection, transactions) 
             transaction: transactions[0],
             address: wallet.address,
             connection: connection,
-            transactionOptions: {
-                skipPreflight: true
-            },
             uiOptions: {
                 showWalletUIs: false
             }

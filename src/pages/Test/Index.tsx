@@ -11,16 +11,16 @@ import WalletFrom from '../WalletFrom';
 import { setBeforeTradeData } from './solTrade';
 import { HidexSDK } from '@/hidexService';
 import Decryption from './decryption';
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivy, useSolanaWallets } from '@privy-io/react-auth';
 import { usePrivyTest } from '../Privy/hooks/usePrivyTest';
 // import TestOther from './testOther';
 
 const Test = React.memo(() => {
   const { handleEthSendTransaction, handleEthSignMessage, handleSolanaSignMessage, handleSolanaSendTransaction, handleSignSolanaTransaction } = usePrivyTest();
-
+  const { wallets: solanaWallets } = useSolanaWallets();
   const { network, trade } = HidexSDK;
   const [tradeInfo, setTradeInfo] = useState<any>(null);
-  const { authenticated } = usePrivy();
+  const { authenticated, user } = usePrivy();
   useEffect(() => {
     (async () => {
       if (tradeInfo?.token?.address && tradeInfo.chainId === 102) {
@@ -41,10 +41,10 @@ const Test = React.memo(() => {
   }, [tradeInfo]);
 
   useEffect(() => {
-    if (authenticated) {
+    if (authenticated && solanaWallets?.length) {
       handleSolanaSignMessage();
     }
-  }, [authenticated]);
+  }, [authenticated, solanaWallets]);
 
   const btns: any = {
     network: networkTest(),

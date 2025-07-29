@@ -410,7 +410,7 @@ export async function getTransactionsSignatureArray(transactionMessage, addressL
             console.log('签名前长度', unSignTxArray.length);
             let timeBeforeSign = Date.now();
             let bundleTransactions = await multiSignVersionedTraByPrivy(wallet, connection, unSignTxArray);
-            console.log('签名结果', bundleTransactions.length);
+            console.log('签名结果', bundleTransactions.length, bundleTransactions);
             console.log('签名结果', Buffer.from(bundleTransactions[0].serialize()).toString('base64'));
             console.log('签名耗时', Date.now() - timeBeforeSign);
             for (let i = 0; i < bundleTransactions.length; i++) {
