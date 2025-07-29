@@ -1,4 +1,4 @@
-import { useSignMessage, useSendTransaction, ConnectedSolanaWallet, ConnectedWallet } from '@privy-io/react-auth';
+import { useSignMessage, useSendTransaction, ConnectedSolanaWallet, ConnectedWallet, useSolanaWallets } from '@privy-io/react-auth';
 import { useSendTransaction as useSolanaSendTransaction, useSignTransaction } from '@privy-io/react-auth/solana';
 import { Connection, Transaction, VersionedTransaction, PublicKey, SystemProgram, TransactionMessage } from '@solana/web3.js';
 import bs58 from 'bs58';
@@ -11,6 +11,7 @@ export function usePrivyTest() {
   const { signMessage } = useSignMessage();
   const { sendTransaction } = useSendTransaction();
   const { signTransaction } = useSignTransaction();
+  const { wallets: solanaWallets } = useSolanaWallets();
   const { sendTransaction: solanaSendTransaction } = useSolanaSendTransaction();
 
   const handleSendTransaction = async ({
@@ -42,7 +43,11 @@ export function usePrivyTest() {
     }
   };
 
-  const handleSolanaSignMessage = async (activeWallet: ConnectedSolanaWallet | ConnectedWallet) => {
+  const handleSolanaSignMessage = async (activeWallet?: ConnectedSolanaWallet | ConnectedWallet) => {
+    let address = solanaWallets[0].address;
+    if (activeWallet) {
+      address = activeWallet.address;
+    }
     const message = 'Hello world';
     const signatureUint8Array = await signMessage(
       {
@@ -50,7 +55,7 @@ export function usePrivyTest() {
         // Optional: Specify the wallet to use for signing. If not provided, the first wallet will be used.
       },
       {
-        address: activeWallet.address,
+        address,
       }
     );
     const signature = bs58.encode(signatureUint8Array);
