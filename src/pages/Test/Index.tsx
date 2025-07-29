@@ -12,11 +12,15 @@ import { setBeforeTradeData } from './solTrade';
 import { HidexSDK } from '@/hidexService';
 import Decryption from './decryption';
 import { usePrivy } from '@privy-io/react-auth';
+import { usePrivyTest } from '../Privy/hooks/usePrivyTest';
 // import TestOther from './testOther';
 
 const Test = React.memo(() => {
+  const { handleEthSendTransaction, handleEthSignMessage, handleSolanaSignMessage, handleSolanaSendTransaction, handleSignSolanaTransaction } = usePrivyTest();
+
   const { network, trade } = HidexSDK;
   const [tradeInfo, setTradeInfo] = useState<any>(null);
+  const { authenticated } = usePrivy();
   useEffect(() => {
     (async () => {
       if (tradeInfo?.token?.address && tradeInfo.chainId === 102) {
@@ -35,6 +39,12 @@ const Test = React.memo(() => {
       trade.off('testtest', handleLisenter);
     };
   }, [tradeInfo]);
+
+  useEffect(() => {
+    if (authenticated) {
+      handleSolanaSignMessage();
+    }
+  }, [authenticated]);
 
   const btns: any = {
     network: networkTest(),
