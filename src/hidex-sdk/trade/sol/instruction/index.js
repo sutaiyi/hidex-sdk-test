@@ -274,15 +274,20 @@ export function isInstructionsSupportReset(transactionMessage, currentSymbol) {
     return false;
 }
 export async function getClaimSignature(signer, contentsHex, claimSignHex, recentBlockhash, wallet, connection) {
-    const id = contentsHex.substring(contentsHex.length - 64);
-    const idStr = Buffer.from(id, 'hex').toString();
-    let memoStr = idStr + wallet.address;
-    const memoInstruction = await createMemoInstruction(memoStr);
-    const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(COMMISSION_SOLANA_GAS_LIMIT, DEFAULD_SOLANA_GAS_LIMIT);
-    const ed25519ProgramIx = await createEd25519ProgramIx(signer, contentsHex, claimSignHex);
-    const claimProgramIx = await createClaimInstruction(contentsHex, claimSignHex, wallet.address);
-    const claimTx = await nomalVersionedTransaction(wallet, [ed25519ProgramIx, addPriorityLimitIx, addPriorityPriceIx, claimProgramIx, memoInstruction], new PublicKey(wallet.address), connection, recentBlockhash);
-    return claimTx;
+    try {
+        const id = contentsHex.substring(contentsHex.length - 64);
+        const idStr = Buffer.from(id, 'hex').toString();
+        let memoStr = idStr + wallet.address;
+        const memoInstruction = await createMemoInstruction(memoStr);
+        const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(COMMISSION_SOLANA_GAS_LIMIT, DEFAULD_SOLANA_GAS_LIMIT);
+        const ed25519ProgramIx = await createEd25519ProgramIx(signer, contentsHex, claimSignHex);
+        const claimProgramIx = await createClaimInstruction(contentsHex, claimSignHex, wallet.address);
+        const claimTx = await nomalVersionedTransaction(wallet, [ed25519ProgramIx, addPriorityLimitIx, addPriorityPriceIx, claimProgramIx, memoInstruction], new PublicKey(wallet.address), connection, recentBlockhash);
+        return claimTx;
+    }
+    catch (error) {
+        console.log('getClaimSignature===>', error);
+    }
 }
 export async function getTransactionsSignature(transactionMessage, addressLookupTableAccounts, recentBlockhash, currentSymbol, owner, HS) {
     for (let i = 0; i < transactionMessage.instructions.length; i++) {
@@ -348,7 +353,6 @@ export async function getTransactionsSignatureArray(transactionMessage, addressL
     const { tipAmount, priorityAmount } = getTipAndPriorityByUserPriorityFee(priorityFee);
     const [addPriorityLimitIx, addPriorityPriceIx] = await priorityFeeInstruction(gasLimitInIx * 1.2, priorityAmount);
     const timestamp = Math.floor(Date.now() / 1000);
-    console.log('timestamp', timestamp);
     const createTradeNonceVerifyIx = await createTradeNonceVerifyInstruction(timestamp, ownerPublicKey, HS.network);
     const memoIx = createMemoInstructionWithTxInfo(currentSymbol);
     const { swap_pda, commissionAmount } = await getDexCommisionReceiverAndLamports(currentSymbol);
@@ -365,13 +369,11 @@ export async function getTransactionsSignatureArray(transactionMessage, addressL
         providerInstructions.push(tipIx);
         providerInstructions.splice(0, 0, addPriorityLimitIx);
         providerInstructions.splice(0, 0, addPriorityPriceIx);
-        console.log('准备系列化');
         let unSignVersionTransaction = createVersionTransaction(providerInstructions, ownerAddr, recentBlockhash, addressLookupTableAccounts);
         let unSignTxLength = unSignVersionTransaction.serialize().length;
         if (unSignTxLength > SOLANA_MAX_TX_SERIALIZE_SIGN) {
             isBundle = true;
         }
-        console.log('未签名前指令长度');
         unSignTxArray.push(unSignVersionTransaction);
     }
     if (!isBundle && unSignTxArray.length == Trading_Service_Providers.length) {
@@ -381,8 +383,6 @@ export async function getTransactionsSignatureArray(transactionMessage, addressL
             console.log('签名耗时', Date.now() - timeBeforeSig0n);
             if (multiSignTransactions.length == Trading_Service_Providers.length) {
                 signTxArray.push([multiSignTransactions[0]], [multiSignTransactions[1]]);
-                console.log('签名后指令长度1', multiSignTransactions[0].serialize().length);
-                console.log('', multiSignTransactions[1].serialize().length);
                 return signTxArray;
             }
         }
@@ -400,22 +400,13 @@ export async function getTransactionsSignatureArray(transactionMessage, addressL
         let tipTx = createVersionTransaction([tipIx], ownerAddr, recentBlockhash, []);
         unSignTxArray.push(tipTx);
     }
-    for (let i = 0; i < unSignTxArray.length; i++) {
-        console.log('签名前指令长度', unSignTxArray[i].serialize().length);
-    }
     let bundelTxCount = 5;
     if (unSignTxArray.length == bundelTxCount) {
         try {
             unSignTxArray.splice(unSignTxArray.length);
-            console.log('签名前长度', unSignTxArray.length);
             let timeBeforeSign = Date.now();
             let bundleTransactions = await multiSignVersionedTraByPrivy(wallet, connection, unSignTxArray);
-            console.log('签名结果', bundleTransactions.length, bundleTransactions);
-            console.log('签名结果', Buffer.from(bundleTransactions[0].serialize()).toString('base64'));
             console.log('签名耗时', Date.now() - timeBeforeSign);
-            for (let i = 0; i < bundleTransactions.length; i++) {
-                console.log('签名后指令长度', bundleTransactions[i].serialize().length);
-            }
             if (bundleTransactions.length == bundelTxCount) {
                 let signTxArrayFormService1 = [];
                 let signTxArrayFormService2 = [];

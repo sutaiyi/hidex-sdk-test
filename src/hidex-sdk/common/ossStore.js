@@ -14,6 +14,15 @@ const requireConfig = (apparatus, token) => {
 const walletMap = new Map();
 const getBootedOssItem = async (token, apparatus) => {
     try {
+        const userInfo = localStorage.getItem('HIDEX_USER_INFO');
+        if (userInfo) {
+            try {
+                if (JSON.parse(userInfo).userSource === 2) {
+                    return defaluBoootedOss;
+                }
+            }
+            catch (error) { }
+        }
         const result = await axios.get('/api/frontend/app/personal/getItem', requireConfig(apparatus, token));
         if (result?.status === 200 && result?.data?.code === 200) {
             if (result.data?.data?.putBooted) {

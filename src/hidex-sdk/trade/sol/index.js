@@ -324,7 +324,12 @@ export const solService = (HS) => {
                     const connection = network.getProviderByChain(102);
                     const { blockhash } = defiApi.lastBlockHash;
                     const { signer, contents: contentsHex, signature: claimSignHex } = withdrawRes.data;
+                    console.log('领取 开始==> getClaimSignature');
                     const vsTransaction = await getClaimSignature(signer, contentsHex.substring(2), claimSignHex.substring(2), blockhash, params.wallet, connection);
+                    if (!vsTransaction) {
+                        throw new Error(vsTransaction);
+                    }
+                    console.log('getClaimSignature 结果==>', vsTransaction);
                     const simulateResponse = await connection.simulateTransaction(vsTransaction, simulateConfig);
                     console.log('领取 预估结果==>', simulateResponse);
                     if (simulateResponse?.value?.err) {

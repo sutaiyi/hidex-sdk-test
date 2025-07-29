@@ -17,7 +17,7 @@ export declare function getActualLamports(currentSymbol: CurrentSymbol, swapBase
 export declare function isInstructionsSupportReset(transactionMessage: TransactionMessage, currentSymbol: CurrentSymbol): boolean;
 export declare function getClaimSignature(signer: string, contentsHex: string, claimSignHex: string, recentBlockhash: string, wallet: ConnectedSolanaWallet & {
     useSignTransaction: UseSignTransactionInterface['signTransaction'];
-}, connection: Connection): Promise<VersionedTransaction>;
+}, connection: Connection): Promise<VersionedTransaction | undefined>;
 export declare function getTransactionsSignature(transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, owner: any, HS: OptionsCommon): Promise<Array<VersionedTransaction>>;
 export declare function getOwnerTradeNonce(owner: any, HS: OptionsCommon): Promise<number>;
 export declare function getTransactionsSignatureArray(transactionMessage: TransactionMessage, addressLookupTableAccounts: AddressLookupTableAccount[], recentBlockhash: string, currentSymbol: CurrentSymbol, wallet: ConnectedSolanaWallet & {
